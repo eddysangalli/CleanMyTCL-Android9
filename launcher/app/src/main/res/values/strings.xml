@@ -42,4 +42,33 @@
     <string name="weather_set">Weather: %1$s</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="default_name">Eddy</string>
+    <string name="brand_format">%1$s TV</string>
+    <string name="greet_morning">Good morning, %1$s.</string>
+    <string name="greet_afternoon">Good afternoon, %1$s.</string>
+    <string name="greet_night">Good evening, %1$s.</string>
+    <string name="sub_morning">All set to start the day.</string>
+    <string name="sub_afternoon">All set for your afternoon.</string>
+    <string name="sub_night">Time to relax.</string>
+    <string name="opt_name">Your name: %1$s</string>
+    <string name="opt_message">Message: %1$s</string>
+    <string name="opt_message_auto">automatic</string>
+    <string name="opt_accent">Accent colour: %1$s</string>
+    <string name="opt_motion_on">Smooth motion: on</string>
+    <string name="opt_motion_off">Smooth motion: off</string>
+    <string name="name_title">Your name</string>
+    <string name="message_title">Message under the greeting</string>
+    <string name="message_hint">Leave empty for the automatic one</string>
+    <string name="rec_tvlauncher">Re-enable the original home screen</string>
+    <string name="rec_settings">Open Settings</string>
+    <string name="rec_reset">Restore home screen defaults</string>
+    <string name="rec_close">Close</string>
+    <string-array name="accent_names">
+        <item>Blue</item>
+        <item>Green</item>
+        <item>Orange</item>
+        <item>Pink</item>
+        <item>Purple</item>
+        <item>White</item>
+    </string-array>
 </resources>

@@ -43,4 +43,33 @@
     <string name="weather_set">Clima: %1$s</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancelar</string>
+    <string name="default_name">Eddy</string>
+    <string name="brand_format">%1$s TV</string>
+    <string name="greet_morning">Bom dia, %1$s.</string>
+    <string name="greet_afternoon">Boa tarde, %1$s.</string>
+    <string name="greet_night">Boa noite, %1$s.</string>
+    <string name="sub_morning">Tudo pronto para começar o dia.</string>
+    <string name="sub_afternoon">Tudo pronto para a sua tarde.</string>
+    <string name="sub_night">Hora de relaxar.</string>
+    <string name="opt_name">Seu nome: %1$s</string>
+    <string name="opt_message">Mensagem: %1$s</string>
+    <string name="opt_message_auto">automática</string>
+    <string name="opt_accent">Cor de destaque: %1$s</string>
+    <string name="opt_motion_on">Movimento suave: ligado</string>
+    <string name="opt_motion_off">Movimento suave: desligado</string>
+    <string name="name_title">Seu nome</string>
+    <string name="message_title">Mensagem abaixo da saudação</string>
+    <string name="message_hint">Deixe vazio para a automática</string>
+    <string name="rec_tvlauncher">Reativar o launcher original</string>
+    <string name="rec_settings">Abrir as Configurações</string>
+    <string name="rec_reset">Restaurar os padrões do Início</string>
+    <string name="rec_close">Fechar</string>
+    <string-array name="accent_names">
+        <item>Azul</item>
+        <item>Verde</item>
+        <item>Laranja</item>
+        <item>Rosa</item>
+        <item>Roxo</item>
+        <item>Branco</item>
+    </string-array>
 </resources>

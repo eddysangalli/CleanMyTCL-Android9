@@ -9,7 +9,6 @@ import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.GradientDrawable;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
@@ -73,12 +72,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private RecyclerView grid;
     private FrameLayout root;
     private GlassView glass;
-    private View ambient;
-    private TextView heroName;
-    private GradientDrawable ambientGlow;
-    private int ambientColor;
-    private boolean heroShown;
+    private TextView brand;
     private TextView greeting;
+    private TextView subtitle;
+    private TextView weather;
+    /** Eddy TV accent colours, in the order of R.array.accent_names. */
+    private static final int[] ACCENTS = {0xFF4C8DFF, 0xFF3DDC97, 0xFFFF9F43, 0xFFFF5C8A, 0xFFA779FF, 0xFFFFFFFF};
+    /** Last three Home presses (elapsedRealtime), for the recovery shortcut: three within 10 s. */
+    private static final long[] homePresses = new long[3];
+    private static int homePressIndex;
     private TextView btnWifi;
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
@@ -128,15 +130,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         root = findViewById(R.id.root);
         glass = findViewById(R.id.glass);
-        ambient = findViewById(R.id.ambient);
-        heroName = findViewById(R.id.heroName);
-        ambientGlow = new GradientDrawable();
-        ambientGlow.setGradientType(GradientDrawable.RADIAL_GRADIENT);
-        ambientGlow.setGradientCenter(0.32f, 0.42f);
-        ambient.setBackground(ambientGlow);
-        ambient.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) ->
-                ambientGlow.setGradientRadius((r - l) * 0.62f));
+        brand = findViewById(R.id.brand);
         greeting = findViewById(R.id.greeting);
+        subtitle = findViewById(R.id.subtitle);
+        weather = findViewById(R.id.weather);
+        applyAccent();
         btnWifi = findViewById(R.id.btnWifi);
 
         grid = findViewById(R.id.grid);
@@ -230,9 +228,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         super.onResume();
         glassShown = false;
         glass.setAlpha(0f);
-        heroShown = false;
-        heroName.setAlpha(0f);
-        ambient.setAlpha(0f);
         light = prefs.light();
         AppAdapter.light = light;
         updateGreeting();
@@ -325,17 +320,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         View item = (View) card.getParent();
         if (position < COLUMNS) {
-            // Dock: park it at the bottom of the screen and show the top shelf for this app.
+            // Dock: park it at the bottom of the screen.
             int decoratedTop = item.getTop() - (int) (6 * density);
             int dy = decoratedTop - grid.getPaddingTop();
             if (Math.abs(dy) > 1) {
                 if (light) grid.scrollBy(0, dy);
                 else grid.smoothScrollBy(0, dy);
             }
-            if (light) hideHero();
-            else showHero(position, r.top - dy);
         } else {
-            hideHero();
             // Scroll just enough so the whole glass (not only the tile) is visible.
             revealRect.set(0, -(int) pad * 2, item.getWidth(), item.getHeight() + (int) pad);
             // Ultralight: jump instead of animating the scroll, so a move finishes in one frame.
@@ -397,7 +389,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** Hold OK on Settings: ultralight mode, weather place, hidden apps and the default dock. */
     private void showHomeOptions(View anchor) {
         List<MenuItem> items = new ArrayList<>();
-        items.add(new MenuItem(R.drawable.ic_bolt, light ? R.string.opt_light_on : R.string.opt_light_off, this::toggleLight));
+        items.add(new MenuItem(R.drawable.ic_person, getString(R.string.opt_name, prefs.userName()), () ->
+                askText(R.string.name_title, prefs.userName(), 0, text -> {
+                    prefs.setUserName(text);
+                    updateGreeting();
+                })));
+        String message = prefs.message();
+        items.add(new MenuItem(R.drawable.ic_edit, getString(R.string.opt_message,
+                message.isEmpty() ? getString(R.string.opt_message_auto) : message), () ->
+                askText(R.string.message_title, prefs.message(), R.string.message_hint, text -> {
+                    prefs.setMessage(text);
+                    updateGreeting();
+                })));
+        String[] accentNames = getResources().getStringArray(R.array.accent_names);
+        items.add(new MenuItem(R.drawable.ic_circle, getString(R.string.opt_accent,
+                accentNames[prefs.accent() % accentNames.length]), () -> {
+            prefs.setAccent((prefs.accent() + 1) % ACCENTS.length);
+            applyAccent();
+        }));
+        items.add(new MenuItem(R.drawable.ic_bolt, light ? R.string.opt_motion_off : R.string.opt_motion_on, this::toggleLight));
         if (prefs.hasWeatherPlace()) {
             items.add(new MenuItem(R.drawable.ic_cloud, getString(R.string.opt_weather, prefs.weatherPlace()), this::askWeatherPlace));
             items.add(new MenuItem(R.drawable.ic_hide, R.string.opt_weather_disable, () -> {
@@ -425,13 +435,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         light = !light;
         prefs.setLight(light);
         AppAdapter.light = light;
-        if (light) {
-            heroShown = false;
-            heroName.setAlpha(0f);
-            ambient.setAlpha(0f);
-        }
         updateGreeting();
-        refreshWeather();
     }
 
     // ---- weather ---------------------------------------------------------------------------------
@@ -480,7 +484,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Fetches the weather in the background when the cached one is over an hour old; never in ultralight mode. */
     private void refreshWeather() {
-        if (light || !prefs.hasWeatherPlace() || !prefs.weatherStale()) return;
+        if (!prefs.hasWeatherPlace() || !prefs.weatherStale()) return;
         long now = SystemClock.elapsedRealtime();
         if (lastWeatherTry != 0 && now - lastWeatherTry < WEATHER_RETRY_MS) return;
         lastWeatherTry = now;
@@ -495,53 +499,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 // Keep showing the last value; tried again after WEATHER_RETRY_MS.
             }
         });
-    }
-
-    // ---- top shelf -------------------------------------------------------------------------------
-
-    private void showHero(int position, float dockTopInRoot) {
-        String label = adapter.labelAt(position);
-        int color = adapter.ambientColorAt(position);
-        float y = dockTopInRoot - 14 * density - 26 * density - heroName.getHeight();
-        boolean changed = !label.contentEquals(heroName.getText());
-
-        if (!heroShown) {
-            heroName.setText(label);
-            heroName.setY(y);
-            heroName.setTranslationX(0f);
-            heroName.animate().alpha(1f).setDuration(260).start();
-            setAmbient(color);
-            ambient.animate().alpha(1f).setDuration(600).start();
-            heroShown = true;
-        } else if (changed) {
-            heroName.animate().alpha(0f).translationX(-12 * density).setDuration(120).withEndAction(() -> {
-                heroName.setText(label);
-                heroName.setY(y);
-                heroName.setTranslationX(12 * density);
-                heroName.animate().alpha(1f).translationX(0f).setDuration(200).start();
-            }).start();
-            if (color != ambientColor) {
-                ambient.animate().alpha(0.35f).setDuration(200).withEndAction(() -> {
-                    setAmbient(color);
-                    ambient.animate().alpha(1f).setDuration(500).start();
-                }).start();
-            }
-        } else {
-            heroName.setY(y);
-        }
-    }
-
-    private void setAmbient(int color) {
-        ambientColor = color;
-        int c = color & 0x00FFFFFF;
-        ambientGlow.setColors(new int[]{0x5C000000 | c, 0x26000000 | c, 0x00000000 | c});
-    }
-
-    private void hideHero() {
-        if (!heroShown) return;
-        heroShown = false;
-        heroName.animate().alpha(0f).setDuration(160).start();
-        ambient.animate().alpha(0f).setDuration(300).start();
     }
 
     private void hideGlass() {
@@ -612,17 +569,110 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     // ---- top bar ---------------------------------------------------------------------------------
 
+    /**
+     * "Bom dia, Eddy." from the TV's local time, no network. Called on resume and once a minute;
+     * the views are only touched when their text actually changes (at most at the turn of a period).
+     */
     private void updateGreeting() {
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        int res;
-        if (hour < 5) res = R.string.good_night;
-        else if (hour < 12) res = R.string.good_morning;
-        else if (hour < 17) res = R.string.good_afternoon;
-        else if (hour < 22) res = R.string.good_evening;
-        else res = R.string.good_night;
-        String text = getString(res);
-        String weather = light || !prefs.hasWeatherPlace() ? "" : prefs.weatherText();
-        greeting.setText(weather.isEmpty() ? text : text + "  \u00b7  " + weather);
+        int period = hour >= 5 && hour < 12 ? 0 : hour >= 12 && hour < 18 ? 1 : 2;
+        String name = prefs.userName();
+        setIfChanged(brand, getString(R.string.brand_format, name));
+        setIfChanged(greeting, getString(new int[]{R.string.greet_morning, R.string.greet_afternoon, R.string.greet_night}[period], name));
+        String message = prefs.message();
+        setIfChanged(subtitle, message.isEmpty()
+                ? getString(new int[]{R.string.sub_morning, R.string.sub_afternoon, R.string.sub_night}[period]) : message);
+        String w = prefs.hasWeatherPlace() ? prefs.weatherText() : "";
+        setIfChanged(weather, w);
+        int visibility = w.isEmpty() ? View.GONE : View.VISIBLE;
+        if (weather.getVisibility() != visibility) weather.setVisibility(visibility);
+    }
+
+    private static void setIfChanged(TextView view, String text) {
+        if (!text.contentEquals(view.getText())) view.setText(text);
+    }
+
+    /** Accent colour on the brand and the focus ring. */
+    private void applyAccent() {
+        int color = ACCENTS[prefs.accent() % ACCENTS.length];
+        brand.setTextColor(color);
+        glass.setRing(color);
+    }
+
+    private interface TextResult {
+        void accept(String text);
+    }
+
+    private void askText(int title, String current, int hint, TextResult result) {
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        if (hint != 0) input.setHint(hint);
+        input.setText(current);
+        input.setSelection(input.getText().length());
+        new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+                .setTitle(title)
+                .setView(input)
+                .setPositiveButton(R.string.ok, (d, w) -> result.accept(input.getText().toString()))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    // ---- remote shortcuts and recovery -----------------------------------------------------------
+
+    /** Number keys 1-4 jump straight to HDMI 1-4 (same order as the Inputs menu). */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode >= KeyEvent.KEYCODE_1 && keyCode <= KeyEvent.KEYCODE_4 && event.getRepeatCount() == 0
+                && openHdmi(keyCode - KeyEvent.KEYCODE_1)) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private boolean openHdmi(int index) {
+        TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
+        if (tim == null) return false;
+        List<TvInputInfo> hdmi = new ArrayList<>();
+        for (TvInputInfo info : tim.getTvInputList()) {
+            if (info.isPassthroughInput() && info.getType() == TvInputInfo.TYPE_HDMI) hdmi.add(info);
+        }
+        Collections.sort(hdmi, (a, b) -> String.valueOf(a.loadLabel(this)).compareToIgnoreCase(String.valueOf(b.loadLabel(this))));
+        if (index >= hdmi.size()) return false;
+        open(new Intent(Intent.ACTION_VIEW).setDataAndType(
+                TvContract.buildChannelUriForPassthroughInput(hdmi.get(index).getId()), "vnd.android.cursor.item/channel"));
+        return true;
+    }
+
+    /** Home pressed three times within 10 s: recovery menu (original launcher, Settings, defaults). */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
+        long now = SystemClock.elapsedRealtime();
+        homePresses[homePressIndex++ % homePresses.length] = now;
+        long oldest = Long.MAX_VALUE;
+        for (long t : homePresses) oldest = Math.min(oldest, t);
+        if (oldest > 0 && now - oldest <= 10_000) {
+            java.util.Arrays.fill(homePresses, 0);
+            handler.post(this::showRecovery);
+        }
+    }
+
+    private void showRecovery() {
+        List<MenuItem> items = new ArrayList<>();
+        items.add(new MenuItem(R.drawable.ic_refresh, R.string.rec_tvlauncher, () -> open(new Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:com.google.android.tvlauncher")))));
+        items.add(new MenuItem(R.drawable.ic_settings, R.string.rec_settings, () -> open(new Intent(Settings.ACTION_SETTINGS))));
+        items.add(new MenuItem(R.drawable.ic_hide, R.string.rec_reset, () -> {
+            prefs.resetAll();
+            light = prefs.light();
+            AppAdapter.light = light;
+            applyAccent();
+            updateGreeting();
+            AppLoader.reorder(this);
+        }));
+        items.add(new MenuItem(R.drawable.ic_left, R.string.rec_close, () -> { }));
+        showMenu(greeting, items);
     }
 
     /** Shows the Wi-Fi network name on the button when we can read it, otherwise the connection type. */

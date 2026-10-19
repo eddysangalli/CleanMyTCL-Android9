@@ -86,11 +86,45 @@ final class HomePrefs {
 
     /** Apps only: no ambient glow, no app title, no weather, no springs or tile animations. */
     boolean light() {
-        return sp.getBoolean("light", false);
+        return sp.getBoolean("light", true);   // Eddy TV default: instant focus, no motion
     }
 
     void setLight(boolean on) {
         sp.edit().putBoolean("light", on).apply();
+    }
+
+    // ---- identity (Eddy TV) ----------------------------------------------------------------------
+
+    String userName() {
+        String n = sp.getString("name", "").trim();
+        return n.isEmpty() ? ctx.getString(R.string.default_name) : n;
+    }
+
+    void setUserName(String name) {
+        sp.edit().putString("name", name.trim()).apply();
+    }
+
+    /** Custom line under the greeting, or "" for the automatic one per time of day. */
+    String message() {
+        return sp.getString("message", "").trim();
+    }
+
+    void setMessage(String message) {
+        sp.edit().putString("message", message.trim()).apply();
+    }
+
+    int accent() {
+        return sp.getInt("accent", 0);
+    }
+
+    void setAccent(int index) {
+        sp.edit().putInt("accent", index).apply();
+    }
+
+    /** Recovery: name, message, colour, motion, dock and hidden apps back to the defaults. */
+    void resetAll() {
+        sp.edit().remove("name").remove("message").remove("accent").remove("light")
+                .remove("dock").remove("hidden").apply();
     }
 
     // ---- weather --------------------------------------------------------------------------------

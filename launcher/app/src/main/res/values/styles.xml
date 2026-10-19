@@ -6,6 +6,19 @@
         <item name="android:windowAnimationStyle">@null</item>
     </style>
 
+    <!-- Eddy TV brand row: small caps, one line with name, clock, date and weather. -->
+    <style name="BrandText">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">#8CFFFFFF</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:fontFamily">@font/outfit</item>
+        <item name="android:fontVariationSettings">\'wght\' 500</item>
+        <item name="android:letterSpacing">0.16</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
     <!-- Frosted pill, tvOS style. -->
     <style name="TopButton">
         <item name="android:layout_width">wrap_content</item>

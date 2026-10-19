@@ -38,6 +38,16 @@ public class GlassView extends View {
         setLayerType(LAYER_TYPE_HARDWARE, null);
     }
 
+    /** Eddy TV focus: a plain ring in the accent colour (no sheen, specular or glow). 0 = glass. */
+    private int ringColor;
+
+    void setRing(int color) {
+        ringColor = color;
+        rim.setColor(color != 0 ? color : 0xCCFFFFFF);
+        rim.setStrokeWidth((color != 0 ? 3f : 1.5f) * density);
+        invalidate();
+    }
+
     void setRadius(float px) {
         radius = px;
         invalidate();
@@ -54,6 +64,10 @@ public class GlassView extends View {
     protected void onDraw(Canvas canvas) {
         float inset = 6f * density;   // room for the glow
         rect.set(inset, inset, getWidth() - inset, getHeight() - inset);
+        if (ringColor != 0) {
+            canvas.drawRoundRect(rect, radius, radius, rim);
+            return;
+        }
 
         // Outer glow: three widening, fading strokes.
         for (int i = 1; i <= 3; i++) {
