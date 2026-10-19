@@ -330,7 +330,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             hideHero();
             // Scroll just enough so the whole glass (not only the tile) is visible.
             revealRect.set(0, -(int) pad * 2, item.getWidth(), item.getHeight() + (int) pad);
-            grid.requestChildRectangleOnScreen(item, revealRect, false);
+            // Ultralight: jump instead of animating the scroll, so a move finishes in one frame.
+            grid.requestChildRectangleOnScreen(item, revealRect, light);
         }
     }
 
@@ -580,6 +581,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             return;
         }
         // Not laid out yet: scroll there, then focus once the scroll settles.
+        if (light) {
+            grid.scrollToPosition(pos);   // ultralight: jump, then focus after the next layout
+            grid.post(() -> {
+                RecyclerView.ViewHolder h = grid.findViewHolderForAdapterPosition(pos);
+                if (h != null) h.itemView.findViewById(R.id.card).requestFocus();
+            });
+            return;
+        }
         grid.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView rv, int newState) {
