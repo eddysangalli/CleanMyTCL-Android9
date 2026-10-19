@@ -49,6 +49,13 @@ Android (see the idle-CPU findings in the device profile).
 
 Raw output of this run: `medicoes/launcher/20261019-122030-v0.5-atual/` (local only, git-ignored).
 
+The environment these numbers were taken in is pinned in
+[`data/2026-10-19-v0.5.2/environment.txt`](data/2026-10-19-v0.5.2/environment.txt): launcher
+package and version, the SHA-256 of the installed APK and of the stored copy, the signer's
+certificate fingerprint, the build fingerprint, the package counts, the memory figures and the
+animation scales. It contains no serial number, no MAC address, no IP and no account, so the
+measurement can be checked against the exact build it came from.
+
 ## v0.4 / v0.5 status
 
 v0.4 (identity, on-TV settings, HDMI number keys, recovery action) and v0.5 (Globoplay button redirect
