@@ -4,9 +4,9 @@ Follow-up to [`UPSTREAM-AUDIT-2026-10-19.md`](UPSTREAM-AUDIT-2026-10-19.md) (whi
 upstream v2.2.0, PR #119/#150/#153, issue #165/#166 and the v0.5.2 measurement).
 
 Everything below comes from the upstream release/PR pages and the fork owners' code, reviewed on
-2026-10-19. **None of it has been measured on our TCL RTD2851 yet.** The measured reference stays
-the v0.5.2 battery ([`2026-10-19-v0.5.2.md`](../benchmarks/results/2026-10-19-v0.5.2.md)) until the
-v0.5.4 battery runs.
+2026-10-19. Items marked **implemented (v0.5.5)** were built and checked functionally on the TV;
+**their performance was not measured yet.** The measured reference stays the v0.5.2 battery
+([`2026-10-19-v0.5.2.md`](../benchmarks/results/2026-10-19-v0.5.2.md)) until the v0.5.5 battery runs.
 
 Legend: **ready** = small, low-risk change we can implement behind the existing tests;
 **prototype** = needs a before/after measurement on the TV first; **investigate** = needs a design
@@ -19,9 +19,9 @@ by him**. Treat the hardware behaviour as untested.
 
 | Item | What it is | Our status | Action |
 |---|---|---|---|
-| GPU-optimised animations + `reduced_motion` (PR #119) | cheaper/shorter focus animation; reduced motion is opt-in upstream | ultralight already removes the motion; normal mode is a ~632 ms spring (measured on v0.5.2) | **prototype**: try to cut the 632 ms in normal mode without losing the look; measure with the A/B harness |
-| D-pad focus fix (PR #138) | after moving in the top bar, Down returns to the app the user came from; developed on a TCL BeyondTV (Android 9) | our focus logic is custom (`MainActivity`, `DockDecoration`, `focusDown`) | **prototype**: diff the upstream fix against our handlers; behaviour test with injected keys |
-| Installer safety (PR #190) | stop if the APK install fails, before touching the stock launcher | `scripts/tcl-launcher-install.sh` runs `set -euo pipefail`, never swaps the Home and re-checks it after install | **ready (small)**: assert the `adb install` result explicitly |
+| GPU-optimised animations + `reduced_motion` (PR #119) | cheaper/shorter focus animation; reduced motion is opt-in upstream | ultralight already removes the motion; normal mode is a ~632 ms spring (measured on v0.5.2) | **partially implemented (v0.5.5)**: the tile zoom cancels stale animations and runs on a hardware layer; timings unchanged. The reduced-motion switch was not adopted — ultralight already covers it. Cutting the 632 ms still needs the A/B harness |
+| D-pad focus fix (PR #138) | after moving in the top bar, Down returns to the app the user came from; developed on a TCL BeyondTV (Android 9) | our focus logic is custom (`MainActivity`, `DockDecoration`, `focusDown`) | **implemented (v0.5.5)**: Down on a top pill returns to the dock tile Up came from; verified on the TV by screenshots |
+| Installer safety (PR #190) | stop if the APK install fails, before touching the stock launcher | `scripts/tcl-launcher-install.sh` runs `set -euo pipefail`, never swaps the Home and re-checks it after install | **implemented (v0.5.5)**: explicit `adb install` check in `tcl-launcher-install.sh` |
 | Script path fix (PR #153) | resolve the debloat list against the caller's directory | already in `tools/disable.sh` (verified 2026-10-19) | none |
 
 ## 2. New and related upstream items
@@ -44,9 +44,9 @@ by him**. Treat the hardware behaviour as untested.
 
 ## 3. Forks with concrete code
 
-| Fork | What it changes | Fit for our v0.5.4 | Action |
+| Fork | What it changes | Fit for our launcher (v0.5.5) | Action |
 |---|---|---|---|
-| [zennnez/tv-vibehack](https://github.com/zennnez/tv-vibehack) | fixes 5/6-column grids: card width follows the available space instead of a fixed width | our `item_app.xml` uses a fixed `@dimen/tile_width` with `GridLayoutManager(COLUMNS)` | **ready (small)**: compute the tile width from the screen; verify 4/5/6 columns with screenshots |
+| [zennnez/tv-vibehack](https://github.com/zennnez/tv-vibehack) | fixes 5/6-column grids: card width follows the available space instead of a fixed width | our `item_app.xml` uses a fixed `@dimen/tile_width` with `GridLayoutManager(COLUMNS)` | **implemented (v0.5.5)**: tile width comes from the grid's inner width ÷ columns, capped at the design size; 5 columns verified on the TV; 4 is the default and keeps the previous layout |
 | [Suryvibegod/tv-vibehack-coocaa](https://github.com/Suryvibegod/tv-vibehack-coocaa) | removes a duplicated background; `forceHasOverlappingRendering="false"`; UTF-8 for ADB output on Windows | our `tools/tv.py` already reads `utf-8-sig`; our overdraw was never measured | **prototype**: compare `gfxinfo` overdraw before/after |
 | [mhaegeman/cleanyourtv](https://github.com/mhaegeman/cleanyourtv) | profile picker (name + wallpaper) selected with the remote | `HomePrefs` stores name/accent/message; no profiles, no wallpaper | **prototype** (small, no service): profiles as a pref list; wallpaper must be downsampled (#166) |
 | [bramsuurdje/tv-vibehack](https://github.com/bramsuurdje/tv-vibehack) | compact Now Playing block | same as PR #173 | **skip for now** |
@@ -71,14 +71,14 @@ Verified in our code while writing this note:
 
 ## 5. Recommended order (after the paused tests resume)
 
-1. **Re-baseline v0.5.4** — full battery + normal/ultralight A/B (scripts ready:
+1. **Re-baseline v0.5.5** — full battery + normal/ultralight A/B (scripts ready:
    `tcl-launcher-bench.sh`, 5 runs per mode). The v0.5.2 numbers stop being the “current build”
-   reference the moment v0.5.4 is measured.
-2. **D-pad focus fix (PR #138)** — small, behavioural, testable with injected keys.
-3. **Grid width fix (zennnez)** — small, layout-only, testable with screenshots at 4/5/6 columns.
-4. **Normal-mode animation cost (v2.3.0 / PR #119)** — the only way to cut the 632 ms without
-   turning motion off; prototype it behind the A/B harness.
-5. **Installer assert (PR #190)** — one explicit check in `tcl-launcher-install.sh`.
+   reference the moment v0.5.5 is measured.
+2. **D-pad focus fix (PR #138)** — done in v0.5.5; behavioural check passed on the TV.
+3. **Grid width fix (zennnez)** — done in v0.5.5; 5 columns verified on the TV (4 unchanged).
+4. **Normal-mode animation cost (v2.3.0 / PR #119)** — partially done in v0.5.5 (GPU layer on the
+   tile zoom); the 632 ms itself is unchanged and still needs the A/B harness.
+5. **Installer assert (PR #190)** — done in v0.5.5.
 6. **Overdraw trim (Suryvibegod / PR #150)** — small; needs `gfxinfo` overdraw before/after.
 7. **Profiles (mhaegeman)** — optional family feature; includes the #166 wallpaper mitigation.
 8. **Investigate only**: live-TV EPG (`TvContract`), Now Playing (permission audit first), dock

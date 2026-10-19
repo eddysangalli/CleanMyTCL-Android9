@@ -21,9 +21,9 @@ How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
 - [`../../scripts/protected-packages.txt`](../../scripts/protected-packages.txt) — packages the scripts refuse to disable.
 - [`OPTIMIZATION-CANDIDATES.md`](OPTIMIZATION-CANDIDATES.md) — measured candidates, **not applied**, each with risk and undo.
 
-**Currently installed:** `br.eddy.tvhome` **0.5.4** (versionCode 15, installed 2026-10-19 16:33),
-APK SHA-256 `9F5CA4362F100F8AB35E196A64590EC3F3107237EA0EBE9011857CCCB44C355D` — identical to the
-stored `tvhome-0.5.4.apk` (launcher commit `0605275`). The performance battery for 0.5.4 is pending;
+**Currently installed:** `br.eddy.tvhome` **0.5.5** (versionCode 16, installed 2026-10-19 17:16),
+APK SHA-256 `17C70DFBE36F00DEB033E841FBB75AC4C73BE868382F24CEA3EC1BA54E10AE9F` — identical to the
+stored `tvhome-0.5.5.apk` (launcher commit `c250429`). The performance battery for 0.5.5 is pending;
 the measured figures below are from v0.1–v0.5.2.
 
 ## Key findings on this hardware (measured)
