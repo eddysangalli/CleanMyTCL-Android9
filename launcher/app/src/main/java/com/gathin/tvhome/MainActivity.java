@@ -798,7 +798,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             });
             rows.addView(row);
         }
-        popup.showAsDropDown(anchor, 0, (int) (8 * density), Gravity.START);
+        // PopupWindow only flips above the anchor when it knows its height, and a WRAP_CONTENT one never does:
+        // near the bottom the menu was cut off by the screen edge. Measure it and place it above by hand.
+        int width = popup.getWidth();
+        panel.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        int height = panel.getMeasuredHeight();
+        int[] at = new int[2];
+        anchor.getLocationInWindow(at);   // includes the focus scale
+        int below = at[1] + Math.round(anchor.getHeight() * anchor.getScaleY());
+        int gap = (int) (8 * density);
+        if (below + gap + height > root.getHeight()) {
+            int ringGap = (int) (6 * density);   // clear the focus ring drawn just outside the tile
+            popup.showAtLocation(root, Gravity.START | Gravity.TOP, at[0], Math.max(0, at[1] - gap - ringGap - height));
+        } else {
+            popup.showAsDropDown(anchor, 0, gap, Gravity.START);
+        }
         rows.getChildAt(0).requestFocus();
     }
 
