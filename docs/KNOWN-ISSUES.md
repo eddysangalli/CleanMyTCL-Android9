@@ -16,7 +16,7 @@
 | Topic | Known so far | Next step |
 |---|---|---|
 | Slow full boot (power loss) | `adb reboot` → boot_completed ~40 s; 59 processes start in the first 90 s (Play Services, Assistant, Chromecast dex2oat, TCL services) | External stopwatch for bootloader+kernel; split kernel / services / system / launcher |
-| Netflix ~90 s to usable catalogue | First frame in 3.8 s; network ruled out for the analysed boot; no low-memory kills | Screenshot series: right after boot vs 10 min vs stable, cold vs warm, 3 reps each; separate process start, auth, DRM, catalogue |
+| Netflix time to a usable catalogue | First frame ~0.9 s (`am start -W` WaitTime, 5 runs). The earlier “3.8 s” was TotalTime; the “~90 s” was the wall time of an `am start` + `screencap` sequence, and `screencap` hangs on the DRM surface, so neither is the app's real load. `uiautomator dump` exposes only the containers, not the catalogue. | Assisted visual test: `scripts/tcl-app-assisted.sh netflix <label> frio`; a person presses any remote key when the catalogue is usable. Repeat cold/warm, right after boot vs stable. |
 | "Ok Google" slow / always-on cost | Hotword path costs ≈ 48% of one core continuously | Measure latency of built-in mic vs remote BT mic; test hands-free off (owner decision) |
 | Gemini | Button-triggered only, no always-on service, no PC dependency (hosted token service) | Design + cost estimate before any code |
 | Android 11 | Only unofficial images (USB flashing) | **Out of scope for now**; revisit only after Android 9 is fully optimized |

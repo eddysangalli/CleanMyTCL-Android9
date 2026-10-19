@@ -13,12 +13,18 @@ Settings) and stored in the launcher's private preferences — nothing personal 
 | Custom message under the greeting | Home options | 0 |
 | Dock / favourites, hide apps, order | App menu (menu key on a tile) | 0 |
 | HDMI 1/2/3 and Live TV shortcuts | Inputs row; number keys jump to HDMI | 0 |
-| Ultralight mode (no motion, focus in 1 frame) | Home options (default on) | Saves ~0.6 s of animation per move |
+| Ultralight mode (no motion, focus in 1 frame) | Home options (**code default on**; the v0.5.2 battery TV was left in normal) | Saves ~0.6 s of animation per move; changes motion only — the greeting and the weather line are the same in both modes |
 | Weather (optional, off) | Home options → city | ≤ 1 request/hour, only while Home is visible |
 | Globoplay key redirect | Home options (needs accessibility permission) | Being measured |
 
 Rules for new personalization features: no continuous animations, no permanent services, no
 internet dependency, and a benchmark showing no regression (see [../benchmarks/METHODOLOGY.md](../benchmarks/METHODOLOGY.md)).
+
+> **History note (2026-10-19).** An earlier description of this project (upstream PR #180) said the
+> ultralight mode was the default and did not fetch the weather. The first part is correct — the code
+> default is `light=true` — but the second is not: the weather line is shown in both modes, and the
+> fetch is cached and refreshed at most once an hour. The v0.5.2 battery was measured with smooth
+> motion **on** (normal mode), which is why the report's conditions say `light=false`.
 
 ## Known gaps before public release
 

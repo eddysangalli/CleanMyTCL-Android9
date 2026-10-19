@@ -19,6 +19,13 @@ stalls is a regression.
   per-process row is the share of **one core**. Never mix the two.
 - **App first frame is `am start -W` WaitTime.** `TotalTime` on Android 9 can include a previous
   activity transition (~3.7 s in the Settings→Home sequence) and must not be used for that table.
+- **What the key numbers mean.** The launcher battery injects keys with `adb shell input keyevent`.
+  The response time (13 ms median in v0.5.2) is from that injected event to the first frame that
+  reacts; it is the launcher's reaction time and **excludes the remote and the IR/BT receiver**.
+  The real input path (IR receiver `/dev/input/eventN` → launcher) was measured separately with
+  `tcl-keypath-bench.sh` (p50 3 ms, 100 events). The remote's own scan/transmit time was not
+  measured; the end-to-end physical-remote latency would need a hardware probe or a high-speed
+  camera. Do not present the ADB figure as physical-remote latency.
 
 ## Scripts
 

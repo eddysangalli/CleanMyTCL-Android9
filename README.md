@@ -15,7 +15,7 @@ See [NOTICE.md](NOTICE.md) for credits and [docs/PROVENANCE.md](docs/PROVENANCE.
 *Captured on the real device (TCL BeyondTV2, R851T02 V660). The weather location in the options
 screenshot is blurred for privacy; the rest are the original PNGs.*
 
-| Stock Google TV Home | Eddy TV Home (v0.5.2) |
+| Stock Android TV Home | Eddy TV Home (v0.5.4) |
 |:---:|:---:|
 | ![Stock Home](docs/assets/stock-home.png) | ![Eddy TV Home](docs/assets/eddy-home.png) |
 | *Sponsored and recommendation rows, network content fetched on every open, permanent animation at 60 fps* | *Greeting by time of day, weather line, no sponsored row, no feed, 0 fps while idle* |
@@ -33,7 +33,7 @@ screenshot is blurred for privacy; the rest are the original PNGs.*
 | Inputs menu (HDMI / Live TV) | Ultralight mode |
 |:---:|:---:|
 | ![Inputs](docs/assets/eddy-inputs.png) | ![Ultralight](docs/assets/eddy-ultralight.png) |
-| *The HDMI ports and Live TV, straight from the Home: number keys 1-4 jump to HDMI 1-4, in the same order as the Inputs menu* | *Smooth motion off: the focus jumps instead of gliding, 1 frame drawn per move instead of 38* |
+| *The HDMI inputs and Live TV, straight from the Home: keys 1–3 open the three HDMI inputs this unit lists, in the same order as the Inputs menu (the launcher maps keys 1–4 to the inputs the system reports; there is no fourth input entry here)* | *Smooth motion off: the focus jumps instead of gliding, 1 frame drawn per move instead of 38* |
 
 > Every number in [benchmarks/results/](benchmarks/results/) is tagged with the exact launcher
 > version and the conditions it was measured in. Charts are generated from the measured data by

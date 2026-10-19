@@ -21,6 +21,11 @@ How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
 - [`../../scripts/protected-packages.txt`](../../scripts/protected-packages.txt) — packages the scripts refuse to disable.
 - [`OPTIMIZATION-CANDIDATES.md`](OPTIMIZATION-CANDIDATES.md) — measured candidates, **not applied**, each with risk and undo.
 
+**Currently installed:** `br.eddy.tvhome` **0.5.4** (versionCode 15, installed 2026-10-19 16:33),
+APK SHA-256 `9F5CA4362F100F8AB35E196A64590EC3F3107237EA0EBE9011857CCCB44C355D` — identical to the
+stored `tvhome-0.5.4.apk` (launcher commit `0605275`). The performance battery for 0.5.4 is pending;
+the measured figures below are from v0.1–v0.5.2.
+
 ## Key findings on this hardware (measured)
 
 - The largest idle CPU cost is the hands-free **"Ok Google" listening**: `voice_ap` (TCL, built-in mics)
@@ -35,7 +40,9 @@ How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
   and the [detailed v0.5.2 battery](../../benchmarks/results/2026-10-19-v0.5.2.md).*
 - Disabling TCL telemetry/promo packages removed processes but gave **no measurable** speed gain.
 - Memory is not the bottleneck: 0 apps killed by low memory in boot logs; zRAM/swap tweaks are out of scope.
-- Netflix first frame ~0.94 s (`am start -W` WaitTime, 5 runs); the longer wait reported (~90 s) is
-  after the first frame and is still under investigation — the visual catalogue-ready check is pending.
+- Netflix first frame ~0.86–0.94 s (`am start -W` WaitTime, 5 runs). The “~90 s” figure was the wall
+  time of an `am start` + `screencap` sequence; `screencap` hangs on the DRM surface, so it is not
+  the app's load. The time until the catalogue is usable is measured with a person:
+  `scripts/tcl-app-assisted.sh netflix <label> frio`.
 - The remote's "Globoplay" key is injected by TCL software (scanCode 0); it cannot be remapped by a
   key filter without root.

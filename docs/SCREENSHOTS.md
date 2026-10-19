@@ -50,7 +50,7 @@ It never changes TV settings or apps.
 
 | Label | What it shows |
 |---|---|
-| `stock-home` | the original Google TV Home, with its recommendation rows |
+| `stock-home` | the original Android TV Home (Google `com.google.android.tvlauncher`), with its recommendation rows |
 | `eddy-home` | the Eddy TV home: greeting, weather line, top bar, dock |
 | `eddy-launcher-apps` | the app grid, scrolled |
 | `eddy-tile-menu` | the menu of a focused tile (pin to dock, app info) |

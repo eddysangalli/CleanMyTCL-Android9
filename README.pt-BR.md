@@ -12,7 +12,7 @@ Créditos em [NOTICE.md](NOTICE.md); origem de cada parte em [docs/PROVENANCE.md
 *Capturado no aparelho real (TCL BeyondTV2, R851T02 V660). A localização do clima na captura de
 opções está desfocada por privacidade; o resto são os PNGs originais.*
 
-| Home original do Google TV | Home do Eddy TV (v0.5.2) |
+| Home original do Android TV | Home do Eddy TV (v0.5.4) |
 |:---:|:---:|
 | ![Home original](docs/assets/stock-home.png) | ![Eddy TV Home](docs/assets/eddy-home.png) |
 | *Linhas patrocinadas e de recomendação, conteúdo de rede buscado a cada abertura, animação permanente a 60 fps* | *Saudação por horário, linha do clima, sem linha patrocinada, sem feed, 0 fps parado* |
@@ -30,7 +30,7 @@ opções está desfocada por privacidade; o resto são os PNGs originais.*
 | Menu de entradas (HDMI / TV ao vivo) | Modo ultraleve |
 |:---:|:---:|
 | ![Entradas](docs/assets/eddy-inputs.png) | ![Ultraleve](docs/assets/eddy-ultralight.png) |
-| *As portas HDMI e a TV ao vivo, direto do Home: as teclas 1-4 pulam para o HDMI 1-4, na mesma ordem do menu Entradas* | *Movimento suave desligado: o foco salta em vez de deslizar, 1 quadro desenhado por movimento em vez de 38* |
+| *As entradas HDMI e a TV ao vivo, direto do Home: as teclas 1–3 abrem as três entradas HDMI que esta unidade lista, na mesma ordem do menu Entradas (o launcher mapeia 1–4 para as entradas que o sistema expõe; aqui não existe uma quarta entrada)* | *Movimento suave desligado: o foco salta em vez de deslizar, 1 quadro desenhado por movimento em vez de 38* |
 
 > Cada número em [benchmarks/results/](benchmarks/results/) está marcado com a versão exata do
 > launcher e as condições em que foi medido. Os gráficos são gerados a partir dos dados medidos por
