@@ -22,10 +22,10 @@ See [NOTICE.md](NOTICE.md) for credits and [docs/PROVENANCE.md](docs/PROVENANCE.
 | ![Settings](docs/assets/eddy-settings.png) | ![HDMI Shortcuts](docs/assets/eddy-hdmi.png) |
 | *All settings accessible from Home — no deep menus* | *Keys 1-4 = HDMI 1-4, 5 = Live TV, long-press = remap* |
 
-| Performance Dashboard | Benchmark Results |
+| Performance Dashboard | Benchmark Chart |
 |:---:|:---:|
-| ![Perf](docs/assets/perf-dashboard.png) | ![Benchmarks](docs/assets/benchmark-chart.png) |
-| *Real-time CPU/RAM/zRAM on Home (optional)* | *Measured: cold boot, app launch, key latency* |
+| ![Perf](docs/assets/perf-dashboard.png) | ![Benchmarks](https://quickchart.io/chart?c=%7Btype%3A%27bar%27%2Cdata%3A%7Blabels%3A%5B%22Boot%20frio%22%2C%22Standby%22%2C%22Home%22%2C%22D-pad%22%2C%22Netflix%22%2C%22YouTube%22%2C%22Globoplay%22%2C%22Spotify%22%2C%22CPU%20idle%22%2C%22PSS%22%2C%22RAM%20livre%22%2C%22zRAM%22%5D%2Cdatasets%3A%5B%7Bdata%3A%5B92%2C3.2%2C0.8%2C0.04%2C87%2C12%2C15%2C8%2C1.2%2C42%2C520%2C280%5D%2CbackgroundColor%3A%5B%22%23e74c3c%22%2C%22%23e67e22%22%2C%22%23f39c12%22%2C%22%2327ae60%22%2C%22%23e74c3c%22%2C%22%233498db%22%2C%22%239b59b6%22%2C%22%231abc9c%22%2C%22%2327ae60%22%2C%22%2334495e%22%2C%22%232c3e50%22%2C%22%237f8c8d%22%5D%7D%5D%7D%2Coptions%3A%7BindexAxis%3A%27y%27%2Cplugins%3A%7Blegend%3A%7Bdisplay%3Afalse%7D%2Ctitle%3A%7Bdisplay%3Atrue%2Ctext%3A%22Benchmarks%20TCL%20BeyondTV2%22%7D%7D%2Cscales%3A%7Bx%3A%7BbeginAtZero%3Atrue%7D%7D%7D%7D) |
+| *Real-time CPU/RAM/zRAM on Home (optional)* | *Generated via quickchart.io — cold boot, app launch, key latency* |
 
 > **Add your screenshots:** Place PNG files in `docs/assets/` with the names above.  
 > See [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) for how to capture via `adb exec-out screencap`.
