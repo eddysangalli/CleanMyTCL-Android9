@@ -1,8 +1,16 @@
 # TCL BeyondTV2 profile — debloat list (Android TV 9, R851T02 V660)
 # Format compatible with upstream tools/disable.sh and tools/restore.sh (one package per line, # comments).
-# Validated 2026-10-18/19: each package disabled alone with scripts/tcl-try-disable.sh, smoke test 24/24,
-# then 3 reboots OK. Measured effect: these removed processes but gave NO measurable overall speed gain
-# (CPU idle and app-open times within noise). They are kept for less telemetry/ads, not for speed.
+#
+# Test date: 2026-10-18/19. Each package below was disabled ALONE with scripts/tcl-try-disable.sh,
+# then the smoke test passed 24/24 and the device rebooted 3 times without problems.
+# Measured effect: these removed processes but gave NO measurable overall speed gain
+# (CPU idle and app-open times stayed within run-to-run noise). They are kept for less
+# telemetry/ads, NOT for speed. Do not expect a speed-up from this list.
+#
+# NOTE ON TESTING TIME: each package was verified over a single session (disable -> smoke test ->
+# reboots -> live use), NOT over several days. Treat this list as "verified to survive reboots and
+# the smoke test", not as "verified over days of daily use". Upstream's CONTRIBUTING asks for
+# days of use; this profile does not yet meet that bar and says so.
 #
 # Apply (one at a time is recommended):  bash scripts/tcl-try-disable.sh <package>
 # Undo:                                   adb shell pm enable <package>
@@ -11,7 +19,8 @@
 #   com.tcl.bootadservice com.tcl.gallery au.com.stan.and com.amazon.amazonvideo.livingroom
 #   com.linecorp.linetv tv.wuaki.apptv uk.co.freeview.*
 #
-# NEVER disable: see protected-packages.txt in this folder (HDMI, tuner, remote, voice, DRM, Play, Cast).
+# NEVER disable: see ../../scripts/protected-packages.txt
+# (HDMI, tuner, remote, voice, DRM, Play, Cast, and the packages the user relies on).
 
 com.tcl.esticker                # retail/demo stickers
 com.tcl.bi                      # TCL analytics (telemetry)

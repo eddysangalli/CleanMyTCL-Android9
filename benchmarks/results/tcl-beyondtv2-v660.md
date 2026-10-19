@@ -2,6 +2,11 @@
 
 Method: [../METHODOLOGY.md](../METHODOLOGY.md). CPU % = share of one core, system-wide.
 
+> **Every number below is tagged with the launcher version it was measured on.**
+> Numbers are never carried over from one version to the next. If a version has no row, it was not measured.
+> The chart in the README mixes the v0.3.3 launcher rows with stock-Home app-launch rows; this file is the
+> authoritative reference.
+
 ## Stock Home vs light launcher (`tcl-bench.sh`, 3 reps each)
 
 | Run | Home | Idle CPU | MemAvailable | Jank % | p90 / p99 frame | Idle fps |
@@ -22,6 +27,20 @@ Disabling the TCL packages gave **no measurable** gain (differences within run-t
 | v0.3.3 ultralight | 16 / 29 / 34 ms | **17 / 41 ms** | **0%** | 36 / 191 ms | 20 MB |
 
 Cold start v0.3 (WaitTime, 5 runs): 470–551 ms, p50 514 ms.
+
+## v0.4 / v0.5 — installed, smoke-tested, NOT re-benchmarked
+
+v0.4 (identity, on-TV settings, HDMI number keys, recovery action) and v0.5 (Globoplay button redirect via
+window event) are **installed and running** on the device and pass the smoke test and reboot test, but the
+full key-latency / PSS / jank battery has **not** been re-run against them.
+
+**Do not read the v0.3.3 numbers above as v0.4/v0.5 numbers.** The v0.3.3 figures are the last measured
+state of the launcher. Re-running the benchmark is an open task; until it is done, the honest statement is:
+*v0.3.3 was measured; v0.5 is in daily use but unmeasured.*
+
+Changes since v0.3.3 are behavioural/UI (settings screen, HDMI shortcuts, identity strings, one accessibility
+service for the Globoplay key) and do not add background services, polling, network calls or continuous
+animation — but that is a code-review argument, not a measurement.
 
 ## Reboot (`tcl-reboot-test.sh`)
 

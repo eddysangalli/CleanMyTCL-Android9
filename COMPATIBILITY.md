@@ -23,9 +23,9 @@ Profile: [devices/tcl-beyondtv2-rtd2851-r851t02-v660/](devices/tcl-beyondtv2-rtd
 |---|---|---|
 | ADB over network | ✅ | Port 5555, Windows 11 + platform-tools |
 | Backup / restore of package state | ✅ | `tcl-backup.ps1` / `tcl-restore.ps1` (dry-run and apply used on 2026-10-18) |
-| Debloat (profile list, 4 packages) | ✅ | One-by-one with `tcl-try-disable.sh`; smoke 24/24; 3 reboots OK |
+| Debloat (profile list, 3 packages) | ✅ | `debloat.txt` lists 3 packages (`com.tcl.esticker`, `com.tcl.bi`, `com.tcl.tv.tclhome_passive`); one-by-one with `tcl-try-disable.sh`, smoke 24/24, 3 reboots OK. Not benchmarked over several days |
 | Launcher install + Home swap | ✅ | v0.3.3 → v0.5; Home resolves to the new launcher; stock launcher recoverable |
-| Launcher performance | ✅ | Key response 1 frame (p50 14 ms, max 20 ms); real cold start ~0.5 s; PSS ~20 MB; 0 fps idle |
+| Launcher performance | 🟡 | Measured on **v0.3.3**: key response p50 14 ms / max 20 ms, cold start ~0.5 s, PSS ~20 MB, 0 fps idle. **v0.4/v0.5 not re-benchmarked yet** |
 | Reboot (`adb reboot`) | ✅ | 3 runs, ~40–43 s to `boot_completed`, smoke OK after each |
 | Power-loss boot (unplug/replug) | 🟡 | One real boot log analysed; external stopwatch measurement pending |
 | Resume from standby (STR) | ⚪ | Not measured yet (this is the everyday "turn on") |
