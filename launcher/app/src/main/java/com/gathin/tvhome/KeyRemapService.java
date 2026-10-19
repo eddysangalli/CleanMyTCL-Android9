@@ -1,20 +1,18 @@
 package com.gathin.tvhome;
 
 import android.accessibilityservice.AccessibilityService;
-import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.SystemClock;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
  * Makes the remote's Globoplay button open another app. On this TCL the button is not a hardware key: TCL's
  * key service injects keycode 4097 and starts Globoplay itself, and injected keys never reach an accessibility
- * key filter. So instead of the key, this watches for Globoplay coming to the front, switches to the chosen app
- * and then closes Globoplay once it is in the background.
+ * key filter. So instead of the key, this watches for Globoplay coming to the front and switches to the chosen app.
+ * Globoplay is left in the background on purpose: closing it made the next press a cold start, ~4 s of Globoplay
+ * loading before the switch instead of ~0.05 s, and Android drops a cached app first anyway when memory runs low.
  *
  * Any Globoplay screen counts: when its task already exists, the button brings back whatever screen was on top
  * (the profile chooser, a show), not the splash. Globoplay opened from an Eddy TV tile is left alone until the
@@ -29,16 +27,12 @@ public class KeyRemapService extends AccessibilityService {
     static final String SOURCE = "com.globo.globotv";
     /** Globoplay emits a few window changes while it starts; one redirect per burst is enough. */
     private static final long BURST_MS = 300;
-    /** Android only closes a process it no longer shows: Globoplay stays visible until the other app has drawn
-     *  (1.3-3 s measured), so try after that and once more in case that app was slow. */
-    private static final long[] CLOSE_DELAYS_MS = {4000, 10000};
 
     /** Globoplay was opened from Eddy TV. Static: the Home and this service share the process. */
     private static volatile boolean allowed;
 
     private volatile String target = "";
     private long lastRedirect;
-    private final Handler handler = new Handler(Looper.getMainLooper());
     /** Kept as a field: SharedPreferences holds change listeners weakly. */
     private SharedPreferences.OnSharedPreferenceChangeListener prefsListener;
 
@@ -51,11 +45,6 @@ public class KeyRemapService extends AccessibilityService {
     static void homeResumed() {
         allowed = false;
     }
-
-    private final Runnable closeSource = () -> {
-        ActivityManager am = getSystemService(ActivityManager.class);
-        if (am != null) am.killBackgroundProcesses(SOURCE);
-    };
 
     @Override
     protected void onServiceConnected() {
@@ -78,8 +67,6 @@ public class KeyRemapService extends AccessibilityService {
         if (now - lastRedirect < BURST_MS) return;
         lastRedirect = now;
         launch(to);
-        handler.removeCallbacks(closeSource);
-        for (long delay : CLOSE_DELAYS_MS) handler.postDelayed(closeSource, delay);
     }
 
     private void launch(String pkg) {
