@@ -9,23 +9,19 @@ Créditos em [NOTICE.md](NOTICE.md); origem de cada parte em [docs/PROVENANCE.md
 
 ## 📸 Capturas de tela
 
-| Launcher Original TCL | Eddy TV (CleanMyTCL Launcher v0.5) |
-|:---:|:---:|
-| ![Home Original](docs/assets/stock-home.png) | ![Eddy TV Home](docs/assets/eddy-home.png) |
-| *Home original TCL — linha de anúncios, grid lento, sem atalhos* | *Eddy TV — saudação por horário, atalhos HDMI, modo ultraleve, configurável* |
+**As capturas reais estão temporariamente indisponíveis.** Os arquivos enviados anteriormente para `docs/assets/` foram convertidos indevidamente para texto UTF-16 e deixaram de ser PNGs válidos. Ocultamos as imagens quebradas e duplicadas até que sejam recapturadas corretamente.
 
-| Configurações na TV | Acesso Rápido HDMI e TV ao Vivo |
-|:---:|:---:|
-| ![Configurações](docs/assets/eddy-settings.png) | ![Atalhos HDMI](docs/assets/eddy-hdmi.png) |
-| *Todas as configurações acessíveis do Home — sem menus profundos* | *Teclas 1-4 = HDMI 1-4, 5 = TV ao vivo, pressionar longo = remapear* |
+**[Como refazer as capturas no Windows 11 por ADB](docs/SCREENSHOTS.md)** — inclui script PowerShell que preserva os bytes e verifica a assinatura PNG. As imagens devem ser capturadas da TV real, conferidas e enviadas como arquivos binários antes de voltar a aparecer aqui.
 
-| Painel de Desempenho | Gráfico de Benchmark |
-|:---:|:---:|
-| ![Perf](docs/assets/perf-dashboard.png) | ![Benchmarks](https://quickchart.io/chart?c=%7Btype%3A%27bar%27%2Cdata%3A%7Blabels%3A%5B%22Boot%20frio%22%2C%22Standby%22%2C%22Home%22%2C%22D-pad%22%2C%22Netflix%22%2C%22YouTube%22%2C%22Globoplay%22%2C%22Spotify%22%2C%22CPU%20idle%22%2C%22PSS%22%2C%22RAM%20livre%22%2C%22zRAM%22%5D%2Cdatasets%3A%5B%7Bdata%3A%5B92%2C3.2%2C0.8%2C0.04%2C87%2C12%2C15%2C8%2C1.2%2C42%2C520%2C280%5D%2CbackgroundColor%3A%5B%22%23e74c3c%22%2C%22%23e67e22%22%2C%22%23f39c12%22%2C%22%2327ae60%22%2C%22%23e74c3c%22%2C%22%233498db%22%2C%22%239b59b6%22%2C%22%231abc9c%22%2C%22%2327ae60%22%2C%22%2334495e%22%2C%22%232c3e50%22%2C%22%237f8c8d%22%5D%7D%5D%7D%2Coptions%3A%7BindexAxis%3A%27y%27%2Cplugins%3A%7Blegend%3A%7Bdisplay%3Afalse%7D%2Ctitle%3A%7Bdisplay%3Atrue%2Ctext%3A%22Benchmarks%20TCL%20BeyondTV2%22%7D%7D%2Cscales%3A%7Bx%3A%7BbeginAtZero%3Atrue%7D%7D%7D%7D) |
-| *CPU/RAM/zRAM em tempo real no Home (opcional)* | *Gerado via quickchart.io — boot frio, abertura de apps, latência de teclas* |
+### Resultados medidos (não são capturas de tela)
 
-> **Adicione suas capturas:** Coloque arquivos PNG em `docs/assets/` com os nomes acima.  
-> Veja [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) para como capturar via `adb exec-out screencap`.
+| Indicador | Home original Android TV | Launcher leve Eddy TV v0.1 |
+|---|---:|---:|
+| CPU ociosa total (% de um núcleo) | 57,3% | 15,5% |
+| Quadros atrasados na sessão | 85,9% | 7,7% |
+| Atualização da tela parada | 60 fps | ~0,1 fps |
+
+[Metodologia e outros resultados](benchmarks/results/tcl-beyondtv2-v660.md). Medições realizadas na TCL BeyondTV2/R851T02 V660; **não representam o benchmark completo da v0.5**. Tempo até o catálogo do Netflix e boot real após energização ainda não foram validados.
 
 ---
 
