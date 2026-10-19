@@ -36,7 +36,7 @@ development stops.
 ```powershell
 # stop the local ADB server and forget the device
 adb kill-server
-adb disconnect 192.168.1.8:5555
+adb disconnect 192.168.1.50:5555
 ```
 
 `adb disconnect` only drops this computer's connection. The TV keeps listening on 5555 until you

@@ -74,28 +74,28 @@ Não presuma que outra TCL com Android 9 funciona igual. Veja a [matriz de compa
 
 3. **Descubra o IP da TV**
    - Configurações → **Rede e Internet** → sua conexão (Wi-Fi ou Ethernet)
-   - Anote o **endereço IP** (ex.: `192.168.1.8`)
+   - Anote o **endereço IP** (ex.: `192.168.1.50`)
 
 4. **Conecte do Windows**
    - Abra **PowerShell** ou **Git Bash**
    - Rode:
      ```powershell
-     adb connect 192.168.1.8:5555
+     adb connect 192.168.1.50:5555
      ```
    - **Na tela da TV**: aparece um diálogo — **"Permitir depuração USB?"** → marque **"Sempre permitir deste computador"** → **OK**
 
 5. **Verifique**
    ```powershell
    adb devices
-   # Deve mostrar: 192.168.1.8:5555  device
+   # Deve mostrar: 192.168.1.50:5555  device
    ```
 
 6. **Fixe o IP (opcional mas recomendado)**
    ```powershell
    # PowerShell
-   $env:TCL_TV_HOST = "192.168.1.8"
+   $env:TCL_TV_HOST = "192.168.1.50"
    # Git Bash
-   export TCL_TV_HOST=192.168.1.8
+   export TCL_TV_HOST=192.168.1.50
    ```
    > Adicione ao seu perfil do shell (`$PROFILE` ou `~/.bashrc`) para tornar permanente.
 
