@@ -6,19 +6,98 @@
 - **Git for Windows** (provides Git Bash, used by `scripts/*.sh`).
 - To build the launcher only: JDK 17 and Android SDK (API 34 build tools). Set `JAVA_HOME`, `ANDROID_HOME`.
 
-## 2. Enable ADB on the TCL (Android TV 9)
+## 2. Enable ADB on the TCL (Android TV 9) — Detailed Guide
 
-1. Settings → Device Preferences → About → click **Build** 7 times ("You are a developer").
-2. Settings → Device Preferences → Developer options → **USB debugging** / **Network debugging** on.
-3. Find the TV IP: Settings → Network → your connection.
-4. On the PC: `adb connect <tv-ip>:5555` and accept the prompt **on the TV** ("Always allow").
+### Method A: Network ADB (recommended, no cable needed)
 
-Set the IP once per terminal:
+> Works on TCL BeyondTV2 and most TCL Android TV 9 models. Requires TV and PC on the same LAN (Wi-Fi or Ethernet).
 
-```powershell
-$env:TCL_TV_HOST = "<tv-ip>"          # PowerShell
-export TCL_TV_HOST=<tv-ip>             # Git Bash
-```
+#### Step-by-step
+
+1. **Open Developer Options**
+   - Press **Home** on remote → **Settings** (gear icon) → **Device Preferences** → **About**
+   - Scroll to **Build** and press **OK/Select 7 times quickly**
+   - You'll see: *"You are now a developer!"* (or "You are a developer")
+
+2. **Enable Network Debugging**
+   - Go back to **Device Preferences** → **Developer options**
+   - Turn **ON**: **Network debugging** (some firmware: "ADB debugging" + "Network debugging")
+   - Turn **ON**: **USB debugging** (required on some builds even for network)
+   - **Optional but recommended**: Turn **ON** "Disable ADB authorization timeout" (keeps authorization persistent)
+
+3. **Find the TV IP address**
+   - Settings → **Network & Internet** → your connection (Wi-Fi or Ethernet)
+   - Note the **IP address** (e.g., `192.168.1.8`)
+
+4. **Connect from Windows**
+   - Open **PowerShell** or **Git Bash**
+   - Run:
+     ```powershell
+     adb connect 192.168.1.8:5555
+     ```
+   - **On the TV screen**: a dialog appears — **"Allow USB debugging?"** → check **"Always allow from this computer"** → **OK**
+
+5. **Verify**
+   ```powershell
+   adb devices
+   # Should show: 192.168.1.8:5555  device
+   ```
+
+6. **Persist the IP (optional but recommended)**
+   ```powershell
+   # PowerShell
+   $env:TCL_TV_HOST = "192.168.1.8"
+   # Git Bash
+   export TCL_TV_HOST=192.168.1.8
+   ```
+   > Add to your shell profile (`$PROFILE` or `~/.bashrc`) to make it permanent.
+
+---
+
+### Method B: USB ADB (if network fails)
+
+> Requires USB-A to USB-A (or USB-C) cable; TCL service port is often hidden.
+
+1. Enable **USB debugging** in Developer Options (same as above)
+2. Connect TV ↔ PC via USB (try service port or USB 2.0 port)
+3. On PC: `adb devices` → authorize on TV
+4. Use `adb shell` directly (no IP needed)
+
+---
+
+### Method C: Hidden Service Menu (if Developer Options missing)
+
+> Some carrier/region firmwares hide Developer Options.
+
+1. Press: **Settings** → **Device Preferences** → **About**
+2. Press **OK** on **Build** 7 times
+3. If still missing, try remote sequence: **Home** ×5 → **Up** ×3 → **Right** ×2 → **OK** (opens hidden menu on some TCL)
+4. Or: Install "ADB Enabler" apps from Play Store (requires sideload first)
+
+---
+
+### Troubleshooting ADB Connection
+
+| Symptom | Fix |
+|---------|-----|
+| `connection refused` | TV and PC on same subnet? Wi-Fi isolation (AP isolation) off? |
+| `unauthorized` | Accept prompt on TV; revoke in Developer Options → "Revoke USB debugging authorizations" and retry |
+| `offline` | `adb kill-server && adb start-server`; reboot TV |
+| Port 5555 not open | Re-enable Network debugging; some firmwares need reboot after enabling |
+| "Developer options" not visible | Method C; or check Settings → Apps → Show system → "Android TV Core Services" → enable |
+
+---
+
+### Security Notes
+
+- **Network debugging** exposes ADB on LAN port 5555. Only use on trusted home network.
+- **Revoke authorizations** when done: Developer Options → "Revoke USB debugging authorizations"
+- **Disable Network debugging** when not actively developing
+- This project's scripts require `$env:TCL_TV_HOST` — they **do not** hardcode IPs
+
+---
+
+## 3. Identify your TV
 
 ## 3. Identify your TV
 
