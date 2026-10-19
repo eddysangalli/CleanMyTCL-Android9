@@ -33,6 +33,9 @@ public class GlassView extends View {
         rim.setStrokeWidth(1.5f * density);
         rim.setColor(0xCCFFFFFF);
         glow.setStyle(Paint.Style.STROKE);
+        // Drawn once into a GPU layer: the springs only move and fade it, so frames reuse the texture
+        // instead of replaying the glow strokes and clip path.
+        setLayerType(LAYER_TYPE_HARDWARE, null);
     }
 
     void setRadius(float px) {

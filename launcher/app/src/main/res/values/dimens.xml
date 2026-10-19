@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App tile size. Banners are pre-rendered at this size times the focus zoom (AppLoader). -->
+    <dimen name="tile_width">180dp</dimen>
+    <dimen name="tile_height">101dp</dimen>
+</resources>

@@ -1,6 +1,7 @@
 package com.gathin.tvhome;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -15,11 +16,13 @@ import android.media.tv.TvInputManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -27,6 +30,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -45,6 +49,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * tvOS style home: black, a pinned dock row, an app grid, and one glass highlight that springs between tiles.
@@ -56,6 +62,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private static final long MINUTE_MS = 60_000L;
     private String liveTvPkg;
 
+    private HomePrefs prefs;
+    /** Ultralight mode (HomePrefs): apps only, no glow, title, weather or springs. */
+    private boolean light;
+    private static final ExecutorService WEATHER = Executors.newSingleThreadExecutor();
+    /** After a failed weather fetch, wait this long before trying again. */
+    private static final long WEATHER_RETRY_MS = 10 * 60_000L;
+    private static long lastWeatherTry;
     private AppAdapter adapter;
     private RecyclerView grid;
     private FrameLayout root;
@@ -76,6 +89,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** App of the last focused tile, so focus follows it when the app list changes. */
     private static String lastFocusedKey;
     private float density;
+    /** Scratch rects for onTileFocused, which runs on every D-pad move. */
+    private final Rect tileRect = new Rect();
+    private final Rect revealRect = new Rect();
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     /** Refreshes the network pill when the connection changes: at boot Wi-Fi often connects after Home is shown. */
@@ -93,8 +109,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private final Runnable minuteTick = new Runnable() {
         @Override
         public void run() {
-            updateGreeting();
-            updateWifiLabel();
+            updateGreeting();   // the network pill follows networkCallback, no need to poll it
+            refreshWeather();   // no-op unless the cached weather is over an hour old
             handler.postDelayed(this, MINUTE_MS);
         }
     };
@@ -103,6 +119,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        prefs = new HomePrefs(this);
+        light = prefs.light();
+        AppAdapter.light = light;
         density = getResources().getDisplayMetrics().density;
         COLUMNS = Math.max(1, getResources().getInteger(R.integer.columns));
         liveTvPkg = getString(R.string.live_tv_package).trim();
@@ -127,7 +146,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         grid.addItemDecoration(new DockDecoration(COLUMNS, density));
         grid.setLayoutAnimation(new LayoutAnimationController(
                 AnimationUtils.loadAnimation(this, R.anim.tile_enter), 0.06f));
-        adapter = new AppAdapter(this, this, COLUMNS);
+        adapter = new AppAdapter(this, COLUMNS);
         grid.setAdapter(adapter);
 
         // tvOS layout: push the dock row to the bottom of the screen; the grid hides below until you press Down.
@@ -163,6 +182,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnInputs.setOnClickListener(v -> showInputs());
         btnWifi.setOnClickListener(v -> open(new Intent(Settings.ACTION_WIFI_SETTINGS)));
         btnSettings.setOnClickListener(v -> open(new Intent(Settings.ACTION_SETTINGS)));
+        // Hold OK on Settings: this home screen's own options.
+        btnSettings.setOnLongClickListener(v -> {
+            showHomeOptions(v);
+            return true;
+        });
+        View btnVoice = findViewById(R.id.btnVoice);
+        btnVoice.setOnClickListener(v -> open(new Intent(Intent.ACTION_ASSIST)));
 
         // Keep focus on the top bar at its ends and at the top: Android's focus finder would otherwise
         // jump to a tile far below when there is nothing in that direction.
@@ -174,6 +200,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         };
         btnInputs.setOnKeyListener(pillKeys);
         btnWifi.setOnKeyListener(pillKeys);
+        btnVoice.setOnKeyListener(pillKeys);
         btnSettings.setOnKeyListener(pillKeys);
 
         // Hide the glass when focus leaves the tiles.
@@ -194,27 +221,45 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         heroShown = false;
         heroName.setAlpha(0f);
         ambient.setAlpha(0f);
-        // Read these before reload(): rebinding can move focus to the first tile and overwrite them.
-        final String returnKey = lastFocusedKey;
-        final int returnSlot = lastFocused;
-        adapter.reload();
-        grid.scheduleLayoutAnimation();
+        light = prefs.light();
+        AppAdapter.light = light;
         updateGreeting();
         updateWifiLabel();
+        refreshWeather();
         handler.postDelayed(minuteTick, MINUTE_MS);
 
-        // Return to the app we left from, or the same slot if that app is gone. Always refocus: after
-        // reload() the view that holds focus may no longer show the app it had.
-        grid.post(() -> {
-            int pos = adapter.positionOf(returnKey);
-            focusTile(pos >= 0 ? pos : returnSlot);
-        });
+        // Tiles are cached for the life of the process: show them right away, then let the loader check
+        // for installed or removed apps in the background (it only calls back when something changed).
+        List<AppAdapter.Entry> cached = AppLoader.cached();
+        if (adapter.getItemCount() == 0 && cached != null) showApps(cached);
+        else if (adapter.getItemCount() > 0) restoreFocus(lastFocusedKey, lastFocused);
+        AppLoader.start(this, this::showApps);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         handler.removeCallbacks(minuteTick);
+        AppLoader.stop();
+    }
+
+    private void showApps(List<AppAdapter.Entry> entries) {
+        if (isDestroyed()) return;
+        boolean first = adapter.getItemCount() == 0;
+        // Read these before rebinding: it can move focus to the first tile and overwrite them.
+        final String returnKey = lastFocusedKey;
+        final int returnSlot = lastFocused;
+        adapter.setEntries(entries);
+        if (first && !light) grid.scheduleLayoutAnimation();   // tiles rise in on launch only, not on every Home press
+        restoreFocus(returnKey, returnSlot);
+    }
+
+    /** Return to the app we left from, or the same slot if that app is gone. Posted so it runs after layout. */
+    private void restoreFocus(String returnKey, int returnSlot) {
+        grid.post(() -> {
+            int pos = adapter.positionOf(returnKey);
+            focusTile(pos >= 0 ? pos : returnSlot);
+        });
     }
 
     @Override
@@ -236,7 +281,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         lastFocused = position;
         lastFocusedKey = adapter.keyAt(position);
         // Tile rect in root coordinates, using layout positions (ignores the scale animation).
-        Rect r = new Rect(0, 0, card.getWidth(), card.getHeight());
+        Rect r = tileRect;
+        r.set(0, 0, card.getWidth(), card.getHeight());
         root.offsetDescendantRectToMyCoords(card, r);
         float pad = 6f * density;        // matches GlassView's glow inset
         float w = card.getWidth() * AppAdapter.FOCUS_SCALE + 2 * pad;
@@ -253,12 +299,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         glassTargetX = x;
         glassTargetY = y;
-        if (!glassShown) {
+        if (!glassShown || light) {
             springX.cancel();
             springY.cancel();
             glass.setTranslationX(x);
             glass.setTranslationY(y);
-            glass.animate().alpha(1f).setDuration(180).start();
+            if (light) glass.setAlpha(1f);
+            else if (!glassShown) glass.animate().alpha(1f).setDuration(180).start();
             glassShown = true;
         } else {
             springX.animateToFinalPosition(x);
@@ -269,14 +316,172 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             // Dock: park it at the bottom of the screen and show the top shelf for this app.
             int decoratedTop = item.getTop() - (int) (6 * density);
             int dy = decoratedTop - grid.getPaddingTop();
-            if (Math.abs(dy) > 1) grid.smoothScrollBy(0, dy);
-            showHero(position, r.top - dy);
+            if (Math.abs(dy) > 1) {
+                if (light) grid.scrollBy(0, dy);
+                else grid.smoothScrollBy(0, dy);
+            }
+            if (light) hideHero();
+            else showHero(position, r.top - dy);
         } else {
             hideHero();
             // Scroll just enough so the whole glass (not only the tile) is visible.
-            Rect want = new Rect(0, -(int) pad * 2, item.getWidth(), item.getHeight() + (int) pad);
-            grid.requestChildRectangleOnScreen(item, want, false);
+            revealRect.set(0, -(int) pad * 2, item.getWidth(), item.getHeight() + (int) pad);
+            grid.requestChildRectangleOnScreen(item, revealRect, false);
         }
+    }
+
+    @Override
+    public void onTileLaunched(AppAdapter.Entry entry) {
+        prefs.touchRecent(entry.pkg);
+    }
+
+    /** Hold OK on a tile: move it in the dock, pin or unpin it, hide it, or open its app info. */
+    @Override
+    public void onTileMenu(int position, View card) {
+        String pkg = adapter.pkgAt(position);
+        if (pkg == null) return;
+        List<String> dock = prefs.dock();
+        // Forget dock entries that are not on screen (uninstalled or hidden), so they don't take a slot.
+        dock.removeIf(p -> adapter.positionOfPkg(p) < 0);
+        int idx = dock.indexOf(pkg);
+        List<MenuItem> items = new ArrayList<>();
+        if (idx >= 0) {
+            if (idx > 0) items.add(new MenuItem(R.drawable.ic_left, R.string.menu_move_left, () -> moveInDock(dock, idx, idx - 1)));
+            if (idx < dock.size() - 1) items.add(new MenuItem(R.drawable.ic_right, R.string.menu_move_right, () -> moveInDock(dock, idx, idx + 1)));
+            items.add(new MenuItem(R.drawable.ic_hide, R.string.menu_unpin, () -> {
+                dock.remove(pkg);
+                saveDock(dock);
+            }));
+        } else {
+            items.add(new MenuItem(R.drawable.ic_star, R.string.menu_pin, () -> {
+                if (dock.size() >= COLUMNS) {
+                    Toast.makeText(this, R.string.dock_full, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                dock.add(pkg);
+                saveDock(dock);
+            }));
+            items.add(new MenuItem(R.drawable.ic_hide, R.string.menu_hide, () -> {
+                prefs.hide(pkg);
+                AppLoader.reorder(this);
+            }));
+        }
+        items.add(new MenuItem(R.drawable.ic_info, R.string.menu_info, () ->
+                open(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg)))));
+        showMenu(card, items);
+    }
+
+    private void moveInDock(List<String> dock, int from, int to) {
+        dock.add(to, dock.remove(from));
+        saveDock(dock);
+    }
+
+    private void saveDock(List<String> dock) {
+        prefs.setDock(dock);
+        AppLoader.reorder(this);
+    }
+
+    /** Hold OK on Settings: ultralight mode, weather place, hidden apps and the default dock. */
+    private void showHomeOptions(View anchor) {
+        List<MenuItem> items = new ArrayList<>();
+        items.add(new MenuItem(R.drawable.ic_bolt, light ? R.string.opt_light_on : R.string.opt_light_off, this::toggleLight));
+        if (prefs.hasWeatherPlace()) {
+            items.add(new MenuItem(R.drawable.ic_cloud, getString(R.string.opt_weather, prefs.weatherPlace()), this::askWeatherPlace));
+            items.add(new MenuItem(R.drawable.ic_hide, R.string.opt_weather_disable, () -> {
+                prefs.clearWeather();
+                updateGreeting();
+            }));
+        } else {
+            items.add(new MenuItem(R.drawable.ic_cloud, R.string.opt_weather_off, this::askWeatherPlace));
+        }
+        int hidden = prefs.userHidden().size();
+        if (hidden > 0) {
+            items.add(new MenuItem(R.drawable.ic_info, getString(R.string.opt_unhide, hidden), () -> {
+                prefs.unhideAll();
+                AppLoader.reorder(this);
+            }));
+        }
+        items.add(new MenuItem(R.drawable.ic_refresh, R.string.opt_reset_dock, () -> {
+            prefs.resetDock();
+            AppLoader.reorder(this);
+        }));
+        showMenu(anchor, items);
+    }
+
+    private void toggleLight() {
+        light = !light;
+        prefs.setLight(light);
+        AppAdapter.light = light;
+        if (light) {
+            heroShown = false;
+            heroName.setAlpha(0f);
+            ambient.setAlpha(0f);
+        }
+        updateGreeting();
+        refreshWeather();
+    }
+
+    // ---- weather ---------------------------------------------------------------------------------
+
+    private void askWeatherPlace() {
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setHint(R.string.weather_hint);
+        input.setText(prefs.weatherPlace());
+        new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+                .setTitle(R.string.weather_title)
+                .setView(input)
+                .setPositiveButton(R.string.ok, (d, w) -> findWeatherPlace(input.getText().toString()))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void findWeatherPlace(String query) {
+        if (query.trim().isEmpty()) return;
+        WEATHER.execute(() -> {
+            int message;
+            String place = null;
+            try {
+                Weather.Place p = Weather.find(query);
+                if (p == null) {
+                    message = R.string.weather_not_found;
+                } else {
+                    String now = Weather.current(p.lat, p.lon);
+                    prefs.setWeatherPlace(p.name, p.lat, p.lon);
+                    prefs.setWeatherText(now);
+                    place = p.name;
+                    message = R.string.weather_set;
+                }
+            } catch (Exception e) {
+                message = R.string.weather_failed;
+            }
+            final int msg = message;
+            final String name = place;
+            handler.post(() -> {
+                if (isDestroyed()) return;
+                updateGreeting();
+                Toast.makeText(this, name != null ? getString(msg, name) : getString(msg), Toast.LENGTH_SHORT).show();
+            });
+        });
+    }
+
+    /** Fetches the weather in the background when the cached one is over an hour old; never in ultralight mode. */
+    private void refreshWeather() {
+        if (light || !prefs.hasWeatherPlace() || !prefs.weatherStale()) return;
+        long now = SystemClock.elapsedRealtime();
+        if (lastWeatherTry != 0 && now - lastWeatherTry < WEATHER_RETRY_MS) return;
+        lastWeatherTry = now;
+        final double lat = prefs.weatherLat(), lon = prefs.weatherLon();
+        WEATHER.execute(() -> {
+            try {
+                prefs.setWeatherText(Weather.current(lat, lon));
+                handler.post(() -> {
+                    if (!isDestroyed()) updateGreeting();
+                });
+            } catch (Exception ignored) {
+                // Keep showing the last value; tried again after WEATHER_RETRY_MS.
+            }
+        });
     }
 
     // ---- top shelf -------------------------------------------------------------------------------
@@ -329,7 +534,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void hideGlass() {
         if (!glassShown) return;
         glassShown = false;
-        glass.animate().alpha(0f).setDuration(160).start();
+        if (light) glass.setAlpha(0f);
+        else glass.animate().alpha(0f).setDuration(160).start();
     }
 
     // ---- navigation ------------------------------------------------------------------------------
@@ -338,6 +544,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     public boolean onTileVerticalKey(int position, int keyCode) {
         int count = adapter.getItemCount();
         int target;
+        // Horizontal: swallow the key at a row's ends so focus never wraps to the next row or
+        // escapes up into the top bar. Mid-row moves fall through to the default focus search.
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+            return position % COLUMNS == 0;
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+            return position % COLUMNS == COLUMNS - 1 || position == count - 1;
+        }
         if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
             if (position < COLUMNS) return false;          // dock row: let focus move to the top bar
             target = position - COLUMNS;
@@ -385,7 +599,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         else if (hour < 17) res = R.string.good_afternoon;
         else if (hour < 22) res = R.string.good_evening;
         else res = R.string.good_night;
-        greeting.setText(res);
+        String text = getString(res);
+        String weather = light || !prefs.hasWeatherPlace() ? "" : prefs.weatherText();
+        greeting.setText(weather.isEmpty() ? text : text + "  \u00b7  " + weather);
     }
 
     /** Shows the Wi-Fi network name on the button when we can read it, otherwise the connection type. */
@@ -420,6 +636,47 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         } catch (ActivityNotFoundException e) {
             Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private final class MenuItem {
+        final int icon;
+        final String title;
+        final Runnable action;
+
+        MenuItem(int icon, int title, Runnable action) {
+            this(icon, getString(title), action);
+        }
+
+        MenuItem(int icon, String title, Runnable action) {
+            this.icon = icon;
+            this.title = title;
+            this.action = action;
+        }
+    }
+
+    /** A dropdown of actions in the Inputs menu's style, below the anchor (or above it near the bottom). */
+    private void showMenu(View anchor, List<MenuItem> items) {
+        View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
+        LinearLayout rows = panel.findViewById(R.id.rows);
+        final PopupWindow popup = new PopupWindow(panel, (int) (300 * density), ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));   // needed for Back to dismiss
+        popup.setOutsideTouchable(true);
+        popup.setAnimationStyle(0);
+        popup.setElevation(0f);
+        for (MenuItem item : items) {
+            View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
+            ((ImageView) row.findViewById(R.id.icon)).setImageResource(item.icon);
+            ((TextView) row.findViewById(R.id.title)).setText(item.title);
+            row.findViewById(R.id.status).setVisibility(View.GONE);
+            row.findViewById(R.id.dot).setVisibility(View.GONE);
+            row.setOnClickListener(v -> {
+                popup.dismiss();
+                item.action.run();
+            });
+            rows.addView(row);
+        }
+        popup.showAsDropDown(anchor, 0, (int) (8 * density), Gravity.START);
+        rows.getChildAt(0).requestFocus();
     }
 
     /** Dropdown menu under the Inputs pill: HDMI ports (with connection state), AV and Live TV. */

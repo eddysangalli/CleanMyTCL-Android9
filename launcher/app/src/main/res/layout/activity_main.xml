@@ -2,8 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#FF000000">
+    android:layout_height="match_parent">
+    <!-- No background: the window is already black (Theme.TvHome), a second full-screen fill only costs GPU time. -->
 
     <!-- Ambient glow in the colour of the focused dock app. -->
     <View
@@ -135,6 +135,17 @@
                     android:drawableStart="@drawable/ic_input"
                     android:nextFocusDown="@+id/grid" />
 
+                <!-- Icon only: opens the existing Google Assistant (ACTION_ASSIST), no second listener. -->
+                <TextView
+                    android:id="@+id/btnVoice"
+                    style="@style/TopButton"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:drawablePadding="0dp"
+                    android:drawableStart="@drawable/ic_mic"
+                    android:contentDescription="@string/voice"
+                    android:nextFocusDown="@+id/grid" />
+
                 <TextView
                     android:id="@+id/btnWifi"
                     style="@style/TopButton"
@@ -168,6 +179,7 @@
                 android:clipChildren="false"
                 android:overScrollMode="never"
                 android:scrollbars="none"
+                android:focusedByDefault="true"
                 android:descendantFocusability="afterDescendants" />
         </FrameLayout>
     </LinearLayout>

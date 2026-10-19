@@ -20,4 +20,26 @@
     <string name="cant_open">Can\'t open %1$s</string>
     <string name="date_format">EEEE  d MMMM</string>
     <string name="dream_name">Clock</string>
+    <string name="voice">Voice</string>
+    <string name="menu_move_left">Move left</string>
+    <string name="menu_move_right">Move right</string>
+    <string name="menu_unpin">Remove from dock</string>
+    <string name="menu_pin">Pin to dock</string>
+    <string name="menu_hide">Hide</string>
+    <string name="menu_info">App info</string>
+    <string name="dock_full">The dock is full: remove an app first</string>
+    <string name="opt_light_on">Ultralight mode: on</string>
+    <string name="opt_light_off">Ultralight mode: off</string>
+    <string name="opt_weather">Weather: %1$s</string>
+    <string name="opt_weather_off">Weather: off</string>
+    <string name="opt_weather_disable">Turn weather off</string>
+    <string name="opt_unhide">Show hidden apps (%1$d)</string>
+    <string name="opt_reset_dock">Restore the default dock</string>
+    <string name="weather_title">City for the weather</string>
+    <string name="weather_hint">e.g. London</string>
+    <string name="weather_not_found">City not found</string>
+    <string name="weather_failed">Could not get the weather</string>
+    <string name="weather_set">Weather: %1$s</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 </resources>

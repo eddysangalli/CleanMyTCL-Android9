@@ -7,16 +7,24 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId 'com.gathin.tvhome'
+        // Fork for the TCL BeyondTV2 (Android TV 9); own id so it never collides with upstream installs.
+        applicationId 'br.eddy.tvhome'
         minSdk 26
         targetSdk 29
-        versionCode 2
-        versionName '2.0'
+        versionCode 4
+        versionName '0.3'
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            // R8 drops the unused Kotlin stdlib that AndroidX pulls in: on the TCL a full `speed`
+            // compile of the unshrunk APK took ~50 s and most of it was kotlin.* code we never call.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            // Sideloaded over ADB only: the local debug key is enough, and it lets debug and release
+            // builds replace each other with `adb install -r`.
+            signingConfig signingConfigs.debug
         }
     }
 

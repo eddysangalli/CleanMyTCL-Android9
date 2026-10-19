@@ -1,7 +1,6 @@
 package com.gathin.tvhome;
 
 import android.animation.ArgbEvaluator;
-import android.animation.ValueAnimator;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
@@ -18,6 +17,11 @@ import java.util.Random;
 public class ClockDream extends DreamService {
 
     private static final long MOVE_MS = 60_000L;
+    /** The glow fades to its next colour over 8 s in 40 steps: at that pace 5 fps looks the same as 60 and
+     *  redraws the full-screen gradient a twelfth as often. */
+    private static final long SHIFT_MS = 8_000L;
+    private static final int SHIFT_STEPS = 40;
+    private static final ArgbEvaluator ARGB = new ArgbEvaluator();
     /** Deep, low-brightness glow colours; the glow is drawn at partial alpha on black. */
     private static final int[] PALETTE = {0xFF2B5CFF, 0xFF00A39A, 0xFF8A3FFC, 0xFFE0661B, 0xFFD6336C};
 
@@ -27,6 +31,16 @@ public class ClockDream extends DreamService {
     private GradientDrawable glow;
     private int colorIndex;
     private int glowColor;
+    private int shiftFrom, shiftTo, shiftStep;
+
+    private final Runnable shiftStepper = new Runnable() {
+        @Override
+        public void run() {
+            shiftStep++;
+            setGlow((int) ARGB.evaluate((float) shiftStep / SHIFT_STEPS, shiftFrom, shiftTo));
+            if (shiftStep < SHIFT_STEPS) handler.postDelayed(this, SHIFT_MS / SHIFT_STEPS);
+        }
+    };
 
     private final Runnable tick = new Runnable() {
         @Override
@@ -70,12 +84,14 @@ public class ClockDream extends DreamService {
     @Override
     public void onDreamingStopped() {
         handler.removeCallbacks(tick);
+        handler.removeCallbacks(shiftStepper);
         super.onDreamingStopped();
     }
 
     @Override
     public void onDetachedFromWindow() {
         handler.removeCallbacks(tick);
+        handler.removeCallbacks(shiftStepper);
         super.onDetachedFromWindow();
     }
 
@@ -102,12 +118,12 @@ public class ClockDream extends DreamService {
     }
 
     private void shiftGlow() {
-        int from = glowColor;
         colorIndex = (colorIndex + 1) % PALETTE.length;
-        ValueAnimator anim = ValueAnimator.ofObject(new ArgbEvaluator(), from, PALETTE[colorIndex]);
-        anim.setDuration(8000);
-        anim.addUpdateListener(a -> setGlow((int) a.getAnimatedValue()));
-        anim.start();
+        shiftFrom = glowColor;
+        shiftTo = PALETTE[colorIndex];
+        shiftStep = 0;
+        handler.removeCallbacks(shiftStepper);
+        handler.post(shiftStepper);
     }
 
     private void setGlow(int color) {

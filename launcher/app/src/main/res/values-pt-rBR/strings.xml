@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Início</string>
+    <string name="inputs">Entradas</string>
+    <string name="wifi">Wi-Fi</string>
+    <string name="settings">Configurações</string>
+    <string name="choose_input">Entradas</string>
+    <string name="connected">Conectado</string>
+    <string name="standby">Em espera</string>
+    <string name="not_connected">Sem dispositivo</string>
+    <string name="live_tv">TV ao vivo</string>
+    <string name="no_inputs">Nenhuma entrada encontrada</string>
+    <string name="good_morning">Bom dia</string>
+    <string name="good_afternoon">Boa tarde</string>
+    <string name="good_evening">Boa noite</string>
+    <string name="good_night">Boa noite</string>
+    <string name="ethernet">Cabo</string>
+    <string name="offline">Sem conexão</string>
+    <string name="not_available">Não disponível nesta TV</string>
+    <string name="cant_open">Não foi possível abrir %1$s</string>
+    <!-- Curto de proposito: o dia por extenso em portugues invade o botao Entradas. -->
+    <string name="date_format">EEE, d \'de\' MMM</string>
+    <string name="dream_name">Relógio</string>
+    <string name="voice">Voz</string>
+    <string name="menu_move_left">Mover para a esquerda</string>
+    <string name="menu_move_right">Mover para a direita</string>
+    <string name="menu_unpin">Remover do dock</string>
+    <string name="menu_pin">Fixar no dock</string>
+    <string name="menu_hide">Ocultar</string>
+    <string name="menu_info">Informações do app</string>
+    <string name="dock_full">O dock está cheio: remova um app primeiro</string>
+    <string name="opt_light_on">Modo ultraleve: ligado</string>
+    <string name="opt_light_off">Modo ultraleve: desligado</string>
+    <string name="opt_weather">Clima: %1$s</string>
+    <string name="opt_weather_off">Clima: desligado</string>
+    <string name="opt_weather_disable">Desligar o clima</string>
+    <string name="opt_unhide">Mostrar apps ocultos (%1$d)</string>
+    <string name="opt_reset_dock">Restaurar o dock padrão</string>
+    <string name="weather_title">Cidade para o clima</string>
+    <string name="weather_hint">Ex.: Porto Alegre</string>
+    <string name="weather_not_found">Cidade não encontrada</string>
+    <string name="weather_failed">Não foi possível obter o clima</string>
+    <string name="weather_set">Clima: %1$s</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancelar</string>
+</resources>
