@@ -68,6 +68,35 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     }
 
     static final float FOCUS_SCALE = 1.10f;
+    /** Design size of a tile (dp); tiles shrink from here when the columns don't fit, see tileWidthPx. */
+    static final float DESIGN_W_DP = 180f, DESIGN_H_DP = 101f;
+
+    /**
+     * Tile width for a grid of this inner width: the cell minus room for the focus zoom and the glass
+     * highlight, capped at the design size so 4 columns on a 1080p TV look as before.
+     */
+    static int tileWidthPx(int innerWidthPx, int columns, float density) {
+        int design = Math.round(DESIGN_W_DP * density);
+        if (innerWidthPx <= 0 || columns <= 0) return design;
+        int cell = innerWidthPx / columns;
+        int fit = (int) ((cell - 12 * density) / FOCUS_SCALE);
+        return Math.max(Math.round(80 * density), Math.min(design, fit));
+    }
+
+    static int tileHeightPx(int tileWidthPx) {
+        return Math.round(tileWidthPx * DESIGN_H_DP / DESIGN_W_DP);
+    }
+
+    /** Height of one grid item: the tile, the name label under it and the item's own padding. */
+    static int itemHeightPx(int tileHeightPx, float density) {
+        return tileHeightPx + Math.round(45 * density);
+    }
+
+    /** Corner radius for a tile of this width: 16dp at the design width, proportionally less when smaller. */
+    static float cornerRadius(int tileWidthPx, float density) {
+        return 16f * density * Math.min(1f, tileWidthPx / (DESIGN_W_DP * density));
+    }
+
     /** Ultralight mode: focus changes without animations (set by MainActivity from HomePrefs). */
     static boolean light;
     private static final Interpolator FOCUS_IN = new OvershootInterpolator(1.6f);
@@ -96,6 +125,22 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_app, parent, false);
+        // Tiles shrink to fit when the configured columns do not fit at the design size (e.g. 5 or 6).
+        float density = parent.getResources().getDisplayMetrics().density;
+        int width = parent.getWidth() > 0 ? parent.getWidth() : parent.getMeasuredWidth();
+        int inner = width - parent.getPaddingLeft() - parent.getPaddingRight();
+        int w = tileWidthPx(inner, dockSize, density);
+        int h = tileHeightPx(w);
+        View card = v.findViewById(R.id.card);
+        ViewGroup.LayoutParams cardLp = card.getLayoutParams();
+        cardLp.width = w;
+        cardLp.height = h;
+        card.setLayoutParams(cardLp);
+        View name = v.findViewById(R.id.name);
+        ViewGroup.MarginLayoutParams nameLp = (ViewGroup.MarginLayoutParams) name.getLayoutParams();
+        nameLp.width = w;
+        nameLp.topMargin = h + Math.round(7 * density);
+        name.setLayoutParams(nameLp);
         return new Holder(v, listener);
     }
 
@@ -200,11 +245,11 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
             name = v.findViewById(R.id.name);
 
             final float density = v.getResources().getDisplayMetrics().density;
-            final float radius = density * 16f;
             card.setOutlineProvider(new ViewOutlineProvider() {
                 @Override
                 public void getOutline(View view, Outline outline) {
-                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radius);
+                    // 16dp at the design width, scaled down with the tile so small tiles keep the same shape.
+                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), cornerRadius(view.getWidth(), density));
                 }
             });
             card.setClipToOutline(true);
@@ -238,15 +283,20 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
 
             card.setOnFocusChangeListener((view, focused) -> {
                 float s = focused ? FOCUS_SCALE : 1.0f;
+                view.animate().cancel();
+                name.animate().cancel();
                 if (light) {
                     view.setScaleX(s);
                     view.setScaleY(s);
                     name.setAlpha(focused ? 1f : 0f);
                     name.setTranslationY(focused ? density * 4f : -density * 6f);
                 } else {
+                    // A hardware layer keeps the banner as a texture while it scales, instead of
+                    // re-rasterising the tile on every frame of the animation.
                     view.animate().scaleX(s).scaleY(s)
                             .setDuration(focused ? 260 : 180)
                             .setInterpolator(focused ? FOCUS_IN : FOCUS_OUT)
+                            .withLayer()
                             .start();
                     name.animate().alpha(focused ? 1f : 0f)
                             .translationY(focused ? density * 4f : -density * 6f)

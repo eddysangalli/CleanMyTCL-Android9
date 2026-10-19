@@ -164,7 +164,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // tvOS layout: push the dock row to the bottom of the screen; the grid hides below until you press Down.
         grid.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
             int h = b - t;
-            int dockRow = (int) ((145 + 6 + 12) * density);   // item height plus DockDecoration offsets
+            // Item height follows the tile size, which follows the column count (AppAdapter.tileWidthPx).
+            int inner = (r - l) - grid.getPaddingLeft() - grid.getPaddingRight();
+            int itemH = AppAdapter.itemHeightPx(
+                    AppAdapter.tileHeightPx(AppAdapter.tileWidthPx(inner, COLUMNS, density)), density);
+            int dockRow = itemH + (int) ((6 + 12) * density);   // item height plus DockDecoration offsets
             int want = Math.max(0, h - dockRow - (int) (30 * density));
             if (grid.getPaddingTop() != want) {
                 grid.setPadding(grid.getPaddingLeft(), want, grid.getPaddingRight(), grid.getPaddingBottom());
@@ -211,6 +215,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 return true;
             }
             if (keyCode == KeyEvent.KEYCODE_DPAD_UP) return true;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                // Back to the dock tile Up came from, not wherever the focus finder lands.
+                focusTile(lastFocused % COLUMNS);
+                return true;
+            }
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && v.getId() == R.id.btnInputs) return true;
             return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == R.id.btnSettings;
         };
@@ -529,7 +538,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glass.setLayoutParams(lp);
         // Also apply it now: focus restored inside a layout pass would otherwise keep the old size until the next one.
         glass.layout(glass.getLeft(), glass.getTop(), glass.getLeft() + w, glass.getTop() + h);
-        glass.setRadius(16f * density * AppAdapter.FOCUS_SCALE + pad);
+        glass.setRadius(AppAdapter.cornerRadius((int) cardW, density) * AppAdapter.FOCUS_SCALE + pad);
     }
 
     private void hideGlass() {

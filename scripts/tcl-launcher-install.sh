@@ -20,7 +20,12 @@ echo "sdk.dir=$(cygpath -m "$ANDROID_HOME")" > launcher/local.properties
 
 APK=launcher/app/build/outputs/apk/release/app-release.apk
 log "Instalando $APK ($(du -h "$APK" | cut -f1))"
-"$ADB" -s "$SERIAL" install -r "$APK"
+# PR #190 upstream: never move on if the install failed. `set -e` would already stop here; the explicit
+# check leaves no doubt (and a clear message) before anything touches the Home or the stock launcher.
+if ! "$ADB" -s "$SERIAL" install -r "$APK"; then
+    echo "ERRO: a instalacao falhou; o launcher original e o Home ficaram como estavam." >&2
+    exit 1
+fi
 
 HOME_AFTER=$(tv_home_component)
 if [ "$HOME_AFTER" != "$HOME_BEFORE" ]; then

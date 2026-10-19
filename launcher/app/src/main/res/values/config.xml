@@ -22,6 +22,7 @@
     <!-- The TV's Live TV / tuner app (opens HDMI, AV and antenna: com.tcl.tv/.TVActivity). -->
     <string name="live_tv_package" translatable="false">com.tcl.tv</string>
 
-    <!-- Tiles per row in the grid; the dock always has this many slots. -->
+    <!-- Tiles per row in the grid; the dock always has this many slots. Tiles are 180dp wide at 4 columns and
+         shrink to fit from 5 up (about 144dp at 5, 117dp at 6 on a 1080p TV). -->
     <integer name="columns">4</integer>
 </resources>
