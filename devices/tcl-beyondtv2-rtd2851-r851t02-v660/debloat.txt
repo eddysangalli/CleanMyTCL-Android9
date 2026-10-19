@@ -1,8 +1,21 @@
 # TCL BeyondTV2 profile — debloat list (Android TV 9, R851T02 V660)
 # Format compatible with upstream tools/disable.sh and tools/restore.sh (one package per line, # comments).
-# Validated 2026-10-18/19: each package disabled alone with scripts/tcl-try-disable.sh, smoke test 24/24,
-# then 3 reboots OK. Measured effect: these removed processes but gave NO measurable overall speed gain
-# (CPU idle and app-open times within noise). They are kept for less telemetry/ads, not for speed.
+#
+# Device: TCL BeyondTV2 (Latin America / Brazil), Realtek RTD2851 family (ro.board.platform = rtd285o),
+# firmware V8-R851T02-LF1V660, Android 9 (API 28), 32-bit, 2 GB RAM + 800 MB zRAM.
+# Fingerprint: TCL/BeyondTV2/BeyondTV:9/PPR1.180610.011/AP08:user/release-keys
+#
+# Test date: 2026-10-18/19 and re-verified 2026-10-19 12:2x.
+# Each package below was disabled ALONE, the smoke test passed, and the device rebooted cleanly.
+# Measured effect: these removed processes but gave NO measurable overall speed gain
+# (CPU idle and app-open times stayed within run-to-run noise). They are kept for less
+# telemetry/ads, NOT for speed. Do not expect a speed-up from this list.
+#
+# IMPORTANT — how far the testing went:
+# Each package was verified over a single session (disable -> smoke test -> reboots -> normal use).
+# They were NOT lived with for several days. Upstream's CONTRIBUTING asks for days of daily use;
+# this profile does not meet that bar and says so plainly. Treat it as
+# "survives reboots and the smoke test", not as "validated over days".
 #
 # Apply (one at a time is recommended):  bash scripts/tcl-try-disable.sh <package>
 # Undo:                                   adb shell pm enable <package>
@@ -11,11 +24,16 @@
 #   com.tcl.bootadservice com.tcl.gallery au.com.stan.and com.amazon.amazonvideo.livingroom
 #   com.linecorp.linetv tv.wuaki.apptv uk.co.freeview.*
 #
-# NEVER disable: see protected-packages.txt in this folder (HDMI, tuner, remote, voice, DRM, Play, Cast).
+# NEVER disable: see ../../scripts/protected-packages.txt
+# (HDMI, tuner, remote, voice, DRM, Play, Cast, and the packages the user relies on).
 
-com.tcl.esticker                # retail/demo stickers
 com.tcl.bi                      # TCL analytics (telemetry)
 com.tcl.tv.tclhome_passive      # pushes TCL content at boot
 
+# NOT in the list, with the reason (so nobody re-adds it blindly):
+# com.tcl.esticker - was disabled here on 2026-10-18, but it came back enabled later the same
+#                    night and stayed enabled. It does not stick on this firmware, so it is
+#                    left out of the profile rather than listed as if it worked.
+#
 # Only AFTER the new launcher is installed, set as Home and smoke-tested:
 # com.google.android.tvlauncher # stock Android TV home (restore: pm enable com.google.android.tvlauncher)

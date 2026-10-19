@@ -27,28 +27,28 @@
 
 3. **Find the TV IP address**
    - Settings → **Network & Internet** → your connection (Wi-Fi or Ethernet)
-   - Note the **IP address** (e.g., `192.168.1.8`)
+   - Note the **IP address** (e.g., `192.168.1.50`)
 
 4. **Connect from Windows**
    - Open **PowerShell** or **Git Bash**
    - Run:
      ```powershell
-     adb connect 192.168.1.8:5555
+     adb connect 192.168.1.50:5555
      ```
    - **On the TV screen**: a dialog appears — **"Allow USB debugging?"** → check **"Always allow from this computer"** → **OK**
 
 5. **Verify**
    ```powershell
    adb devices
-   # Should show: 192.168.1.8:5555  device
+   # Should show: 192.168.1.50:5555  device
    ```
 
 6. **Persist the IP (optional but recommended)**
    ```powershell
    # PowerShell
-   $env:TCL_TV_HOST = "192.168.1.8"
+   $env:TCL_TV_HOST = "192.168.1.50"
    # Git Bash
-   export TCL_TV_HOST=192.168.1.8
+   export TCL_TV_HOST=192.168.1.50
    ```
    > Add to your shell profile (`$PROFILE` or `~/.bashrc`) to make it permanent.
 

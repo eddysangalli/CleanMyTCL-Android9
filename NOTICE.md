@@ -22,3 +22,26 @@ and add a row here (see [`docs/PROVENANCE.md`](docs/PROVENANCE.md)).
 
 Trademarks (TCL, Android TV, Google, Netflix, YouTube, Globoplay, Spotify) belong to their owners.
 This project is not affiliated with or endorsed by TCL or Google.
+
+## Fonts
+
+The Outfit typeface in `launcher/app/src/main/res/font/outfit.ttf` is copyright The Outfit Project
+Authors and licensed under the **SIL Open Font License 1.1** — see `launcher/FONT-LICENSE-OFL.txt`.
+SIL OFL permits bundling and redistribution inside this project.
+
+## Repository relationship to upstream
+
+This repository is **not** registered as a GitHub "fork" of CleanYourTV, on purpose. It is an
+independent project that **preserves CleanYourTV's commit history** (up to `9ef40c1`) and adds
+TCL-specific work on top. Registering it as a GitHub fork would either hide the divergence behind
+GitHub's fork UI, or make the upstream repository the source of truth for issues and releases.
+
+- Upstream URL: <https://github.com/Gathin23/cleanyourtv>
+- Upstream commit this project continues from: `9ef40c1`
+- Upstream is tracked locally as the `upstream` remote (push disabled)
+- Upstream pull requests #39 and #55 were applied here before being merged upstream; see
+  [`docs/PROVENANCE.md`](docs/PROVENANCE.md) for the file-by-file origin
+- Upstream credits stay intact in [`launcher/NOTICE-pt-BR.md`](launcher/NOTICE-pt-BR.md)
+
+Contributions that are not TCL-specific should be offered back to upstream; see
+[`docs/BRANCHING.md`](docs/BRANCHING.md) for how to do that without forking the workflow.

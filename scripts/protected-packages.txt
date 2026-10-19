@@ -33,6 +33,17 @@ com.tcl.systemuioverlay                  # volume e barra na tela
 com.tcl.appstatecontroller
 com.tcl.factory.view                     # menu de fabrica; nao mexer
 com.tcl.initsetup
+com.tcl.partnercustomizer                # tratamento de teclas (atividade TKey)
+com.tcl.inputmethod.international        # teclado TCL
+com.tcl.common.terminalmanagerplus       # papel incerto; gatilho de boot/pacotes
+com.tcl.xian.StartandroidService         # gatilho de boot
+com.tcl.copydatatotv                     # papel incerto
+com.tcl.usercenter                       # conta TCL / paginas de vinculo
+com.tcl.useragreement                    # tela de acordo, mostrada apos a configuracao
+com.tcl.tvweishi                         # "TV Guard" com instalador proprio
+com.tcl.appmarket2                       # loja de apps da TCL
+com.tcl.ui_mediaCenter                   # central de midia USB
+com.tcl.versionUpdateApp                 # atualizacao de firmware da TCL
 com.realtek.netflix.setting              # integracao Netflix/DRM do Realtek
 
 # Controle remoto, teclas e Bluetooth
@@ -42,6 +53,9 @@ com.tcl.autopair
 com.tcl.keycustomfunctionservice         # teclas do controle; tem um FallbackHome
 com.tcl.keyhelp
 com.tcl.rc.ota                           # firmware do controle remoto
+
+# Ambiente e protetor de tela
+com.google.android.backdrop              # protetor de tela ambiente do Google
 
 # Voz e microfone
 com.google.android.katniss               # Google Assistente / busca por voz
@@ -64,6 +78,10 @@ com.google.android.partnersetup
 # Launcher original: desativado em 19/10/2026 com aprovacao (o br.eddy.tvhome e o Home).
 # Continua aqui para nenhuma automacao mexer nele sem -Force. Reativar: tcl-pkg.ps1 enable.
 com.google.android.tvlauncher
+
+# Nao e load-bearing, mas desativar e inefficaz aqui: desativado em 18/10/2026, voltou
+# ativo na mesma noite e continuou ativo. Fica listado para ninguem perder tempo.
+com.tcl.esticker                        # etiqueta de loja; nao permaneceu desativado neste firmware
 
 # Apps que o usuario usa
 com.netflix.ninja
