@@ -30,18 +30,18 @@ Profile: [devices/tcl-beyondtv2-rtd2851-r851t02-v660/](devices/tcl-beyondtv2-rtd
 | Smoke test (24 checks) | ✅ | Re-run 2026-10-19 12:20 — 24/24 OK, no crashes/ANR. See the timing fix in `scripts/tcl-smoke.sh` |
 | Power-loss boot (unplug/replug) | 🟡 | One real boot log analysed; external stopwatch measurement pending |
 | Resume from standby (STR) | ⚪ | Not measured yet (this is the everyday "turn on") |
-| HDMI 1/2/3 | 🟡 | Smoke test opens one HDMI input in `com.tcl.tv` and checks the session; the other inputs need a manual check |
-| Live TV / tuner | ⚪ | Not tested after changes |
+| HDMI 1/2/3 | 🟡 | **Number keys 1-3 verified**: each opens `com.tcl.tv` on the matching input (2026-10-19). Two ports report `state: 0` (connected) and two `state: 1`; key 4 does nothing because that port has no device — the launcher indexes the HDMI-type inputs it finds and there are three here. Playing content on them is still a visual check |
+| Live TV / tuner | 🟡 | `com.tcl.tv` opens and takes focus (2026-10-19); tuner input listed by `dumpsys tv_input`. No antenna/cable connected, so reception is untested |
 | Audio / picture / TCL settings | 🟡 | Speaker output and Settings open (smoke); TCL picture menus opened manually |
-| Netflix / YouTube / Globoplay / Spotify | 🟡 | All open (first frame measured with WaitTime; Eddy is faster on 4 of 5 apps in the same-session stock comparison); time to usable catalogue is a visual check and is pending |
-| IR remote | 🟡 | Daily use, no scripted test |
-| Bluetooth remote (TCL_RC802VLA) | 🟡 | Paired check in smoke; key latency path measured (p50 2 ms) |
-| Microphone / Assistant | 🟡 | Assistant opens, HAL mic opens, server connects (smoke). Whether the microphone actually captures voice with the remote needs a person |
-| Chromecast built-in | ⚪ | Process running; casting not tested after changes |
+| Netflix / YouTube / Globoplay / Spotify | 🟡 | All open. Cold first frame (WaitTime, 3 reps each): Netflix 888 ms · YouTube 1100 ms · Globoplay 2859 ms · Spotify 1212 ms. Eddy is faster than the stock Home on 4 of 5 apps in the same-session comparison. **Time to a usable catalogue is a visual check and is still pending**: Netflix draws its catalogue in a DRM-protected custom surface, so neither `screencap` nor the accessibility tree can see it over ADB |
+| IR remote | ✅ | Real D-pad events written to the IR receiver (`/dev/input/event0`, `mtkinp`) with `sendevent`: key delivery p50 2 ms, p95 4, p99 4, max 4 ms over 60 events. This is the physical path, including the input reader and the dispatcher; the 13 ms figure is for ADB-injected keys, which skip the reader |
+| Bluetooth remote (TCL_RC802VLA) | 🟡 | Paired (bonds listed in `dumpsys bluetooth_manager`); key latency path measured (p50 2 ms) with the same method as the IR one |
+| Microphone / Assistant | 🟡 | Assistant opens, HAL mic opens, server connects (smoke). Search → UI 45 ms, mic 60 ms, server 886 ms. Whether the microphone actually captures voice with the remote needs a person |
+| Chromecast built-in | ⚪ | Process running (`com.google.android.apps.mediashell`); casting not tested after changes |
 | Google Home control | ⚪ | Not tested |
 | Wi-Fi / Ethernet | 🟡 | Internet check in smoke (Ethernet); Wi-Fi not re-tested |
-| Google Play / DRM playback | 🟡 | Play Store present; Netflix opens; protected playback not explicitly verified after changes |
-| Remap of the "Globoplay" button | 🧪 | No root: the key is injected by TCL software; v0.5 redirects by window event (accessibility service) |
+| Google Play / DRM playback | 🟡 | Play Store present; Netflix opens; `android.hardware.drm@1.1-service.widevine`, clearkey, `drmserver` and `mediadrmserver` all running. Protected playback itself is a visual/audio check |
+| Remap of the "Globoplay" button | 🧪 | No root: the key is injected by TCL software. v0.5 redirects by window event, which needs the accessibility service — **currently off**, and its cost to key delivery is **not measured** (the two attempts that were run collided with other measurements) |
 
 ### Other TCL Android 9 models
 
