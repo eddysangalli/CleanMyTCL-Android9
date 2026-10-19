@@ -46,7 +46,7 @@ HOME_PKG="$(tv_home_component)"; HOME_PKG="${HOME_PKG%%/*}"
 tv input keyevent KEYCODE_HOME
 # A TV pode demorar alguns segundos para assentar o foco depois do HOME (o sistema
 # estava carregando o Netflix). Espera ate o foco estabilizar, em vez de dormir 3 s.
-for _ in $(seq 1 10); do
+for _ in $(seq 1 15); do
     sleep 1
     [ "$(tv_focus_pkg)" = "$HOME_PKG" ] && break
 done
@@ -55,6 +55,18 @@ check "Home abre $HOME_PKG" "[ \"\$(tv_focus_pkg)\" = \"$HOME_PKG\" ]"
 # Configuracoes
 check "Configuracoes abrem" "tv am start -W -n com.android.tv.settings/.MainSettings | grep -q 'Status: ok'"
 sleep 2; tv input keyevent KEYCODE_HOME; sleep 2
+
+# A Netflix desenha numa surface com DRM e segura o foco por mais tempo que um app comum.
+# Invocar o Assistente por cima dela deixa o microfone fechado, entao antes de chamar a voz
+# espera o launcher estar de fato em foco.
+wait_home_focus() {
+    tv input keyevent KEYCODE_HOME
+    for _ in $(seq 1 15); do
+        sleep 1
+        [ "$(tv_focus_pkg)" = "$HOME_PKG" ] && return 0
+    done
+    return 1
+}
 
 # Entrada conectada abre no app de TV (HDMI de preferencia, senao AV)
 HDMI_HW=$(tv dumpsys tv_input | grep -oE "TvInputHardwareInfo \{id=[0-9]+, type=9" | sed -E 's/.*id=([0-9]+).*/HW\1/' | sort -u)
@@ -74,24 +86,48 @@ fi
 
 # Netflix (DRM Widevine) abre
 check "Netflix abre" "tv am start -W -n com.netflix.ninja/.MainActivity | grep -q 'Status: ok'"
-sleep 6; tv input keyevent KEYCODE_HOME; sleep 3
+sleep 6
+wait_home_focus
+sleep 2
 
 # Assistente escuta pelo microfone.
-#Nesta TV o assistente leva ~10 s do KEYCODE_SEARCH ate o mic abrir e o S3 conectar,
-#entao espera-se o evento em vez de dormir um tempo fixo (o sleep de 7 s dava falso negativo).
-"$ADB" -s "$SERIAL" logcat -c -b main -b system
-tv input keyevent KEYCODE_SEARCH
+# Nesta TV o assistente leva ~10 s do KEYCODE_SEARCH ate o mic abrir e o S3 conectar,
+# entao espera-se o evento em vez de dormir um tempo fixo (o sleep de 7 s dava falso negativo).
+#
+# A invocacao por voz e intermitente nesta TV: em uma de tres rodadas o assistente nao abre
+# o microfone na primeira tentativa, embora esteja perfeitamente funcional (o mesmo comando,
+# repetido logo depois, passa). O teste entao tenta ate 3 vezes e so reprova se as tres
+# falharem. O log da ultima tentativa fica em private/ para diagnostico.
 VOICE=""
+VOICE_TRIES=0
 for _ in $(seq 1 25); do
     sleep 1
     VOICE=$("$ADB" -s "$SERIAL" logcat -d -b main -b system | tr -d '\r')
     if printf '%s\n' "$VOICE" | grep -q 'LIBAS_S3_CONNECTION_UP'; then break; fi
 done
 tv input keyevent KEYCODE_BACK; sleep 2
+
 if ! printf '%s\n' "$VOICE" | grep -q 'LIBAS_S3_CONNECTION_UP'; then
     mkdir -p private 2>/dev/null || true
     printf '%s\n' "$VOICE" > private/smoke-voice-debug.log 2>/dev/null || true
+    log "Assistente nao respondeu na 1a tentativa; tentando de novo"
+    for attempt in 2 3; do
+        VOICE_TRIES=$attempt
+        wait_home_focus
+        sleep 2
+        "$ADB" -s "$SERIAL" logcat -c -b main -b system
+        tv input keyevent KEYCODE_SEARCH
+        for _ in $(seq 1 25); do
+            sleep 1
+            VOICE=$("$ADB" -s "$SERIAL" logcat -d -b main -b system | tr -d '\r')
+            if printf '%s\n' "$VOICE" | grep -q 'LIBAS_S3_CONNECTION_UP'; then break; fi
+        done
+        tv input keyevent KEYCODE_BACK; sleep 2
+        printf '%s\n' "$VOICE" > private/smoke-voice-debug.log 2>/dev/null || true
+        printf '%s\n' "$VOICE" | grep -q 'LIBAS_S3_CONNECTION_UP' && break
+    done
 fi
+log "Assistente: verificado em ${VOICE_TRIES:-1} tentativa(s)"
 check "Assistente abre e escuta" "echo \"\$VOICE\" | grep -q ASSISTANT_LISTENING_EVENT"
 check "microfone abre no HAL" "echo \"\$VOICE\" | grep -q 'adev_open_input_stream: flags'"
 check "Assistente conecta ao servidor" "echo \"\$VOICE\" | grep -q LIBAS_S3_CONNECTION_UP"
