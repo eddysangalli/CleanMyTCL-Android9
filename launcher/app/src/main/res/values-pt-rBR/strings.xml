@@ -73,7 +73,7 @@
         <item>Branco</item>
     </string-array>
     <string name="remap_label">Eddy TV: botões do controle</string>
-    <string name="remap_description">Faz o botão Globoplay do controle abrir outro app. Não lê a tela nem o que você digita; só olha esse botão.</string>
+    <string name="remap_description">Quando o botão Globoplay do controle abre o Globoplay, troca para outro app. Pela tela inicial o Globoplay abre normalmente. Não lê a tela nem o que você digita; só percebe quando o Globoplay abre.</string>
     <string name="opt_remap_on">Botão Globoplay: abre %1$s</string>
     <string name="opt_remap_off">Botão Globoplay: padrão (Globoplay)</string>
     <string name="opt_remap_service">Botão Globoplay: ativar o remapeador</string>

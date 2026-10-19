@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Key filtering only: no window content, and the rarest event type so the service gets no event traffic. -->
+<!-- Window changes of Globoplay only: no key filtering, no window content, no events from any other app. -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes="typeAnnouncement"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:packageNames="com.globo.globotv"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagRequestFilterKeyEvents"
-    android:canRequestFilterKeyEvents="true"
     android:canRetrieveWindowContent="false"
     android:notificationTimeout="0"
     android:description="@string/remap_description" />

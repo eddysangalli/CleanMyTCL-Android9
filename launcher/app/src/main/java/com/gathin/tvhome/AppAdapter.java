@@ -129,6 +129,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
                 .addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
                 .setComponent(e.component)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        if (KeyRemapService.SOURCE.equals(e.component.getPackageName())) KeyRemapService.allowSource();
         try {
             ctx.startActivity(i);
         } catch (Exception ex) {
