@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.util.Log;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -81,6 +82,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** Last three Home presses (elapsedRealtime), for the recovery shortcut: three within 10 s. */
     private static final long[] homePresses = new long[3];
     private static int homePressIndex;
+    /** Benchmark aid: `settings put global eddy_debug_keys 1` logs how long each key took to reach us. */
+    private boolean debugKeys;
     private TextView btnWifi;
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
@@ -230,6 +233,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glass.setAlpha(0f);
         light = prefs.light();
         AppAdapter.light = light;
+        debugKeys = Settings.Global.getInt(getContentResolver(), "eddy_debug_keys", 0) == 1;
         updateGreeting();
         updateWifiLabel();
         refreshWeather();
@@ -408,6 +412,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             applyAccent();
         }));
         items.add(new MenuItem(R.drawable.ic_bolt, light ? R.string.opt_motion_off : R.string.opt_motion_on, this::toggleLight));
+        if (!remapServiceEnabled()) {
+            items.add(new MenuItem(R.drawable.ic_star, R.string.opt_remap_service, () ->
+                    open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))));
+        } else {
+            String target = prefs.remapTarget();
+            items.add(new MenuItem(R.drawable.ic_star, target.isEmpty() ? getString(R.string.opt_remap_off)
+                    : getString(R.string.opt_remap_on, appLabel(target)), () ->
+                    prefs.setRemapTarget(target.isEmpty() ? HomePrefs.DEFAULT_REMAP : "")));
+        }
         if (prefs.hasWeatherPlace()) {
             items.add(new MenuItem(R.drawable.ic_cloud, getString(R.string.opt_weather, prefs.weatherPlace()), this::askWeatherPlace));
             items.add(new MenuItem(R.drawable.ic_hide, R.string.opt_weather_disable, () -> {
@@ -618,6 +631,27 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     // ---- remote shortcuts and recovery -----------------------------------------------------------
+
+    private boolean remapServiceEnabled() {
+        String on = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        return on != null && on.contains(getPackageName() + "/" + KeyRemapService.class.getName());
+    }
+
+    private String appLabel(String pkg) {
+        try {
+            return String.valueOf(getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(pkg, 0)));
+        } catch (Exception e) {
+            return pkg;
+        }
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (debugKeys && event.getAction() == KeyEvent.ACTION_DOWN) {
+            Log.i("EddyKey", "key=" + event.getKeyCode() + " delay=" + (SystemClock.uptimeMillis() - event.getEventTime()));
+        }
+        return super.dispatchKeyEvent(event);
+    }
 
     /** Number keys 1-4 jump straight to HDMI 1-4 (same order as the Inputs menu). */
     @Override

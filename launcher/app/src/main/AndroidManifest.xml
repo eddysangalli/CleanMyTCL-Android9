@@ -40,6 +40,20 @@
             </intent-filter>
         </activity>
 
+        <!-- Globoplay button -> another app. Off until enabled in Accessibility settings (or over adb). -->
+        <service
+            android:name=".KeyRemapService"
+            android:label="@string/remap_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/key_remap" />
+        </service>
+
         <!-- Screensaver: pick it in Settings, or `settings put secure screensaver_components
              com.gathin.tvhome/.ClockDream` over adb. -->
         <service

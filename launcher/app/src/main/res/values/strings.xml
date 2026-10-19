@@ -71,4 +71,9 @@
         <item>Purple</item>
         <item>White</item>
     </string-array>
+    <string name="remap_label">Eddy TV: remote buttons</string>
+    <string name="remap_description">Makes the remote\'s Globoplay button open another app. It does not read the screen or what you type; it only looks at that button.</string>
+    <string name="opt_remap_on">Globoplay button: opens %1$s</string>
+    <string name="opt_remap_off">Globoplay button: default (Globoplay)</string>
+    <string name="opt_remap_service">Globoplay button: turn on the remapper</string>
 </resources>

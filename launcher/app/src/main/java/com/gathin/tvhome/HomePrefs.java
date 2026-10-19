@@ -121,6 +121,24 @@ final class HomePrefs {
         sp.edit().putInt("accent", index).apply();
     }
 
+    // ---- Globoplay button remap (KeyRemapService) ---------------------------------------------
+
+    static final String KEY_REMAP = "remap";
+    static final String DEFAULT_REMAP = "com.unitvnet.tvod";
+
+    /** App opened by the remote's Globoplay button, or "" to leave the button alone. */
+    String remapTarget() {
+        return sp.getString(KEY_REMAP, DEFAULT_REMAP);
+    }
+
+    void setRemapTarget(String pkg) {
+        sp.edit().putString(KEY_REMAP, pkg).apply();
+    }
+
+    void listen(SharedPreferences.OnSharedPreferenceChangeListener listener) {
+        sp.registerOnSharedPreferenceChangeListener(listener);
+    }
+
     /** Recovery: name, message, colour, motion, dock and hidden apps back to the defaults. */
     void resetAll() {
         sp.edit().remove("name").remove("message").remove("accent").remove("light")
