@@ -194,6 +194,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // jump to a tile far below when there is nothing in that direction.
         View.OnKeyListener pillKeys = (v, keyCode, event) -> {
             if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (keyCode == KeyEvent.KEYCODE_MENU && event.getRepeatCount() == 0) {
+                showHomeOptions(v);   // menu key on the top bar: this home screen's options
+                return true;
+            }
             if (keyCode == KeyEvent.KEYCODE_DPAD_UP) return true;
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && v.getId() == R.id.btnInputs) return true;
             return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == R.id.btnSettings;

@@ -222,6 +222,13 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
 
             card.setOnKeyListener((view, keyCode, event) -> {
                 if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+                // The remote's menu/options key opens the same menu as holding OK.
+                if (keyCode == KeyEvent.KEYCODE_MENU && event.getRepeatCount() == 0) {
+                    int pos = getBindingAdapterPosition();
+                    if (listener == null || pos == RecyclerView.NO_POSITION) return false;
+                    listener.onTileMenu(pos, view);
+                    return true;
+                }
                 if (keyCode != KeyEvent.KEYCODE_DPAD_UP && keyCode != KeyEvent.KEYCODE_DPAD_DOWN
                         && keyCode != KeyEvent.KEYCODE_DPAD_LEFT && keyCode != KeyEvent.KEYCODE_DPAD_RIGHT) return false;
                 int pos = getBindingAdapterPosition();
