@@ -17,6 +17,16 @@ if (-not (Test-Path $py)) { throw 'run: python -m venv tools\venv; tools\venv\Sc
 if (-not $TvHost) { throw 'pass -TvHost <tv ip> or set $env:TV_HOST' }
 $env:TV_HOST = $TvHost
 
+# A debloat list is a text file. If it comes from somewhere else (or a typo lands in it), a
+# "package name" can carry shell metacharacters, and the line that reaches the TV is a shell
+# command. Validate every name before building any command.
+# See https://github.com/Gathin23/cleanyourtv/issues/165
 $pkgs = Get-Content $List | ForEach-Object { ($_ -replace '#.*$', '').Trim() } | Where-Object { $_ }
+foreach ($p in $pkgs) {
+    if ($p -notmatch '^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$') {
+        throw "refusing to run: invalid package name in the debloat list: '$p' (letters, digits, dot and underscore only; each segment starts with a letter)"
+    }
+}
+
 $cmds = @($pkgs | ForEach-Object { "pm disable-user --user 0 $_" }) + 'pm list packages -d'
 $cmds | & $py -I (Join-Path $repo 'tools\tv.py') --batch

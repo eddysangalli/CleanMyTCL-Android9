@@ -17,6 +17,16 @@ if (-not $TvHost) { throw 'pass -TvHost <tv ip> or set $env:TV_HOST' }
 $env:TV_HOST = $TvHost
 
 $pkgs = Get-Content $List | ForEach-Object { ($_ -replace '#.*$', '').Trim() } | Where-Object { $_ }
+# Same validation as tools\disable.ps1: nothing from a list file reaches the TV shell unvalidated.
+# See https://github.com/Gathin23/cleanyourtv/issues/165
+foreach ($p in $pkgs) {
+    if ($p -notmatch '^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$') {
+        throw "refusing to run: invalid package name in the debloat list: '$p'"
+    }
+}
+if ($Stock -notmatch '^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$') {
+    throw "refusing to run: invalid stock launcher package name: '$Stock'"
+}
 $cmds = @($pkgs | ForEach-Object { "pm enable $_" }) + @(
     "pm enable $Stock",
     "cmd package set-home-activity --user 0 $Stock",

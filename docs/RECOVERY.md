@@ -16,3 +16,46 @@ factory-resets the TV.
 
 **Order of safety:** never disable the stock launcher before the new one is installed, set as Home,
 smoke-tested and survived a reboot (`scripts/tcl-reboot-test.sh`).
+
+---
+
+## Closing network debugging when you are done (upstream issue #164)
+
+Network debugging leaves the TV's ADB port **5555 open on the local network**. Anyone on the same
+Wi-Fi can run `adb connect <tv-ip>:5555` and, once authorised, control the TV. Turn it off when
+development stops.
+
+### On the TV (the authoritative way)
+
+1. **Settings → Device Preferences → Developer options**
+2. Turn **OFF** *Network debugging* (and *ADB debugging* if you no longer need USB)
+3. Leave *USB debugging* off unless you still use a cable
+
+### From the computer (does not need the TV to be reachable)
+
+```powershell
+# stop the local ADB server and forget the device
+adb kill-server
+adb disconnect 192.168.1.8:5555
+```
+
+`adb disconnect` only drops this computer's connection. The TV keeps listening on 5555 until you
+switch *Network debugging* off on the device itself, so **do both**.
+
+### Check that the port is really closed
+
+```powershell
+Test-NetConnection -ComputerName <tv-ip> -Port 5555
+# TcpTestSucceeded : False  -> closed
+```
+
+### If the TV was authorised from this computer before
+
+The authorisation lives on the device. To drop it: **Developer options → Revoke USB debugging
+authorisations**. After that, a new `adb connect` asks for permission again.
+
+### While you are still developing
+
+Keep *Network debugging* on but stay on a trusted home network, and consider disabling
+*ADB authorization timeout* so you are not re-approving on every reconnect. See
+[GETTING-STARTED.md](GETTING-STARTED.md) for the full ADB setup.
