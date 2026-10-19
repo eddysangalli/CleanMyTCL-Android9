@@ -81,7 +81,7 @@ one topic per PR and a real device to test on:
 4. Open the PR from a fork of upstream — **not** from this repository's `main`, which carries our
    TCL-specific README and would show up as noise in the diff.
 
-Two PRs are prepared (locally, not submitted) — see [`docs/UPSTREAM-CONTRIBUTIONS.md`](UPSTREAM-CONTRIBUTIONS.md).
+Two PRs are prepared — see [`docs/UPSTREAM-PR-DESCRIPTIONS.md`](UPSTREAM-PR-DESCRIPTIONS.md).
 
 ## Safety
 

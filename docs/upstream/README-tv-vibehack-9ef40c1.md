@@ -1,5 +1,11 @@
 # tv-vibehack
 
+> **Verbatim copy of the upstream README at commit `9ef40c1`**, kept here for provenance: it is
+> the point where this repository branched from [CleanYourTV](https://github.com/Gathin23/cleanyourtv).
+> The relative links below point at files in the **upstream** repository, not in this one — read
+> them at <https://github.com/Gathin23/cleanyourtv/tree/9ef40c1>. Nothing here was edited.
+> For this project's own documentation, start at the [repository README](../../README.md).
+
 **Your TV, minus the ads.**
 
 Strip the bloatware from any Android TV or Google TV over Wi-Fi, and replace the ad-filled home

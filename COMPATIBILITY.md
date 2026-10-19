@@ -47,6 +47,6 @@ Profile: [devices/tcl-beyondtv2-rtd2851-r851t02-v660/](devices/tcl-beyondtv2-rtd
 
 | Model | Status | Notes |
 |---|---|---|
-| TCL BeyondTV (India set, PPR1.180610.011) | 🔵 | Upstream CleanYourTV profile [`examples/tcl-beyondtv`](examples/tcl-beyondtv/debloat.txt) (not reproduced here) |
+| TCL BeyondTV (India set, PPR1.180610.011) | 🔵 | Upstream CleanYourTV profile [`examples/tcl-beyondtv`](https://github.com/Gathin23/cleanyourtv/blob/main/examples/tcl-beyondtv/debloat.txt) (not reproduced here) |
 | Any other TCL Android 9 | ⚪ | Please contribute a profile: [devices/README.md](devices/README.md) |
 | TCL Google TV / Android 11+ | ⚪ | Out of scope of this fork; see upstream CleanYourTV |
