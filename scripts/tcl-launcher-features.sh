@@ -41,7 +41,12 @@ sleep 2
 f=$(focus); shot 4-opcoes-inicio
 case "$f" in PopupWindow*) ok "segurar OK em Configuracoes abre as opcoes do Inicio";; *) bad "opcoes nao abriram (foco: $f)";; esac
 
-# 3. Modo ultraleve: 1a opcao liga; medir quadros parado; desligar de novo
+# 3. Modo ultraleve: o menu tem Nome, Mensagem, Cor de destaque e Movimento suave.
+#    "Movimento suave" e o 4o item; o rotulo mostra o estado atual. Desce 3x antes do OK.
+#    Mede os quadros de um movimento e restaura o estado anterior.
+tv input keyevent 20 20 20
+sleep 1
+shot 4b-opcoes-movimento
 tv input keyevent KEYCODE_DPAD_CENTER
 sleep 2
 dock_start; tv input keyevent 22; sleep 2; shot 5-ultraleve
@@ -52,7 +57,8 @@ FR=$(tv dumpsys gfxinfo br.eddy.tvhome | awk -F': ' '/Total frames rendered/ { p
 echo "  INFO   ultraleve: quadros para 1 movimento = $FR"
 tv input keyevent 19 22 22 22; sleep 1
 tv input keyevent KEYCODE_MENU; sleep 2
-tv input keyevent KEYCODE_DPAD_CENTER   # desliga o ultraleve
+tv input keyevent 20 20 20; sleep 1
+tv input keyevent KEYCODE_DPAD_CENTER   # restaura o estado anterior
 sleep 2
 dock_start; tv input keyevent 22; sleep 2; shot 6-normal-de-novo
 tv dumpsys gfxinfo br.eddy.tvhome reset > /dev/null

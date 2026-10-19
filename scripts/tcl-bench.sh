@@ -59,21 +59,27 @@ IDLE_FPS=$(tv dumpsys gfxinfo "$HOME_PKG" | awk -F': ' '/Total frames rendered/ 
 
 # ---- abertura de apps (a frio: app encerrado antes) ----------------------------------------------
 declare -A START_MED
+declare -A START_WAIT
 for entry in "${APPS[@]}"; do
     IFS='|' read -r name pkg comp <<< "$entry"
     log "Abertura a frio: $name (${N}x)"
     : > "$OUT/start_${name}_ms.txt"
+    : > "$OUT/start_${name}_wait_ms.txt"
     for i in $(seq 1 "$N"); do
         tv am force-stop "$pkg"
         sleep 2
         r=$(tv am start -W -n "$comp")
         echo "$r" >> "$OUT/start_${name}.txt"
         echo "$r" | awk -F': ' '/^TotalTime/ { print $2 }' >> "$OUT/start_${name}_ms.txt"
+        # WaitTime e o tempo ate o primeiro quadro; TotalTime pode somar uma transicao de
+        # activity anterior (ex.: ~3,7 s na sequencia Configuracoes -> Home).
+        echo "$r" | awk -F': ' '/^WaitTime/ { print $2 }' >> "$OUT/start_${name}_wait_ms.txt"
         sleep 8
         show_home
         sleep 4
     done
-    START_MED[$name]=$(median < "$OUT/start_${name}_ms.txt")
+    START_MED[$name]=$(median < "$OUT/start_${name}_ms.txt")        # TotalTime (historico do CSV)
+    START_WAIT[$name]=$(median < "$OUT/start_${name}_wait_ms.txt")  # WaitTime (tempo ate o 1o quadro)
 done
 
 # ---- volta a tela inicial a partir de um app: tecla Home (ou abertura direta) -> launcher retomado --
@@ -142,7 +148,7 @@ Medicao: $LABEL ($(date '+%Y-%m-%d %H:%M')), repeticoes: $N, Home: $HOME_COMPONE
 Memoria   MemAvailable ${MEM_AVAIL} MB | Free RAM ${FREE_RAM} MB | Used RAM ${USED_RAM} MB | swap usada ${SWAP_USED} MB | processos ${PROCS} | status ${MEM_STATUS}
 CPU       parada: ${CPU_BUSY}% da capacidade total (4 nucleos), tela inicial desenhando ${IDLE_FPS} quadros/s. Maiores consumidores (% de 1 nucleo):
 $(sed 's/^/          /' "$OUT/cpu_top.txt")
-Abertura  a frio, mediana ms: settings ${START_MED[settings]} | youtube ${START_MED[youtube]} | netflix ${START_MED[netflix]} | globoplay ${START_MED[globoplay]} | spotify ${START_MED[spotify]}
+Abertura  a frio, mediana WaitTime ms: settings ${START_WAIT[settings]} | youtube ${START_WAIT[youtube]} | netflix ${START_WAIT[netflix]} | globoplay ${START_WAIT[globoplay]} | spotify ${START_WAIT[spotify]}
 Home      volta ao Home ${HOME_MS} ms | navegacao: ${FRAMES} quadros, ${JANK_PCT}% atrasados, p90 ${P90} ms, p99 ${P99} ms
 Voz       busca -> tela ${ASSIST_UI} ms | microfone aberto ${ASSIST_MIC} ms | servidor conectado ${ASSIST_SRV} ms
 Boot      boot_progress_enable_screen: ${BOOT_MS:-fora do buffer} ms
@@ -152,5 +158,10 @@ cat "$OUT/resumo.txt"
 CSV=medicoes/historico.csv
 [ -f "$CSV" ] || echo "data,rotulo,home,mem_avail_mb,free_ram_mb,used_ram_mb,swap_mb,processos,cpu_parada_pct,settings_ms,youtube_ms,netflix_ms,globoplay_ms,spotify_ms,home_ms,quadros,jank_pct,p90_ms,p99_ms,voz_tela_ms,voz_mic_ms,voz_servidor_ms,boot_ms,uptime_s,fps_parado" > "$CSV"
 head -1 "$CSV" | grep -q fps_parado || sed -i '1s/$/,fps_parado/' "$CSV"
-echo "$(date '+%Y-%m-%d %H:%M'),$LABEL,$HOME_PKG,$MEM_AVAIL,$FREE_RAM,$USED_RAM,$SWAP_USED,$PROCS,$CPU_BUSY,${START_MED[settings]},${START_MED[youtube]},${START_MED[netflix]},${START_MED[globoplay]},${START_MED[spotify]},$HOME_MS,$FRAMES,$JANK_PCT,$P90,$P99,$ASSIST_UI,$ASSIST_MIC,$ASSIST_SRV,${BOOT_MS:-},$UPTIME_S,$IDLE_FPS" >> "$CSV"
+# Colunas novas de WaitTime (tempo ate o 1o quadro). As colunas *_ms antigas continuam sendo
+# TotalTime para nao misturar metodos nas linhas ja gravadas.
+for c in settings_wait_ms youtube_wait_ms netflix_wait_ms globoplay_wait_ms spotify_wait_ms; do
+    head -1 "$CSV" | grep -q "$c" || sed -i "1s/$/,$c/" "$CSV"
+done
+echo "$(date '+%Y-%m-%d %H:%M'),$LABEL,$HOME_PKG,$MEM_AVAIL,$FREE_RAM,$USED_RAM,$SWAP_USED,$PROCS,$CPU_BUSY,${START_MED[settings]},${START_MED[youtube]},${START_MED[netflix]},${START_MED[globoplay]},${START_MED[spotify]},$HOME_MS,$FRAMES,$JANK_PCT,$P90,$P99,$ASSIST_UI,$ASSIST_MIC,$ASSIST_SRV,${BOOT_MS:-},$UPTIME_S,$IDLE_FPS,${START_WAIT[settings]},${START_WAIT[youtube]},${START_WAIT[netflix]},${START_WAIT[globoplay]},${START_WAIT[spotify]}" >> "$CSV"
 log "Pronto: $OUT"

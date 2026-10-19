@@ -24,7 +24,11 @@ ACC=$(tv settings get secure enabled_accessibility_services)
 log "Dispositivo $DEV | acessibilidade: ${ACC:-nenhuma} | $N teclas"
 
 tv settings put global eddy_debug_keys 1
-tv input keyevent KEYCODE_HOME      # retoma o launcher, que le o ajuste de depuracao no onResume
+# HOME alone may not resume the Home when it is already on top; open Settings and come back so
+# onResume re-reads the debug flag (MainActivity.onResume).
+tv am start -a android.settings.SETTINGS > /dev/null 2>&1
+sleep 2
+tv input keyevent KEYCODE_HOME
 sleep 3
 "$ADB" -s "$SERIAL" logcat -c -b main
 for i in $(seq 1 "$N"); do

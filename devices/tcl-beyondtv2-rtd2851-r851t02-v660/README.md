@@ -25,12 +25,17 @@ How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
 
 - The largest idle CPU cost is the hands-free **"Ok Google" listening**: `voice_ap` (TCL, built-in mics)
   + `katniss:interactor` (Assistant) ≈ 48% of one core, continuously. Re-confirmed 2026-10-19 (≈ 27% + 25%).
-- Replacing the stock Home with the light launcher cut idle CPU from ~53–57% to ~15% (of one core,
-  system-wide) and idle fps from 60 to 0 (stock home animates permanently).
-  *Measured on launcher v0.1–v0.5.2; v0.5.2 itself: 14.9% total CPU with the launcher at 0%,
-  0 fps, PSS 23 MB. See [../../benchmarks/results/tcl-beyondtv2-v660.md](../../benchmarks/results/tcl-beyondtv2-v660.md).*
+- Replacing the stock Home with the light launcher cut idle CPU from ~53–57% (stock Home animating
+  continuously at 60 fps) to ~15% **of the whole 4-core SoC**, and idle fps from 60 to 0.
+  *Measured on launcher v0.1–v0.5.2; v0.5.2: 14.5% in the 5-rep full battery and 14.9/15.6/17.3%
+  across three launcher runs; the launcher itself is 0% of one core and 0 fps; PSS 18 MB (16–23).
+  A cold stock sample on 2026-10-19 at 13:49 read 20.6% at 3.7 fps before its feed animation ramped
+  up, so the steady-state stock figure remains the 57.3% at 60 fps. See
+  [../../benchmarks/results/tcl-beyondtv2-v660.md](../../benchmarks/results/tcl-beyondtv2-v660.md)
+  and the [detailed v0.5.2 battery](../../benchmarks/results/2026-10-19-v0.5.2.md).*
 - Disabling TCL telemetry/promo packages removed processes but gave **no measurable** speed gain.
 - Memory is not the bottleneck: 0 apps killed by low memory in boot logs; zRAM/swap tweaks are out of scope.
-- Netflix first frame ~3.8 s; the long wait (~90 s reported) is after that and is still under investigation.
+- Netflix first frame ~0.94 s (`am start -W` WaitTime, 5 runs); the longer wait reported (~90 s) is
+  after the first frame and is still under investigation — the visual catalogue-ready check is pending.
 - The remote's "Globoplay" key is injected by TCL software (scanCode 0); it cannot be remapped by a
   key filter without root.

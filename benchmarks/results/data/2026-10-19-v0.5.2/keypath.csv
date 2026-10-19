@@ -1,0 +1,4 @@
+date,label,accessibility,p50_ms,p95_ms,p99_ms,max_ms,keys,note
+2026-10-19 14:15,final-v0.5.2-ir,none,2,4,4,4,60,real D-pad events via /dev/input/event0 (mtkinp)
+2026-10-19 14:42,a11y-off,none,3,4,6,6,40,real D-pad events via /dev/input/event0 (mtkinp)
+pooled,2026-10-19 14:15-14:42,none,3,4,5,6,100,accessibility off; accessibility-on is not published (both attempts collided with other runs)

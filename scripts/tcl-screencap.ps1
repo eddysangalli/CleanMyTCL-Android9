@@ -7,11 +7,15 @@
 #   writes a 0-byte file on this firmware. `exec-out` over the pipe is the
 #   method that works; this script writes the raw bytes.
 #
-# Usage: powershell -ExecutionPolicy Bypass -File scripts\tcl-screencap.ps1 -Out <file.png> [-Serial <host:port>]
+# Note: with the screen asleep, screencap returns nothing at all. Use -Wake to
+# send KEYCODE_WAKEUP first.
+#
+# Usage: powershell -ExecutionPolicy Bypass -File scripts\tcl-screencap.ps1 -Out <file.png> [-Serial <host:port>] [-Wake]
 param(
     [Parameter(Mandatory = $true)][string]$Out,
     [string]$Serial = '',
-    [string]$Adb = ''
+    [string]$Adb = '',
+    [switch]$Wake
 )
 $ErrorActionPreference = 'Stop'
 
@@ -31,6 +35,15 @@ if (-not $Adb) {
 }
 if (-not $Adb) { throw 'adb.exe not found.' }
 
+$dir = Split-Path -Parent $Out
+if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+
+# The screen asleep returns nothing: screencap comes back with 0 bytes.
+if ($Wake) {
+    & $Adb -s $Serial shell input keyevent KEYCODE_WAKEUP | Out-Null
+    Start-Sleep -Seconds 2
+}
+
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = $Adb
 $psi.Arguments = "-s $Serial exec-out screencap -p"
@@ -39,8 +52,6 @@ $psi.RedirectStandardOutput = $true
 $psi.RedirectStandardError = $true
 $proc = [System.Diagnostics.Process]::Start($psi)
 
-$dir = Split-Path -Parent $Out
-if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
 $fs = [System.IO.File]::Create($Out)
 $proc.StandardOutput.BaseStream.CopyTo($fs)
 $fs.Close()

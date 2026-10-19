@@ -1,5 +1,9 @@
 # Funcoes compartilhadas pelos scripts bash da TCL (Git Bash no Windows). Use: . "$(dirname "$0")/tcl-lib.sh"
 export MSYS_NO_PATHCONV=1
+# Numeros com ponto decimal, independente da maquina: em locale pt_BR o printf do bash
+# formata "17,0" e rejeita "17.0" como entrada, o que quebra os CSV e o nome dos arquivos.
+export LC_ALL=C
+export LANG=C
 
 if [ -z "${ADB:-}" ]; then
     if command -v adb >/dev/null 2>&1; then

@@ -1,0 +1,4 @@
+run,started_at,reboot_to_boot_completed_s,home_focus_s,enable_screen_ms,home_launch_ms,smoke_exit,note
+r2,2026-10-19 14:21,39,40,22426,1266,0,clean
+r3,2026-10-19 14:24,42,42,24598,3603,0,clean
+r1,2026-10-19 14:19,39,39,20716,1811,0,discarded - an accessibility key-path attempt ran during this boot

@@ -8,7 +8,8 @@
 # Uso: scripts/tcl-app-start-test.sh <netflix|youtube|globoplay|spotify> <rotulo> [segundos=120] [frio|quente] [sim|nao]
 #      frio = encerra o processo do app antes (padrao); quente = so traz de volta
 #      sim/nao = captura telas a cada 5 s (nao por padrao: a captura custa ~1 s de CPU e
-#      polui a medicao de tempo e CPU)
+#      polui a medicao de tempo e CPU). Em superficies DRM (video da Netflix) o screencap pode
+#      voltar vazio ou travar; nesses casos use sim=nao e capture o catalogo/menu antes do video.
 # Saida: investigacao/netflix-boot/<data-hora>-<app>-<rotulo>/ (timeline.csv, shots/, am_start.txt)
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -31,6 +32,11 @@ tv_connect
 
 UPTIME=$(tv cat /proc/uptime | cut -d' ' -f1)
 log "$APP ($MODE), uptime da TV ${UPTIME}s, $SECS s de registro -> $OUT"
+# A tela precisa estar acesa antes de comecar: com ela apagada o screencap devolve nada.
+# Acorda ANTES do T0, para nao entrar na medicao. nesta TV o KEYCODE_WAKEUP vira um intent
+# HOME, entao ele vem antes do app abrir.
+tv input keyevent KEYCODE_WAKEUP
+sleep 3
 if [ "$MODE" = frio ]; then
     tv am force-stop "$PKG"
     sleep 2
@@ -54,7 +60,13 @@ while :; do
     awk -v e="$el" -v s="$SECS" 'BEGIN { exit !(e >= s) }' && break
     if [ $((n % 5)) -eq 0 ] && [ "$SHOTS" = "sim" ]; then
         # Binario de verdade: o '>' do PowerShell 5.1 transformaria o PNG em texto.
-        scripts/tcl-screencap.sh "$OUT/shots/$(printf '%05.1f' "$el").png" "$SERIAL" > /dev/null 2>&1
+        #
+        # NAO acordar a tela aqui: nesta TV o KEYCODE_WAKEUP e traduzido em um intent HOME
+        # (ActivityManager: START u0 {act=android.intent.action.MAIN cat=[HOME]}), e a tela
+        # volta para o launcher, tirando o app que estamos medindo do primeiro plano. A tela
+        # fica acesa sozinha porque o app em primeiro plano nao deixa o timeout expirar.
+        SHOT_NAME=$(printf '%05.1f' "$el")
+        scripts/tcl-screencap.sh "$OUT/shots/$SHOT_NAME.png" "$SERIAL" > /dev/null 2>&1
     fi
     sleep 2
     cur=$(tv "head -1 /proc/stat; cat /proc/$PID/stat 2>/dev/null")
@@ -67,7 +79,7 @@ while :; do
           if (!c) next; split(substr($0, c + 2), f, " ")
           if (ph == 2) A2 = f[12] + f[13]; else A1 = f[12] + f[13] }
         END { dt = (T2 - T1) / 4   # ticks por nucleo no intervalo (4 nucleos)
-              printf "%s,%.1f,%.1f\n", t, 100 * (1 - (I2 - I1) / (T2 - T1)), dt > 0 ? 100 * (A2 - A1) / dt : 0 }' >> "$OUT/timeline.csv"
+              printf "%s,%.1f,%.1f\n", t, 100 * (1 - (I2 - I1) / (T2 - T1)), ((dt > 0) ? 100 * (A2 - A1) / dt : 0) }' >> "$OUT/timeline.csv"
     prev="$cur"
     n=$((n + 1))
 done
@@ -75,4 +87,5 @@ done
 echo "$T0" > "$OUT/t0_epoch.txt"
 echo "app=$APP modo=$MODE uptime_inicio=${UPTIME}s waittime_ms=$WAIT pid=$PID" > "$OUT/resumo.txt"
 cat "$OUT/resumo.txt"
-log "Pronto: $OUT ($(ls "$OUT/shots" | wc -l) capturas)"
+SHOT_COUNT=$(ls "$OUT/shots" 2>/dev/null | wc -l)
+log "Pronto: $OUT ($SHOT_COUNT capturas)"

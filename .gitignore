@@ -22,6 +22,8 @@ getprop*.txt
 state.json
 # Raw measurement folders produced by scripts/tcl-*.sh (publish only curated summaries in benchmarks/)
 benchmarks/raw/
+# Raw app-timeline captures (screenshots, logcat) also stay local
+investigacao/
 
 # Secrets and signing material: never commit
 adbkey

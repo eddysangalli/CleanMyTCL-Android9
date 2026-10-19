@@ -9,31 +9,32 @@ Créditos em [NOTICE.md](NOTICE.md); origem de cada parte em [docs/PROVENANCE.md
 
 ## 📸 Capturas de tela
 
-*Capturado no aparelho real (TCL BeyondTV2, R851T02 V660). Arquivos originais, sem retoque.*
+*Capturado no aparelho real (TCL BeyondTV2, R851T02 V660). A localização do clima na captura de
+opções está desfocada por privacidade; o resto são os PNGs originais.*
 
-| Home original do Google TV | Home do Eddy TV (v0.5) |
+| Home original do Google TV | Home do Eddy TV (v0.5.2) |
 |:---:|:---:|
-| ![Home original](https://raw.githubusercontent.com/eddysangalli/CleanMyTCL-Android9/main/docs/assets/stock-home.png) | ![Eddy TV Home](https://raw.githubusercontent.com/eddysangalli/CleanMyTCL-Android9/main/docs/assets/eddy-home.png) |
+| ![Home original](docs/assets/stock-home.png) | ![Eddy TV Home](docs/assets/eddy-home.png) |
 | *Linhas patrocinadas e de recomendação, conteúdo de rede buscado a cada abertura, animação permanente a 60 fps* | *Saudação por horário, linha do clima, sem linha patrocinada, sem feed, 0 fps parado* |
 
 | Grade de aplicativos (D-pad) | Menu do aplicativo |
 |:---:|:---:|
-| ![Grade de apps](https://raw.githubusercontent.com/eddysangalli/CleanMyTCL-Android9/main/docs/assets/eddy-launcher-apps.png) | ![Menu do app](https://raw.githubusercontent.com/eddysangalli/CleanMyTCL-Android9/main/docs/assets/eddy-tile-menu.png) |
+| ![Grade de apps](docs/assets/eddy-launcher-apps.png) | ![Menu do app](docs/assets/eddy-tile-menu.png) |
 | *Linhas de apps instalados; no modo ultraleve a grade salta em vez de rolar* | *Segure em um app: fixar no dock, ver informações, ocultar* |
 
-| Opções na TV | Gráfico de benchmark |
+| Opções na TV | CPU ociosa medida |
 |:---:|:---:|
-| ![Opções](https://raw.githubusercontent.com/eddysangalli/CleanMyTCL-Android9/main/docs/assets/eddy-options.png) | ![Benchmarks](https://quickchart.io/chart?c=%7Btype%3A%27bar%27%2Cdata%3A%7Blabels%3A%5B%22Boot%20frio%22%2C%22Standby%22%2C%22Home%22%2C%22D-pad%22%2C%22Netflix%22%2C%22YouTube%22%2C%22Globoplay%22%2C%22Spotify%22%2C%22CPU%20idle%22%2C%22PSS%22%2C%22RAM%20livre%22%2C%22zRAM%22%5D%2Cdatasets%3A%5B%7Bdata%3A%5B92%2C3.2%2C0.8%2C0.04%2C87%2C12%2C15%2C8%2C1.2%2C42%2C520%2C280%5D%2CbackgroundColor%3A%5B%22%23e74c3c%22%2C%22%23e67e22%2C%22%23f39c12%22%2C%22%2327ae60%22%2C%22%23e74c3c%22%2C%22%233498db%22%2C%22%239b59b6%22%2C%22%231abc9c%22%2C%22%2327ae60%22%2C%22%2334495e%22%2C%22%232c3e50%22%2C%22%237f8c8d%22%5D%7D%5D%7D%2Coptions%3A%7BindexAxis%3A%27y%27%2Cplugins%3A%7Blegend%3A%7Bdisplay%3Afalse%7D%2Ctitle%3A%7Bdisplay%3Atrue%2Ctext%3A%22Benchmarks%20TCL%20BeyondTV2%22%7D%7D%2Cscales%3A%7Bx%3A%7BbeginAtZero%3Atrue%7D%7D%7D%7D) |
-| *Tudo se configura na própria TV: nome do usuário, mensagem, cor de destaque, movimento, clima, apps ocultos, restaurar* | *Valores medidos; o método e a versão exata do launcher por trás de cada número estão em [benchmarks/results/](benchmarks/results/)* |
+| ![Opções](docs/assets/eddy-options.png) | ![Gráfico de CPU ociosa](docs/assets/charts/bench-idle-cpu.png) |
+| *Tudo se configura na própria TV: nome do usuário, mensagem, cor de destaque, movimento, clima, apps ocultos, restaurar* | *Mesma TV, mesmo script: 57,3% (feed original animando a 60 fps), 20,6% (amostra fria do original a 3,7 fps) e 14,5% (Eddy v0.5.2), em % da capacidade dos 4 núcleos. Método e resultados completos em [benchmarks/results/](benchmarks/results/).* |
 
-> O gráfico mistura medições de setups diferentes: as linhas do launcher foram medidas na **v0.5.2**
-> (o build instalado no aparelho), as linhas de abertura de apps no Home **original**. Cada número em
-> [benchmarks/results/tcl-beyondtv2-v660.md](benchmarks/results/tcl-beyondtv2-v660.md) está marcado com
-> a versão e o setup exatos de onde veio — nenhum número é reaproveitado entre versões.
+> Cada número em [benchmarks/results/](benchmarks/results/) está marcado com a versão exata do
+> launcher e as condições em que foi medido. Os gráficos são gerados a partir dos dados medidos por
+> `scripts/tcl-make-charts.py`; nenhum número é digitado à mão.
 
-> **Adicione suas capturas:** use `scripts\tcl-capture-screenshot.ps1` (ele grava PNG binário de
-> verdade — veja [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) por que o comando de uma linha não
-> funciona), abra o resultado e confira antes de commitar.
+> **Adicione suas capturas:** use `scripts/tcl-screencap.sh <arquivo.png>` (ou o
+> `scripts\tcl-capture-screenshot.ps1`). Os dois gravam PNG binário de verdade — veja
+> [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) por que o comando de uma linha não funciona — e confira
+> o resultado antes de commitar.
 
 ---
 

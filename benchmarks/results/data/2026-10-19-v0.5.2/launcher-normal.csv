@@ -1,0 +1,5 @@
+run_label,started_at,keys,response_p50_ms,response_p95_ms,response_p99_ms,response_max_ms,movement_p50_ms,movement_p95_ms,movement_max_ms,jank_pct,cold_p50_ms,cold_max_ms,back_p50_ms,back_p95_ms,back_max_ms,idle_cpu_total_pct,launcher_cpu_one_core_pct,idle_fps,pss_mb,pss_after_returns_mb
+v0.5-atual,2026-10-19 12:25,36,13,16,17,17,631,642,645,0.4,414,483,39,181,181,14.9,0,0.0,23,21
+final-r1,2026-10-19 13:26,36,13,17,19,19,631,641,642,0.1,488,539,39,164,164,17.3,0,0.1,18,16
+final-v0.5.2,2026-10-19 13:36,60,13,15,16,16,632,641,644,0.3,525,962,36,152,152,15.6,0,0.0,18,16
+pooled,2026-10-19 12:20-13:36,132,13,16,17,19,632,641,645,0.3,466,962,38,164,181,15.6,0,0.0,18,16

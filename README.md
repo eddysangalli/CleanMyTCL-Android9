@@ -12,31 +12,32 @@ See [NOTICE.md](NOTICE.md) for credits and [docs/PROVENANCE.md](docs/PROVENANCE.
 
 ## 📸 Screenshots
 
-*Captured on the real device (TCL BeyondTV2, R851T02 V660). Original files, no retouching.*
+*Captured on the real device (TCL BeyondTV2, R851T02 V660). The weather location in the options
+screenshot is blurred for privacy; the rest are the original PNGs.*
 
-| Stock Google TV Home | Eddy TV Home (v0.5) |
+| Stock Google TV Home | Eddy TV Home (v0.5.2) |
 |:---:|:---:|
-| ![Stock Home](https://raw.githubusercontent.com/eddysangalli/CleanMyTCL-Android9/main/docs/assets/stock-home.png) | ![Eddy TV Home](https://raw.githubusercontent.com/eddysangalli/CleanMyTCL-Android9/main/docs/assets/eddy-home.png) |
+| ![Stock Home](docs/assets/stock-home.png) | ![Eddy TV Home](docs/assets/eddy-home.png) |
 | *Sponsored and recommendation rows, network content fetched on every open, permanent animation at 60 fps* | *Greeting by time of day, weather line, no sponsored row, no feed, 0 fps while idle* |
 
 | App grid (D-pad) | Tile menu |
 |:---:|:---:|
-| ![App grid](https://raw.githubusercontent.com/eddysangalli/CleanMyTCL-Android9/main/docs/assets/eddy-launcher-apps.png) | ![Tile menu](https://raw.githubusercontent.com/eddysangalli/CleanMyTCL-Android9/main/docs/assets/eddy-tile-menu.png) |
+| ![App grid](docs/assets/eddy-launcher-apps.png) | ![Tile menu](docs/assets/eddy-tile-menu.png) |
 | *Rows of installed apps; in ultralight mode the grid jumps instead of scrolling* | *Long-press a tile: pin it to the dock, open its info, hide it* |
 
-| On-TV options | Benchmark chart |
+| On-TV options | Measured idle CPU |
 |:---:|:---:|
-| ![Options](https://raw.githubusercontent.com/eddysangalli/CleanMyTCL-Android9/main/docs/assets/eddy-options.png) | ![Benchmarks](https://quickchart.io/chart?c=%7Btype%3A%27bar%27%2Cdata%3A%7Blabels%3A%5B%22Boot%20frio%22%2C%22Standby%22%2C%22Home%22%2C%22D-pad%22%2C%22Netflix%22%2C%22YouTube%22%2C%22Globoplay%22%2C%22Spotify%22%2C%22CPU%20idle%22%2C%22PSS%22%2C%22RAM%20livre%22%2C%22zRAM%22%5D%2Cdatasets%3A%5B%7Bdata%3A%5B92%2C3.2%2C0.8%2C0.04%2C87%2C12%2C15%2C8%2C1.2%2C42%2C520%2C280%5D%2CbackgroundColor%3A%5B%22%23e74c3c%22%2C%22%23e67e22%22%2C%22%23f39c12%22%2C%22%2327ae60%22%2C%22%23e74c3c%22%2C%22%233498db%22%2C%22%239b59b6%22%2C%22%231abc9c%22%2C%22%2327ae60%22%2C%22%2334495e%22%2C%22%232c3e50%22%2C%22%237f8c8d%22%5D%7D%5D%7D%2Coptions%3A%7BindexAxis%3A%27y%27%2Cplugins%3A%7Blegend%3A%7Bdisplay%3Afalse%7D%2Ctitle%3A%7Bdisplay%3Atrue%2Ctext%3A%22Benchmarks%20TCL%20BeyondTV2%22%7D%7D%2Cscales%3A%7Bx%3A%7BbeginAtZero%3Atrue%7D%7D%7D%7D) |
-| *Everything is set on the TV itself: user name, message, accent colour, motion, weather, hidden apps, reset* | *Measured values; the method and the exact launcher version behind every number are in [benchmarks/results/](benchmarks/results/)* |
+| ![Options](docs/assets/eddy-options.png) | ![Idle CPU chart](docs/assets/charts/bench-idle-cpu.png) |
+| *Everything is set on the TV itself: user name, message, accent colour, motion, weather, hidden apps, reset* | *Same TV, same script: 57.3% (stock feed animating at 60 fps), 20.6% (cold stock sample at 3.7 fps) and 14.5% (Eddy v0.5.2), in % of the whole 4-core SoC. Full method and results in [benchmarks/results/](benchmarks/results/).* |
 
-> The chart mixes measurements from different setups: the launcher rows were measured on **v0.5.2**
-> (the build installed on the device), the app-launch rows on the **stock** Home. Every number in
-> [benchmarks/results/tcl-beyondtv2-v660.md](benchmarks/results/tcl-beyondtv2-v660.md) is tagged with
-> the exact version and setup it came from — no number is reused across versions.
+> Every number in [benchmarks/results/](benchmarks/results/) is tagged with the exact launcher
+> version and the conditions it was measured in. Charts are generated from the measured data by
+> `scripts/tcl-make-charts.py`; no number is typed into a drawing tool.
 
-> **Add your own screenshots:** run `scripts\tcl-capture-screenshot.ps1` (it writes real binary
-> PNGs — see [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) for why the obvious one-liner does not
-> work), open the result and check it before committing.
+> **Add your own screenshots:** run `scripts/tcl-screencap.sh <file.png>` (or the PowerShell
+> `scripts\tcl-capture-screenshot.ps1`). Both write real binary PNGs — see
+> [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) for why the obvious one-liner does not work — and
+> check the result before committing.
 
 ---
 
