@@ -1,0 +1,21 @@
+# TCL BeyondTV2 profile — debloat list (Android TV 9, R851T02 V660)
+# Format compatible with upstream tools/disable.sh and tools/restore.sh (one package per line, # comments).
+# Validated 2026-10-18/19: each package disabled alone with scripts/tcl-try-disable.sh, smoke test 24/24,
+# then 3 reboots OK. Measured effect: these removed processes but gave NO measurable overall speed gain
+# (CPU idle and app-open times within noise). They are kept for less telemetry/ads, not for speed.
+#
+# Apply (one at a time is recommended):  bash scripts/tcl-try-disable.sh <package>
+# Undo:                                   adb shell pm enable <package>
+#
+# Already disabled at the factory on this firmware (do not need action):
+#   com.tcl.bootadservice com.tcl.gallery au.com.stan.and com.amazon.amazonvideo.livingroom
+#   com.linecorp.linetv tv.wuaki.apptv uk.co.freeview.*
+#
+# NEVER disable: see protected-packages.txt in this folder (HDMI, tuner, remote, voice, DRM, Play, Cast).
+
+com.tcl.esticker                # retail/demo stickers
+com.tcl.bi                      # TCL analytics (telemetry)
+com.tcl.tv.tclhome_passive      # pushes TCL content at boot
+
+# Only AFTER the new launcher is installed, set as Home and smoke-tested:
+# com.google.android.tvlauncher # stock Android TV home (restore: pm enable com.google.android.tvlauncher)

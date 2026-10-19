@@ -8,3 +8,35 @@ launcher/local.properties
 # your own TV's dumps (serial, android_id, device names) stay local
 backup/
 .DS_Store
+
+# ---- CleanMyTCL-Android9 additions -------------------------------------------------------------
+# Local/private data: personal Eddy TV config, raw dumps, logs, screenshots of personal screens.
+private/
+medicoes/
+auditoria/
+diagnostics/
+*.log
+logcat*.txt
+dumpsys*.txt
+getprop*.txt
+state.json
+# Raw measurement folders produced by scripts/tcl-*.sh (publish only curated summaries in benchmarks/)
+benchmarks/raw/
+
+# Secrets and signing material: never commit
+adbkey
+adbkey.pub
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+*.pem
+*.p12
+.env
+.env.*
+!.env.example
+
+# APKs (build outputs and app backups pulled from the TV)
+*.apk
+*.aab
+*.apks

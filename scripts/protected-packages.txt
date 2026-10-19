@@ -1,0 +1,72 @@
+# Pacotes que tcl-pkg.ps1 se recusa a desativar (so passa com -Force).
+# Fonte: diagnostico da fase 1 (fase1/RELATORIO-FASE1.md). Um pacote por linha, # comenta.
+
+# Sistema Android base
+android
+com.android.systemui
+com.android.tv.settings
+com.android.providers.settings
+com.android.providers.tv                 # banco de canais e entradas (TV ao vivo, HDMI)
+com.android.providers.media
+com.android.providers.downloads
+com.android.externalstorage
+com.android.inputdevices
+com.android.se
+com.android.shell                        # necessario para o proprio ADB
+com.android.packageinstaller
+com.google.android.packageinstaller
+com.android.defcontainer
+com.android.keychain
+com.android.location.fused
+com.google.android.ext.services
+com.google.android.ext.shared
+com.google.android.webview
+com.google.android.tv.frameworkpackagestubs
+com.android.dreams.basic                 # protetor de tela de reserva
+
+# TV, HDMI, imagem e audio (TCL / Realtek)
+com.tcl.tv                               # app de TV ao vivo; abre HDMI/AV/antena (TVActivity)
+com.tcl.tvinput                          # servicos TIF: sintonizador, HDMI 1-3, AV
+com.tcl.framework.custom                 # ponte Android <-> chip Realtek
+com.tcl.settings                         # imagem, som, HDR, modos
+com.tcl.systemuioverlay                  # volume e barra na tela
+com.tcl.appstatecontroller
+com.tcl.factory.view                     # menu de fabrica; nao mexer
+com.tcl.initsetup
+com.realtek.netflix.setting              # integracao Netflix/DRM do Realtek
+
+# Controle remoto, teclas e Bluetooth
+com.android.bluetooth
+com.tcl.tcl_bt_rcu_service               # pareamento do controle Bluetooth
+com.tcl.autopair
+com.tcl.keycustomfunctionservice         # teclas do controle; tem um FallbackHome
+com.tcl.keyhelp
+com.tcl.rc.ota                           # firmware do controle remoto
+
+# Voz e microfone
+com.google.android.katniss               # Google Assistente / busca por voz
+com.google.android.tv.assistant
+com.google.android.speech.pumpkin        # comandos de voz offline
+com.google.android.tts
+com.tcl.micmanager
+com.tcl.assistant
+
+# Google, Play e Chromecast
+com.google.android.gms
+com.google.android.gsf
+com.android.vending
+com.google.android.apps.mediashell       # Chromecast integrado
+com.google.android.tv.remote.service     # controle pelo app Google TV no celular
+com.google.android.inputmethod.latin     # teclado na tela
+com.google.android.backuptransport
+com.google.android.partnersetup
+
+# Launcher original: desativado em 19/10/2026 com aprovacao (o br.eddy.tvhome e o Home).
+# Continua aqui para nenhuma automacao mexer nele sem -Force. Reativar: tcl-pkg.ps1 enable.
+com.google.android.tvlauncher
+
+# Apps que o usuario usa
+com.netflix.ninja
+com.google.android.youtube.tv
+com.spotify.tv.android
+com.globo.globotv
