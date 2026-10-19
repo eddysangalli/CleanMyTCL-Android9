@@ -6,6 +6,10 @@ upstream `Gathin23/cleanyourtv` `main` / release **v2.2.0** (2026-10-19).
 Nothing was merged, cherry-picked, installed or flashed on the TV for this audit. All checks that
 needed the device were read-only (package state, `dumpsys`, key injection, logcat).
 
+Update, same day: upstream released **v2.3.0** and more PRs/forks appeared. They are compiled, with
+an implementation order, in [`UPSTREAM-UPDATE-2026-10-19.md`](UPSTREAM-UPDATE-2026-10-19.md). The
+v2.2.0 findings below stay valid.
+
 ---
 
 ## 1. What upstream v2.2.0 actually changed
