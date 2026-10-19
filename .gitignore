@@ -42,3 +42,6 @@ signing.properties
 *.apk
 *.aab
 *.apks
+
+# Saida dos testes de recursos (screenshots de trabalho, contem o nome e a cidade configurados)
+etapa2/
