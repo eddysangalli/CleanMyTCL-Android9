@@ -1,0 +1,52 @@
+{
+  "source": "benchmarks/results/data/2026-10-19-v0.5.2/idle-clean-pair.csv",
+  "charts": [
+    {
+      "id": "bench-idle-clean-launcher",
+      "title": "Idle cost of the launcher itself, with the apps closed",
+      "subtitle": "TCL BeyondTV2, 120 s samples, back to back, stock Home vs Eddy TV v0.5.2",
+      "y_label": "% of one core",
+      "x_labels": ["Stock Home (14:06)", "Stock Home (14:12)", "Eddy TV (14:03)", "Eddy TV (14:10)"],
+      "series": [
+        {
+          "name": "Launcher process CPU",
+          "values": [10.5, 10.5, 0.9, 0.0],
+          "colors": ["#c0392b", "#c0392b", "#27ae60", "#27ae60"]
+        }
+      ],
+      "note": "One core, not the whole SoC. Apps closed before each sample. The launcher itself is the difference; the system-wide total is dominated by the Google hotword."
+    },
+    {
+      "id": "bench-idle-clean-fps",
+      "title": "Redraw rate while the Home sits idle",
+      "subtitle": "Frames drawn in 120 s with nothing happening on screen",
+      "y_label": "frames per second",
+      "value_suffix": " fps",
+      "x_labels": ["Stock Home (14:06)", "Stock Home (14:12)", "Eddy TV (14:03)", "Eddy TV (14:10)"],
+      "series": [
+        {
+          "name": "Idle redraw rate",
+          "values": [3.80, 3.79, 0.17, 0.03],
+          "colors": ["#c0392b", "#c0392b", "#27ae60", "#27ae60"]
+        }
+      ],
+      "note": "456 and 455 frames on the stock Home against 20 and 4 on Eddy TV, over the same 120 s."
+    },
+    {
+      "id": "bench-idle-clean-memory",
+      "title": "Memory available with the apps closed",
+      "subtitle": "MemAvailable, 120 s idle samples",
+      "y_label": "MB",
+      "value_suffix": " MB",
+      "x_labels": ["Stock Home (14:06)", "Stock Home (14:12)", "Eddy TV (14:03)", "Eddy TV (14:10)"],
+      "series": [
+        {
+          "name": "MemAvailable",
+          "values": [596, 620, 681, 717],
+          "colors": ["#2c7fb8", "#2c7fb8", "#16a085", "#16a085"]
+        }
+      ],
+      "note": "Swap used was equal in all four samples (about 293 MB), which is the zRAM floor."
+    }
+  ]
+}

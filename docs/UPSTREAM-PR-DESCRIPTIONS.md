@@ -131,8 +131,10 @@ on it. What it changes:
 
 ### What it adds on top of the shared launcher
 
-- **Ultralight mode, on by default.** No scroll animation, no springs, no glow, no weather
-  request. Focus moves in one frame.
+- **Ultralight mode, on by default.** No scroll animation, no springs, no glow, no tile title
+  and no entry animation: the focus jumps instead of gliding (1 frame drawn per move against
+  38 in normal mode). The greeting, the weather line and the dock are still there — what the
+  mode changes is the motion, not the content.
 - **Everything configurable from the sofa.** Name, system name, accent colour, dock order, hidden
   apps and the ultralight toggle are all edited on the TV. No "Eddy" is hard-coded — the
   identity is a configuration, so the build is usable by anyone.

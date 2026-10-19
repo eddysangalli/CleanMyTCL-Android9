@@ -280,7 +280,7 @@ of #130, since they list it as a valid target.
 | #167 | On-TV layout and motion settings | **Largely redundant** with our settings screen. |
 | #151 | Remote dock and app reordering | Same as #152; pick one if we port. |
 | #143 | Self-update from signed GitHub releases | **Skip.** Self-update on a TV is a supply-chain surface; our `RECOVERY.md` covers reinstalling a tagged version. |
-| #156 | Optional weather line above the date | **We already have it** — `Weather.java` + `MainActivity.refreshWeather()`, off by default, never fetches in ultralight mode. |
+| #156 | Optional weather line above the date | **We already have it** — `Weather.java` + `MainActivity.refreshWeather()`, off by default. Correction (2026-10-19): the weather is **not** gated by the ultralight mode — `updateGreeting()` sets the same text in both modes, and the fetch is cached and refreshed at most once an hour. What ultralight changes is the motion, not the content. |
 | #149 | Bitcoin ticker | **Skip.** Needs network, no value on a TV, and it is what PR #150 is stacked on. |
 
 ---

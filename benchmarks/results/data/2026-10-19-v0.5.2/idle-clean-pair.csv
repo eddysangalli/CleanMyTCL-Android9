@@ -1,0 +1,5 @@
+label,started_at,seconds,focus_pkg,cpu_total_4core_pct,launcher_cpu_one_core_pct,idle_fps,frames_total,mem_available_kb,swap_used_kb,note
+eddy-clean-1,2026-10-19 14:03,120,br.eddy.tvhome,26.8,0.9,0.17,20,681424,293136,first sample after the assistant test; the voice stack was still hot
+eddy-clean-2,2026-10-19 14:10,120,br.eddy.tvhome,14.0,0.0,0.03,4,717344,293136,second sample, taken in a quieter window
+stock-clean-1,2026-10-19 14:06,120,com.google.android.tvlauncher,19.4,10.5,3.80,456,596360,292900,stock launcher enabled and set as Home for the measurement
+stock-clean-2,2026-10-19 14:12,120,com.google.android.tvlauncher,19.3,10.5,3.79,455,619804,292900,repeat of the stock sample

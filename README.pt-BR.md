@@ -22,10 +22,15 @@ opções está desfocada por privacidade; o resto são os PNGs originais.*
 | ![Grade de apps](docs/assets/eddy-launcher-apps.png) | ![Menu do app](docs/assets/eddy-tile-menu.png) |
 | *Linhas de apps instalados; no modo ultraleve a grade salta em vez de rolar* | *Segure em um app: fixar no dock, ver informações, ocultar* |
 
-| Opções na TV | CPU ociosa medida |
+| Opções na TV | Custo ocioso do próprio launcher |
 |:---:|:---:|
-| ![Opções](docs/assets/eddy-options.png) | ![Gráfico de CPU ociosa](docs/assets/charts/bench-idle-cpu.png) |
-| *Tudo se configura na própria TV: nome do usuário, mensagem, cor de destaque, movimento, clima, apps ocultos, restaurar* | *Mesma TV, mesmo script: 57,3% (feed original animando a 60 fps), 20,6% (amostra fria do original a 3,7 fps) e 14,5% (Eddy v0.5.2), em % da capacidade dos 4 núcleos. Método e resultados completos em [benchmarks/results/](benchmarks/results/).* |
+| ![Opções](docs/assets/eddy-options.png) | ![Gráfico ocioso](docs/assets/charts/bench-idle-clean-launcher.png) |
+| *Tudo se configura na própria TV: nome do usuário, mensagem, cor de destaque, movimento, clima, apps ocultos, restaurar* | *Mesma TV, mesma sessão, apps fechados: o Home original custa 10,5% de um núcleo e redesenha a 3,8 fps; o Eddy TV custa 0,0–0,9% e redesenha a 0,03–0,17 fps. [Método e resultados completos](benchmarks/results/2026-10-19-v0.5.2.md).* |
+
+| Menu de entradas (HDMI / TV ao vivo) | Modo ultraleve |
+|:---:|:---:|
+| ![Entradas](docs/assets/eddy-inputs.png) | ![Ultraleve](docs/assets/eddy-ultralight.png) |
+| *As portas HDMI e a TV ao vivo, direto do Home: as teclas 1-4 pulam para o HDMI 1-4, na mesma ordem do menu Entradas* | *Movimento suave desligado: o foco salta em vez de deslizar, 1 quadro desenhado por movimento em vez de 38* |
 
 > Cada número em [benchmarks/results/](benchmarks/results/) está marcado com a versão exata do
 > launcher e as condições em que foi medido. Os gráficos são gerados a partir dos dados medidos por

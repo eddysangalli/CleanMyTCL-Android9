@@ -25,10 +25,15 @@ screenshot is blurred for privacy; the rest are the original PNGs.*
 | ![App grid](docs/assets/eddy-launcher-apps.png) | ![Tile menu](docs/assets/eddy-tile-menu.png) |
 | *Rows of installed apps; in ultralight mode the grid jumps instead of scrolling* | *Long-press a tile: pin it to the dock, open its info, hide it* |
 
-| On-TV options | Measured idle CPU |
+| On-TV options | Idle cost of the launcher itself |
 |:---:|:---:|
-| ![Options](docs/assets/eddy-options.png) | ![Idle CPU chart](docs/assets/charts/bench-idle-cpu.png) |
-| *Everything is set on the TV itself: user name, message, accent colour, motion, weather, hidden apps, reset* | *Same TV, same script: 57.3% (stock feed animating at 60 fps), 20.6% (cold stock sample at 3.7 fps) and 14.5% (Eddy v0.5.2), in % of the whole 4-core SoC. Full method and results in [benchmarks/results/](benchmarks/results/).* |
+| ![Options](docs/assets/eddy-options.png) | ![Idle chart](docs/assets/charts/bench-idle-clean-launcher.png) |
+| *Everything is set on the TV itself: user name, message, accent colour, motion, weather, hidden apps, reset* | *Same TV, same session, apps closed: the stock Home costs 10.5% of one core and redraws at 3.8 fps; Eddy TV costs 0.0–0.9% and redraws at 0.03–0.17 fps. [Full method and results](benchmarks/results/2026-10-19-v0.5.2.md).* |
+
+| Inputs menu (HDMI / Live TV) | Ultralight mode |
+|:---:|:---:|
+| ![Inputs](docs/assets/eddy-inputs.png) | ![Ultralight](docs/assets/eddy-ultralight.png) |
+| *The HDMI ports and Live TV, straight from the Home: number keys 1-4 jump to HDMI 1-4, in the same order as the Inputs menu* | *Smooth motion off: the focus jumps instead of gliding, 1 frame drawn per move instead of 38* |
 
 > Every number in [benchmarks/results/](benchmarks/results/) is tagged with the exact launcher
 > version and the conditions it was measured in. Charts are generated from the measured data by
