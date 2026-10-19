@@ -11,7 +11,7 @@ mkdir -p "$SHOTS"
 FAIL=0
 ok() { echo "  OK     $*"; }
 bad() { echo "  FALHA  $*"; FAIL=$((FAIL + 1)); }
-shot() { "$ADB" -s "$SERIAL" exec-out screencap -p > "$SHOTS/$1.png"; }
+shot() { scripts/tcl-screencap.sh "$SHOTS/$1.png" "$SERIAL" > /dev/null 2>&1; }
 focus() { tv dumpsys window | grep -m1 mCurrentFocus | sed 's/.*u0 //; s/}$//'; }
 home() { tv input keyevent KEYCODE_HOME; sleep 3; }
 dock_start() { home; tv input keyevent 21 21 21 21; sleep 1; }

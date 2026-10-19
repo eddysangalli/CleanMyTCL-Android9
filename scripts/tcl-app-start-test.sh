@@ -5,20 +5,24 @@
 #  - a cada 5 s: uma captura de tela (para marcar quando o catalogo aparece; custa ~1 s de 1 nucleo)
 # Nao limpa cache, nao troca perfil, nao mexe em conta.
 #
-# Uso: scripts/tcl-app-start-test.sh <netflix|youtube|globoplay> <rotulo> [segundos=120] [frio|quente]
+# Uso: scripts/tcl-app-start-test.sh <netflix|youtube|globoplay|spotify> <rotulo> [segundos=120] [frio|quente] [sim|nao]
 #      frio = encerra o processo do app antes (padrao); quente = so traz de volta
+#      sim/nao = captura telas a cada 5 s (nao por padrao: a captura custa ~1 s de CPU e
+#      polui a medicao de tempo e CPU)
 # Saida: investigacao/netflix-boot/<data-hora>-<app>-<rotulo>/ (timeline.csv, shots/, am_start.txt)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 . scripts/tcl-lib.sh
-APP="${1:?uso: tcl-app-start-test.sh <netflix|youtube|globoplay> <rotulo> [segundos] [frio|quente]}"
+APP="${1:?uso: tcl-app-start-test.sh <netflix|youtube|globoplay|spotify> <rotulo> [segundos] [frio|quente] [sim|nao]}"
 LABEL="${2:?rotulo}"
 SECS="${3:-120}"
 MODE="${4:-frio}"
+SHOTS="${5:-nao}"
 case "$APP" in
     netflix)   PKG=com.netflix.ninja; COMP=com.netflix.ninja/.MainActivity ;;
     youtube)   PKG=com.google.android.youtube.tv; COMP=com.google.android.youtube.tv/com.google.android.apps.youtube.tv.activity.ShellActivity ;;
     globoplay) PKG=com.globo.globotv; COMP=com.globo.globotv/.splashtv.SplashActivity ;;
+    spotify)   PKG=com.spotify.tv.android; COMP=com.spotify.tv.android/.SpotifyTVActivity ;;
     *) echo "app desconhecido: $APP"; exit 2 ;;
 esac
 OUT="investigacao/netflix-boot/$(date +%Y%m%d-%H%M%S)-$APP-$LABEL"
@@ -48,8 +52,9 @@ while :; do
     now=$(date +%s.%N)
     el=$(awk -v a="$now" -v b="$T0" 'BEGIN { printf "%.1f", a - b }')
     awk -v e="$el" -v s="$SECS" 'BEGIN { exit !(e >= s) }' && break
-    if [ $((n % 5)) -eq 0 ]; then
-        "$ADB" -s "$SERIAL" exec-out screencap -p > "$OUT/shots/$(printf '%05.1f' "$el").png" 2>/dev/null
+    if [ $((n % 5)) -eq 0 ] && [ "$SHOTS" = "sim" ]; then
+        # Binario de verdade: o '>' do PowerShell 5.1 transformaria o PNG em texto.
+        scripts/tcl-screencap.sh "$OUT/shots/$(printf '%05.1f' "$el").png" "$SERIAL" > /dev/null 2>&1
     fi
     sleep 2
     cur=$(tv "head -1 /proc/stat; cat /proc/$PID/stat 2>/dev/null")
