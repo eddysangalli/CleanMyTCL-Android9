@@ -43,7 +43,13 @@ check "saida de audio (alto-falante)" "tv dumpsys media.audio_flinger | grep -q 
 
 # Home responde e mostra o launcher configurado
 HOME_PKG="$(tv_home_component)"; HOME_PKG="${HOME_PKG%%/*}"
-tv input keyevent KEYCODE_HOME; sleep 3
+tv input keyevent KEYCODE_HOME
+# A TV pode demorar alguns segundos para assentar o foco depois do HOME (o sistema
+# estava carregando o Netflix). Espera ate o foco estabilizar, em vez de dormir 3 s.
+for _ in $(seq 1 10); do
+    sleep 1
+    [ "$(tv_focus_pkg)" = "$HOME_PKG" ] && break
+done
 check "Home abre $HOME_PKG" "[ \"\$(tv_focus_pkg)\" = \"$HOME_PKG\" ]"
 
 # Configuracoes
@@ -70,11 +76,22 @@ fi
 check "Netflix abre" "tv am start -W -n com.netflix.ninja/.MainActivity | grep -q 'Status: ok'"
 sleep 6; tv input keyevent KEYCODE_HOME; sleep 3
 
-# Assistente escuta pelo microfone
+# Assistente escuta pelo microfone.
+#Nesta TV o assistente leva ~10 s do KEYCODE_SEARCH ate o mic abrir e o S3 conectar,
+#entao espera-se o evento em vez de dormir um tempo fixo (o sleep de 7 s dava falso negativo).
 "$ADB" -s "$SERIAL" logcat -c -b main -b system
-tv input keyevent KEYCODE_SEARCH; sleep 7
-VOICE=$("$ADB" -s "$SERIAL" logcat -d -b main -b system | tr -d '\r')
+tv input keyevent KEYCODE_SEARCH
+VOICE=""
+for _ in $(seq 1 25); do
+    sleep 1
+    VOICE=$("$ADB" -s "$SERIAL" logcat -d -b main -b system | tr -d '\r')
+    if printf '%s\n' "$VOICE" | grep -q 'LIBAS_S3_CONNECTION_UP'; then break; fi
+done
 tv input keyevent KEYCODE_BACK; sleep 2
+if ! printf '%s\n' "$VOICE" | grep -q 'LIBAS_S3_CONNECTION_UP'; then
+    mkdir -p private 2>/dev/null || true
+    printf '%s\n' "$VOICE" > private/smoke-voice-debug.log 2>/dev/null || true
+fi
 check "Assistente abre e escuta" "echo \"\$VOICE\" | grep -q ASSISTANT_LISTENING_EVENT"
 check "microfone abre no HAL" "echo \"\$VOICE\" | grep -q 'adev_open_input_stream: flags'"
 check "Assistente conecta ao servidor" "echo \"\$VOICE\" | grep -q LIBAS_S3_CONNECTION_UP"

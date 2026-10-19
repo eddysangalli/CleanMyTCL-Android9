@@ -27,7 +27,8 @@ How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
   + `katniss:interactor` (Assistant) ≈ 48% of one core, continuously. Re-confirmed 2026-10-19 (≈ 27% + 25%).
 - Replacing the stock Home with the light launcher cut idle CPU from ~53–57% to ~15% (of one core,
   system-wide) and idle fps from 60 to 0 (stock home animates permanently).
-  *Measured on launcher v0.1–v0.3.3; see [../../benchmarks/results/tcl-beyondtv2-v660.md](../../benchmarks/results/tcl-beyondtv2-v660.md).*
+  *Measured on launcher v0.1–v0.5.2; v0.5.2 itself: 14.9% total CPU with the launcher at 0%,
+  0 fps, PSS 23 MB. See [../../benchmarks/results/tcl-beyondtv2-v660.md](../../benchmarks/results/tcl-beyondtv2-v660.md).*
 - Disabling TCL telemetry/promo packages removed processes but gave **no measurable** speed gain.
 - Memory is not the bottleneck: 0 apps killed by low memory in boot logs; zRAM/swap tweaks are out of scope.
 - Netflix first frame ~3.8 s; the long wait (~90 s reported) is after that and is still under investigation.

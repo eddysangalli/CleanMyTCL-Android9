@@ -23,10 +23,11 @@ Profile: [devices/tcl-beyondtv2-rtd2851-r851t02-v660/](devices/tcl-beyondtv2-rtd
 |---|---|---|
 | ADB over network | ✅ | Port 5555, Windows 11 + platform-tools |
 | Backup / restore of package state | ✅ | `tcl-backup.ps1` / `tcl-restore.ps1` (dry-run and apply used on 2026-10-18) |
-| Debloat (profile list, 3 packages) | ✅ | `debloat.txt` lists 3 packages (`com.tcl.esticker`, `com.tcl.bi`, `com.tcl.tv.tclhome_passive`); one-by-one with `tcl-try-disable.sh`, smoke 24/24, 3 reboots OK. Not benchmarked over several days |
+| Debloat (profile list, 2 packages) | ✅ | `debloat.txt` lists 2 packages (`com.tcl.bi`, `com.tcl.tv.tclhome_passive`); one-by-one with `tcl-try-disable.sh`, smoke test, reboots OK. Not benchmarked over several days. `com.tcl.esticker` is **not** listed — it did not stay disabled |
 | Launcher install + Home swap | ✅ | v0.3.3 → v0.5; Home resolves to the new launcher; stock launcher recoverable |
-| Launcher performance | 🟡 | Measured on **v0.3.3**: key response p50 14 ms / max 20 ms, cold start ~0.5 s, PSS ~20 MB, 0 fps idle. **v0.4/v0.5 not re-benchmarked yet** |
+| Launcher performance | ✅ | Measured on **v0.5.2** (2026-10-19): key response p50 13 ms / p95 16 / max 17 ms; cold start p50 414 ms; back-to-Home p50 39 ms; janky frames 0.4 %; idle CPU 14.9 % total with the launcher at 0 %; PSS 23 MB |
 | Reboot (`adb reboot`) | ✅ | 3 runs, ~40–43 s to `boot_completed`, smoke OK after each |
+| Smoke test (24 checks) | ✅ | Re-run 2026-10-19 12:20 — 24/24 OK, no crashes/ANR. See the timing fix in `scripts/tcl-smoke.sh` |
 | Power-loss boot (unplug/replug) | 🟡 | One real boot log analysed; external stopwatch measurement pending |
 | Resume from standby (STR) | ⚪ | Not measured yet (this is the everyday "turn on") |
 | HDMI 1/2/3 | 🟡 | Smoke test opens one HDMI input in `com.tcl.tv` and checks the session; the other inputs need a manual check |
