@@ -79,6 +79,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private TextView weather;
     /** Eddy TV accent colours, in the order of R.array.accent_names. */
     private static final int[] ACCENTS = {0xFF4C8DFF, 0xFF3DDC97, 0xFFFF9F43, 0xFFFF5C8A, 0xFFA779FF, 0xFFFFFFFF};
+    private static final int FOCUS_RING = 0xF2FFFFFF;
     /** Last three Home presses (elapsedRealtime), for the recovery shortcut: three within 10 s. */
     private static final long[] homePresses = new long[3];
     private static int homePressIndex;
@@ -133,6 +134,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         root = findViewById(R.id.root);
         glass = findViewById(R.id.glass);
+        // Sized for a focused tile before the first frame: left at the 10dp placeholder it showed as a dot.
+        sizeGlass(getResources().getDimension(R.dimen.tile_width), getResources().getDimension(R.dimen.tile_height));
         brand = findViewById(R.id.brand);
         greeting = findViewById(R.id.greeting);
         subtitle = findViewById(R.id.subtitle);
@@ -229,6 +232,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onResume() {
         super.onResume();
+        KeyRemapService.homeResumed();
         glassShown = false;
         glass.setAlpha(0f);
         light = prefs.light();
@@ -303,19 +307,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         Rect r = tileRect;
         r.set(0, 0, card.getWidth(), card.getHeight());
         root.offsetDescendantRectToMyCoords(card, r);
-        float pad = 6f * density;        // matches GlassView's glow inset
-        float w = card.getWidth() * AppAdapter.FOCUS_SCALE + 2 * pad;
-        float h = card.getHeight() * AppAdapter.FOCUS_SCALE + 2 * pad;
-        float x = r.exactCenterX() - w / 2f;
-        float y = r.exactCenterY() - h / 2f;
-
-        ViewGroup.LayoutParams lp = glass.getLayoutParams();
-        if (lp.width != (int) w || lp.height != (int) h) {
-            lp.width = (int) w;
-            lp.height = (int) h;
-            glass.setLayoutParams(lp);
-            glass.setRadius(16f * density * AppAdapter.FOCUS_SCALE + pad);
-        }
+        sizeGlass(card.getWidth(), card.getHeight());
+        float pad = 6f * density;        // GlassView's inset, also the reveal margin below
+        float x = r.exactCenterX() - glass.getLayoutParams().width / 2f;
+        float y = r.exactCenterY() - glass.getLayoutParams().height / 2f;
         glassTargetX = x;
         glassTargetY = y;
         if (!glassShown || light) {
@@ -522,6 +517,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
     }
 
+    /** Highlight size for a tile of cardW x cardH at focus scale, plus GlassView's inset on each side. */
+    private void sizeGlass(float cardW, float cardH) {
+        float pad = 6f * density;        // matches GlassView's inset
+        int w = (int) (cardW * AppAdapter.FOCUS_SCALE + 2 * pad);
+        int h = (int) (cardH * AppAdapter.FOCUS_SCALE + 2 * pad);
+        ViewGroup.LayoutParams lp = glass.getLayoutParams();
+        if (lp.width == w && lp.height == h) return;
+        lp.width = w;
+        lp.height = h;
+        glass.setLayoutParams(lp);
+        // Also apply it now: focus restored inside a layout pass would otherwise keep the old size until the next one.
+        glass.layout(glass.getLeft(), glass.getTop(), glass.getLeft() + w, glass.getTop() + h);
+        glass.setRadius(16f * density * AppAdapter.FOCUS_SCALE + pad);
+    }
+
     private void hideGlass() {
         if (!glassShown) return;
         glassShown = false;
@@ -613,11 +623,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (!text.contentEquals(view.getText())) view.setText(text);
     }
 
-    /** Accent colour on the brand and the focus ring. */
+    /** Accent colour on the brand. The focus ring stays white: a coloured ring read as heavy on the TV. */
     private void applyAccent() {
         int color = ACCENTS[prefs.accent() % ACCENTS.length];
         brand.setTextColor(color);
-        glass.setRing(color);
+        glass.setRing(FOCUS_RING);
     }
 
     private interface TextResult {

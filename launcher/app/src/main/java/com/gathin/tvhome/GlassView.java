@@ -38,13 +38,13 @@ public class GlassView extends View {
         setLayerType(LAYER_TYPE_HARDWARE, null);
     }
 
-    /** Eddy TV focus: a plain ring in the accent colour (no sheen, specular or glow). 0 = glass. */
+    /** Eddy TV focus: a plain thin ring just outside the tile (no sheen, specular or glow). 0 = glass. */
     private int ringColor;
 
     void setRing(int color) {
         ringColor = color;
         rim.setColor(color != 0 ? color : 0xCCFFFFFF);
-        rim.setStrokeWidth((color != 0 ? 3f : 1.5f) * density);
+        rim.setStrokeWidth((color != 0 ? 2.5f : 1.5f) * density);
         invalidate();
     }
 
@@ -63,11 +63,17 @@ public class GlassView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         float inset = 6f * density;   // room for the glow
-        rect.set(inset, inset, getWidth() - inset, getHeight() - inset);
         if (ringColor != 0) {
-            canvas.drawRoundRect(rect, radius, radius, rim);
+            // A small gap off the tile edge, with the tile's own corner radius carried outwards, so the ring
+            // follows the tile's shape instead of rounding off its corners.
+            float out = 2.5f * density + rim.getStrokeWidth() / 2f;
+            float d = inset - out;
+            rect.set(d, d, getWidth() - d, getHeight() - d);
+            float r = radius - inset + out;   // radius is the tile's radius plus the inset
+            canvas.drawRoundRect(rect, r, r, rim);
             return;
         }
+        rect.set(inset, inset, getWidth() - inset, getHeight() - inset);
 
         // Outer glow: three widening, fading strokes.
         for (int i = 1; i <= 3; i++) {
