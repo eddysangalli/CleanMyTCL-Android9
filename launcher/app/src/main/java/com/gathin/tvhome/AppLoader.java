@@ -137,6 +137,7 @@ final class AppLoader {
         Intent probe = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
         List<AppAdapter.Entry> fresh = new ArrayList<>();
         Set<String> seen = new HashSet<>();
+        Set<String> labels = new HashSet<>();
         for (ResolveInfo ri : pm.queryIntentActivities(probe, 0)) {
             if (ri.activityInfo == null) continue;
             String pkg = ri.activityInfo.packageName;
@@ -149,6 +150,9 @@ final class AppLoader {
                 e = build(pm, ri, component, key, w, h);
                 CACHE.put(key, e);
             }
+            // An app can declare two leanback activities with the same visible name; one tile is
+            // enough (#298, upstream anandhakrishnanaji). Different labels are still kept.
+            if (!labels.add(e.pkg + '\n' + e.label)) continue;
             fresh.add(e);
         }
         CACHE.keySet().retainAll(seen);
