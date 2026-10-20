@@ -24,7 +24,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -489,7 +491,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             prefs.resetDock();
             AppLoader.reorder(this);
         }));
-        showMenu(anchor, items, focusIndex, () -> {
+        showMenu(null, items, focusIndex, () -> {
             if (prefs.columns() != COLUMNS) recreate();
         });
     }
@@ -960,11 +962,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         showMenu(anchor, items, 0, null);
     }
 
-    /** A dropdown of actions in the Inputs menu's style, below the anchor (or above it near the bottom). */
+    /**
+     * A dropdown of actions in the Inputs menu's style, below the anchor (or above it near the bottom).
+     * With no anchor it is a wider panel fixed at the right edge, vertically centred (the Home options).
+     */
     private void showMenu(View anchor, List<MenuItem> items, int focusIndex, Runnable onDismiss) {
         View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
         LinearLayout rows = panel.findViewById(R.id.rows);
-        final PopupWindow popup = new PopupWindow(panel, (int) (300 * density), ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        int popupWidth = (int) ((anchor == null ? 380 : 300) * density);
+        final PopupWindow popup = new PopupWindow(panel, popupWidth, ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));   // needed for Back to dismiss
         popup.setOutsideTouchable(true);
         popup.setAnimationStyle(0);
@@ -972,7 +978,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         for (MenuItem item : items) {
             View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
             ((ImageView) row.findViewById(R.id.icon)).setImageResource(item.icon);
-            ((TextView) row.findViewById(R.id.title)).setText(item.title);
+            TextView title = row.findViewById(R.id.title);
+            title.setText(item.title);
+            // A label too long for the row scrolls once into view while the row has focus.
+            title.setMarqueeRepeatLimit(1);
+            row.setOnFocusChangeListener((v, focused) -> {
+                title.setEllipsize(focused ? TextUtils.TruncateAt.MARQUEE : TextUtils.TruncateAt.END);
+                title.setSelected(focused);
+            });
             TextView status = row.findViewById(R.id.status);
             row.findViewById(R.id.dot).setVisibility(View.GONE);
             if (item.step == null) {
@@ -983,7 +996,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 });
             } else {
                 status.setText(R.string.menu_stepper_hint);
-                TextView title = row.findViewById(R.id.title);
+                status.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+                status.setTextColor(title.getTextColors());
                 row.setOnClickListener(v -> {
                     item.step.step(1);
                     title.setText(item.label.get());
@@ -1000,6 +1014,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             rows.addView(row);
         }
         if (onDismiss != null) popup.setOnDismissListener(onDismiss::run);
+        if (anchor == null) {
+            popup.showAtLocation(root, Gravity.END | Gravity.CENTER_VERTICAL, (int) (40 * density), 0);
+            rows.getChildAt(Math.max(0, Math.min(focusIndex, rows.getChildCount() - 1))).requestFocus();
+            return;
+        }
         // PopupWindow only flips above the anchor when it knows its height, and a WRAP_CONTENT one never does:
         // near the bottom the menu was cut off by the screen edge. Measure it and place it above by hand.
         int width = popup.getWidth();
