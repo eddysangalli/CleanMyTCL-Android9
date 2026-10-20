@@ -180,7 +180,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             @Override
             public boolean requestChildRectangleOnScreen(@NonNull RecyclerView parent, @NonNull View child,
                                                          @NonNull Rect rect, boolean immediate, boolean focusedChildVisible) {
-                if (getPosition(child) < COLUMNS) return false;
+                if (getPosition(child) < Grid.dockSize(COLUMNS)) return false;
                 int top = child.getTop() + rect.top;
                 int bottom = top + rect.height();
                 int limitBottom = getHeight() - getPaddingBottom();
@@ -196,7 +196,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
         grid.setHasFixedSize(true);
         grid.setItemAnimator(null);
-        grid.addItemDecoration(new DockDecoration(COLUMNS, density));
+        grid.addItemDecoration(new DockDecoration(Grid.dockSize(COLUMNS), density));
         grid.setLayoutAnimation(new LayoutAnimationController(
                 AnimationUtils.loadAnimation(this, R.anim.tile_enter), 0.06f));
         // After the rise-in animation, refit the ring once more: a cold start can focus a tile before
@@ -215,7 +215,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             public void onAnimationRepeat(Animation a) {
             }
         });
-        adapter = new AppAdapter(this, COLUMNS);
+        adapter = new AppAdapter(this, Grid.dockSize(COLUMNS));
         grid.setAdapter(adapter);
 
         // tvOS layout: push the dock row to the bottom of the screen; the grid hides below until you press Down.
@@ -225,8 +225,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             int inner = (r - l) - grid.getPaddingLeft() - grid.getPaddingRight();
             int itemH = AppAdapter.itemHeightPx(
                     AppAdapter.tileHeightPx(AppAdapter.tileWidthPx(inner, COLUMNS, density)), density);
-            int dockRow = itemH + (int) ((6 + 12) * density);   // item height plus DockDecoration offsets
-            int want = Math.max(0, h - dockRow - (int) (30 * density));
+            int want = Grid.topPadding(h, itemH, density);
             if (grid.getPaddingTop() != want) {
                 grid.setPadding(grid.getPaddingLeft(), want, grid.getPaddingRight(), grid.getPaddingBottom());
             }
@@ -417,7 +416,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             springY.animateToFinalPosition(glassTargetY);
         }
         View item = (View) card.getParent();
-        if (position < COLUMNS) {
+        if (Grid.inDock(position, COLUMNS)) {
             // Dock: park it at the bottom of the screen.
             int decoratedTop = item.getTop() - (int) (6 * density);
             int dy = decoratedTop - grid.getPaddingTop();
@@ -457,7 +456,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }));
         } else {
             items.add(new MenuItem(R.drawable.ic_star, R.string.menu_pin, () -> {
-                if (dock.size() >= COLUMNS) {
+                if (!Grid.dockHasRoom(dock.size(), COLUMNS)) {
                     Toast.makeText(this, R.string.dock_full, Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -520,7 +519,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         items.add(new MenuItem(R.drawable.ic_person, getString(R.string.opt_profiles, prefs.profiles().length()), this::showProfiles));
         // Changing the columns rebuilds the Home, so the new count is applied when the menu closes.
         items.add(new MenuItem(R.drawable.ic_grid, () -> getString(R.string.opt_columns, prefs.columns()),
-                dir -> prefs.setColumns(Math.max(4, Math.min(6, prefs.columns() + dir)))));
+                dir -> prefs.setColumns(Grid.columns(prefs.columns() + dir))));
         String[] wallpaperNames = getResources().getStringArray(R.array.wallpaper_names);
         items.add(new MenuItem(R.drawable.ic_wallpaper, () -> {
             int i = backgroundIndex(prefs.wallpaper());
@@ -815,20 +814,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // Horizontal: swallow the key at a row's ends so focus never wraps to the next row or
         // escapes up into the top bar. Mid-row moves fall through to the default focus search.
         if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-            if (position % COLUMNS != 0) return false;
+            if (!Grid.atRowStart(position, COLUMNS)) return false;
             nudgeGlass(-1, 0);
             return true;
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-            if (position % COLUMNS != COLUMNS - 1 && position != count - 1) return false;
+            if (!Grid.atRowEnd(position, count, COLUMNS)) return false;
             nudgeGlass(1, 0);
             return true;
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-            if (position < COLUMNS) return false;          // dock row: let focus move to the top bar
+            if (Grid.inDock(position, COLUMNS)) return false;   // dock row: let focus move to the top bar
             target = position - COLUMNS;
         } else {
-            int lastRowStart = ((count - 1) / COLUMNS) * COLUMNS;
+            int lastRowStart = Grid.lastRowStart(count, COLUMNS);
             if (position >= lastRowStart) {                // already on the last row: stay put
                 nudgeGlass(0, 1);
                 return true;
