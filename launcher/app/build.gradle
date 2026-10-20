@@ -37,6 +37,13 @@ android {
         fatal 'HardcodedText', 'SetTextI18n'
     }
 
+    testOptions {
+        // Unit tests cover the pure arithmetic the launcher gets right before it touches a View
+        // (WallpaperSize, AppAdapter's tile geometry). Android's classes are stubs in a unit test, so
+        // the stubs return defaults instead of throwing "not mocked".
+        unitTests.returnDefaultValues = true
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -46,4 +53,7 @@ android {
 dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.3.2'
     implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
+
+    // JVM unit tests only; not in the APK.
+    testImplementation 'junit:junit:4.13.2'
 }

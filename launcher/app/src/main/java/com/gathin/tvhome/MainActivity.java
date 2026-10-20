@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -25,6 +26,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.provider.Settings;
@@ -982,11 +984,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (wallpaperLoadingRes == image) return;
         wallpaperLoadingRes = image;
         final int request = ++wallpaperRequest;
+        final Resources resources = getResources();
         WALLPAPER.execute(() -> {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inPreferredConfig = Bitmap.Config.RGB_565;
-            options.inScaled = false;
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), image, options);
+            Bitmap bitmap = decodeWallpaper(resources, image);
             runOnUiThread(() -> {
                 if (request != wallpaperRequest || isFinishing() || isDestroyed()) {
                     if (bitmap != null) bitmap.recycle();
@@ -1001,6 +1001,41 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 wallpaperView.setVisibility(View.VISIBLE);
             });
         });
+    }
+
+    /**
+     * Decodes a wallpaper at the size the screen actually shows it, so it costs a screen-sized bitmap
+     * and no more (#277, from upstream #166). Two passes over the JPEG: the first reads the size for
+     * nothing, the second decodes. A picture over about 4K is refused and the caller keeps the plain
+     * colour: decoding one would ask for hundreds of MB on a TV with 1 GB of RAM.
+     *
+     * The bundled wallpapers are 1920x1080 and the BeyondTV2 is 1920x1080, so on this TV both passes
+     * return the same options the decode had before and the picture costs 4.1 MB as it always did; the
+     * sampling is what keeps a larger screen, or a larger picture, from costing more than that.
+     */
+    private static Bitmap decodeWallpaper(Resources resources, int image) {
+        DisplayMetrics dm = resources.getDisplayMetrics();
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        bounds.inScaled = false;
+        BitmapFactory.decodeResource(resources, image, bounds);
+        if (!WallpaperSize.accepted(bounds.outWidth, bounds.outHeight)) return null;
+
+        int sample = WallpaperSize.sampleSize(bounds.outWidth, bounds.outHeight, dm.widthPixels, dm.heightPixels);
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.RGB_565;
+        options.inScaled = false;
+        if (sample > 1) options.inSampleSize = sample;
+        // A picture between two sample sizes still decodes at full size; inDensity/inTargetDensity scale
+        // it while the decoder has it open, down to the side that limits what centerCrop shows.
+        int[] scale = WallpaperSize.coverScale(bounds.outWidth / sample, bounds.outHeight / sample,
+                dm.widthPixels, dm.heightPixels);
+        if (scale != null) {
+            options.inScaled = true;
+            options.inDensity = scale[0];
+            options.inTargetDensity = scale[1];
+        }
+        return BitmapFactory.decodeResource(resources, image, options);
     }
 
     /** Drops the only wallpaper bitmap: black mode, destroy, or just before a new decode is shown. */
