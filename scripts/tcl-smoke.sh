@@ -7,6 +7,7 @@
 # Variaveis por modelo (o padrao e o perfil BeyondTV2; outros perfis anotam os seus valores em devices/<perfil>/):
 #   TCL_REMOTE_NAME  nome Bluetooth do controle pareado; vazio = controle so IR, o teste e pulado
 #   TCL_SMOKE_APP    componente do app de streaming aberto no teste (pacote/atividade)
+#   TCL_MIC_HAL_LOG  trecho do log do HAL de audio quando o microfone abre; vazio = sem microfone, o teste e pulado
 set -uo pipefail
 cd "$(dirname "$0")/.."
 . scripts/tcl-lib.sh
@@ -14,6 +15,7 @@ tv_connect
 
 REMOTE_NAME="${TCL_REMOTE_NAME-TCL_RC802VLA}"
 SMOKE_APP="${TCL_SMOKE_APP:-com.netflix.ninja/.MainActivity}"
+MIC_HAL_LOG="${TCL_MIC_HAL_LOG-adev_open_input_stream: flags}"
 
 SINCE="${1:-$(( $(tv date +%s) - 180 ))}"
 FAIL=0
@@ -140,7 +142,11 @@ if ! printf '%s\n' "$VOICE" | grep -q 'LIBAS_S3_CONNECTION_UP'; then
 fi
 log "Assistente: verificado em ${VOICE_TRIES:-1} tentativa(s)"
 check "Assistente abre e escuta" "echo \"\$VOICE\" | grep -q ASSISTANT_LISTENING_EVENT"
-check "microfone abre no HAL" "echo \"\$VOICE\" | grep -q 'adev_open_input_stream: flags'"
+if [ -n "$MIC_HAL_LOG" ]; then
+    check "microfone abre no HAL" "echo \"\$VOICE\" | grep -qF '$MIC_HAL_LOG'"
+else
+    echo "  INFO   microfone no HAL nao configurado (TCL_MIC_HAL_LOG vazio): teste pulado"
+fi
 check "Assistente conecta ao servidor" "echo \"\$VOICE\" | grep -q LIBAS_S3_CONNECTION_UP"
 
 tv input keyevent KEYCODE_HOME
