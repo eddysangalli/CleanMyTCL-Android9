@@ -100,6 +100,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private TextView btnWifi;
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
+    private int glassCardW;   // width of the tile the glass was last fitted to
     private boolean glassShown;
     // Static so they survive the activity being destroyed while another app is open (low-memory TVs,
     // or Developer options → "Don't keep activities"); they only reset when the process dies.
@@ -185,6 +186,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             int want = Math.max(0, h - dockRow - (int) (30 * density));
             if (grid.getPaddingTop() != want) {
                 grid.setPadding(grid.getPaddingLeft(), want, grid.getPaddingRight(), grid.getPaddingBottom());
+            }
+            // On a slow cold start a tile can take focus while the grid has no width yet, at the design size;
+            // the relaid-out tile is smaller, so refit the glass instead of waiting for the next focus change.
+            View item = grid.getFocusedChild();
+            View card = item == null ? null : item.findViewById(R.id.card);
+            if (glassShown && card != null && card.isFocused() && card.getWidth() != glassCardW) {
+                grid.post(() -> {
+                    int pos = grid.getChildAdapterPosition(item);
+                    if (card.isFocused() && pos != RecyclerView.NO_POSITION) onTileFocused(pos, card);
+                });
             }
         });
 
@@ -333,6 +344,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         r.set(0, 0, card.getWidth(), card.getHeight());
         root.offsetDescendantRectToMyCoords(card, r);
         sizeGlass(card.getWidth(), card.getHeight());
+        glassCardW = card.getWidth();
         float pad = 6f * density;        // GlassView's inset, also the reveal margin below
         float x = r.exactCenterX() - glass.getLayoutParams().width / 2f;
         float y = r.exactCenterY() - glass.getLayoutParams().height / 2f;
