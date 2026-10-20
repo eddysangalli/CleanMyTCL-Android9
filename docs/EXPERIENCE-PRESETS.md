@@ -1,7 +1,8 @@
 # Experience presets and measured cost
 
-Status: **develop 0.5.7, test/validation only**. The published reference remains **v0.5.6 on
-`main`**. Nothing here was published as a release.
+Status: **0.5.7 (versionCode 29) on the integration branch `integrate/all-prs`, test/validation
+only**. The published reference remains **v0.5.6 on `main`**. Nothing here was published as a
+release.
 
 The project rule is:
 
@@ -17,11 +18,24 @@ recovery are never optional.
 | Preset | Motion | Background | What is known |
 |---|---|---|---|
 | **Performance** (default on a new install) | Instant focus; no spring | Black | Removes the spring animation and releases the wallpaper bitmap. Not separately benchmarked in v0.5.6 |
-| **Balanced** | Smooth focus; current spring | Black | No wallpaper decode. Uses the same current spring as Visual; the shorter Material 3 spring is not integrated yet |
-| **Visual** | Smooth focus; current spring | Aurora wallpaper | Measured on the TCL BeyondTV2 with **v0.5.6**: +9 MB PSS, delayed frames **0.19% → 6.89%**, median key response **17 ms** on both sides |
+| **Balanced** | Smooth focus; the current spring | Black | No wallpaper decode. Uses the same spring as Visual |
+| **Visual** | Smooth focus; the current spring | Aurora wallpaper | Measured on the TCL BeyondTV2 with **v0.5.6**: +9 MB PSS, delayed frames **0.19% → 6.89%**, median key response **17 ms** on both sides |
 
 The three presets are the same app and components. They set the existing motion and wallpaper
 preferences; they do not create separate launchers, packages or services.
+
+### The spring in the 0.5.7 build
+
+The integrated build uses the **Material 3 Expressive spring** from @roky146's PR #10
+(stiffness 380, damping ratio 0.8, plus a subtle lean at the grid edges). It replaced the older
+spring (stiffness 260, damping 0.58) in the Balanced and Visual presets.
+
+That spring is **not measured on this TV yet**. The numbers the author reported come from a
+different TCL (UnionTV, RTD284x) with a different protocol, so they are not transferred. The
+v0.5.6 spring figures quoted below describe the *old* spring and stay labelled as v0.5.6.
+
+Performance (instant focus) is unchanged by this: with no spring, the focus moves in one frame
+and the glass has nothing to interpolate.
 
 ## Measurement provenance
 
@@ -61,19 +75,33 @@ validated on this TV and is not offered as a preset yet.
 - The **Experience** dialog explains each preset. Visual carries a short measured note
   (`v0.5.6: +9 MB, 0.19% → 6.89%`).
 - The **Wallpaper** action shows the fuller v0.5.6 cost before enabling Aurora; turning it off is
-  immediate.
+  immediate. Any other image background (Earth at night, the BlurHash blurs) shows the
+  **"not measured on this TV"** notice instead, and a solid colour switches with no notice.
 - Options without a valid measurement say so instead of inventing a number. In particular, no
   performance claim is made for the Visual preset on v0.5.7 until it is measured.
 
+## Backgrounds available in 0.5.7
+
+The background is a list, cycled with Left/Right in the options, and every entry is reversible.
+`black` is the default and is what Performance uses.
+
+| Background | What it is | Cost on this TV |
+|---|---|---|
+| Black | The window's own black; no draw at all | 0 |
+| Six solid colours | One full-screen fill (midnight, forest, plum, wine, graphite, petrol), chosen for at least 13:1 contrast with the white header text | One fill; not separately measured |
+| Aurora | The bundled 1920×1080 photo, decoded off the main thread at RGB_565 | **Measured in v0.5.6**: +9 MB PSS, delayed frames 0.19% → 6.89% |
+| Earth at night | A bundled NASA photo, same decoding | **Not measured on this TV** |
+| Three BlurHash blurs | A 32×18 bitmap decoded from a 28-character string; the photo itself is not in the APK | **Not measured on this TV** |
+
+A small file is not a small runtime cost: the BlurHash is tiny on disk, but it is still a
+full-screen image drawn every frame, so its cost has to be measured like any other wallpaper.
+
 ## Not integrated yet
 
-- **Expressive Material 3 spring** (`roky146` PR #10): the author reported a shorter spring on a
-  different TCL UnionTV. It has not passed our five-repetition A/B on this TV, so Balanced/Visual
-  keep the current spring. It can become an optional experimental choice after measurement.
-- **BlurHash wallpapers** (PR #8) and additional wallpapers (PR #7): not integrated; no proof yet
-  that they remove the measured Aurora jank.
 - **Wallpaper at reduced resolution**, overdraw reductions and bitmap-cache changes: candidates
   for a future A/B. Do not change the visual result without the comparison.
+- **The 0.5.7 battery** (5 repetitions) and the A/B of the new spring and of the BlurHash: pending
+  an idle TV. Until then, no v0.5.7 performance number is published.
 
 ## Undo
 
