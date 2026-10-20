@@ -3,6 +3,8 @@
 
 Set TV_HOST to the TV's IP. Usage:
     tv.py --probe                      connect and print model / Android version
+                                      (and ro.adb.secure, so a run can say whether the port is open
+                                      to the whole network; see tools/disable.sh, #319)
     tv.py <shell command...>           run one shell command
     tv.py --batch < commands.txt       one command per line, same connection
     tv.py --push <local> <remote>      small files only (see b64push.py for larger ones)
@@ -46,7 +48,10 @@ def main():
     dev = connect()
     if not args or args == ["--probe"]:
         for p in ("ro.product.model", "ro.product.device", "ro.build.version.release",
-                  "ro.build.version.sdk", "ro.build.display.id", "ro.product.manufacturer"):
+                  "ro.build.version.sdk", "ro.build.display.id", "ro.product.manufacturer",
+                  # 0 means network ADB on port 5555 hands a shell to any device on the network
+                  # without the "Allow" prompt, so a debloat run can warn about it (#319).
+                  "ro.adb.secure", "service.adb.tcp.port"):
             print(f"{p} = {dev.shell(f'getprop {p}').strip()}")
     elif args[0] == "--push" and len(args) == 3:
         dev.push(args[1], args[2], transport_timeout_s=300.0, read_timeout_s=300.0)

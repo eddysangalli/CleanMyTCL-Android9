@@ -59,5 +59,46 @@ if (-not $env:FORCE_HOME) {
     }
 }
 
+# Same as disable.sh (#321): a package that asks for android.permission.TV_INPUT_HARDWARE is the software
+# layer under the HDMI, AV and tuner inputs. Disable one and the port still notices the cable but shows
+# "No Signal" for good; re-enabling the pieces in batches does not bring the picture back, a full restore
+# and a cold boot do. Keep them; $env:TVINPUT_ALLOW=1 disables them anyway.
+if (-not $env:TVINPUT_ALLOW -and $pkgs.Count -gt 0) {
+    # Every name was validated as a bare package name above, so none of them can add shell syntax here.
+    # Trailing `; true`: the loop's status is the last package's `grep -q`, which is nonzero whenever the
+    # last listed package is not an input driver, and would look like a failed check.
+    $loop = 'for p in ' + ($pkgs -join ' ') + '; do dumpsys package $p | grep -q TV_INPUT_HARDWARE && echo $p; done; true'
+    # Windows PowerShell turns redirected stderr into an error that 'Stop' would throw (see getprop).
+    $ErrorActionPreference = 'Continue'
+    $tvhw = @(& $py -I (Join-Path $repo 'tools\tv.py') $loop 2>$null)
+    $checked = $LASTEXITCODE -eq 0
+    $ErrorActionPreference = 'Stop'
+    if (-not $checked) {
+        Write-Warning 'Could not check which listed packages drive the HDMI/AV inputs (tv.py failed). Check every input after this run: a port that notices the cable and stays black means one of them was disabled, and only a full restore and a cold boot bring it back (#321).'
+    } else {
+        foreach ($p in ($tvhw | ForEach-Object { $_.Trim() } | Where-Object { $_ })) {
+            if ($pkgs -contains $p) {
+                Write-Warning "Skipping ${p}: it asks for android.permission.TV_INPUT_HARDWARE, so it is the software layer under the HDMI/AV/tuner inputs. With it disabled those inputs still notice the cable but stay black (No Signal), and re-enabling the pieces in batches does not restore the picture: a full restore plus a cold boot does (#321). Set `$env:TVINPUT_ALLOW=1 to disable it."
+                $pkgs = @($pkgs | Where-Object { $_ -ne $p })
+            }
+        }
+    }
+}
+
+# Network ADB warning (#319): on firmware with ro.adb.secure=0, or with the property not set at all,
+# port 5555 hands a shell to any device on the network without the "Allow" prompt. Read it and say
+# so once, before the first command reaches the TV, so the note is on screen even if the run dies
+# halfway. A read that fails is not a guess: it only skips the note. Windows PowerShell turns
+# redirected stderr into an error record that 'Stop' would throw, so relax it for the read only.
+$adbSecure = $null
+$ErrorActionPreference = 'Continue'
+try { $adbSecure = ((& $py -I (Join-Path $repo 'tools\tv.py') 'getprop ro.adb.secure' 2>$null) -join '').Trim() } catch { $adbSecure = $null }
+$ErrorActionPreference = 'Stop'
+if ($LASTEXITCODE -ne 0) { $adbSecure = $null }
+if ($null -ne $adbSecure -and ($adbSecure -eq '0' -or $adbSecure -eq '')) {
+    $shown = if ($adbSecure -eq '') { '<empty>' } else { $adbSecure }
+    Write-Warning "This TV reports ro.adb.secure=$shown, so network ADB on port 5555 accepts any device on your network without the `"Allow`" prompt. When you are done, turn USB debugging and Network/ADB debugging off on the TV, reboot it, and check that the port is gone."
+}
+
 $cmds = @($pkgs | ForEach-Object { "pm disable-user --user 0 $_" }) + 'pm list packages -d'
 $cmds | & $py -I (Join-Path $repo 'tools\tv.py') --batch
