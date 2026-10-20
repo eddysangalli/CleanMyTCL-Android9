@@ -44,7 +44,9 @@ if (-not $env:FORCE_HOME) {
         $claimQuery = 'cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.HOME'
         try {
             $claims = @(& $py -I (Join-Path $repo 'tools\tv.py') $claimQuery 2>$null | ForEach-Object {
-                if ($_ -match '^\s*([A-Za-z0-9_.]+)/([A-Za-z0-9_.$]+)$' -and $Matches[2] -notmatch 'FallbackHome$') {
+                # Trim first: a trailing CR from the TV would stop the `$` anchor from matching any
+                # line, and every claim would look like it had no class.
+                if ("$_".Trim() -match '^([A-Za-z0-9_.]+)/([A-Za-z0-9_.$]+)$' -and $Matches[2] -notmatch 'FallbackHome$') {
                     $Matches[1]
                 }
             } | Sort-Object -Unique)
