@@ -16,9 +16,11 @@ upstream CleanYourTV v2.4.0 e o que o nosso próprio benchmarking mostrou sobre 
 |---|---|
 | Versão | 0.5.8 (versionCode 30) |
 | Publicada em | `main` |
-| APK | `medicoes/apks/tvhome-0.5.8.apk` |
-| Launcher instalado | `br.eddy.tvhome` |
-| Base do upstream | CleanYourTV v2.4.0 (`fd1ee0a`) |
+| APK de desenvolvimento | `medicoes/apks/tvhome-0.5.8.apk` (arquivo local, não distribuído pelo GitHub) |
+| Pacote do launcher | `br.eddy.tvhome` (não comprova qual versão está instalada agora) |
+| Última instalação comprovada em relatório público | v0.5.7 / versionCode 29 (20/10/2026, 11:38); verificar o APK atual pela TV |
+| Validação da v0.5.8 | Build/testes de código reportados abaixo; bateria completa de hardware, standby, Cast e soak pendentes |
+| Upstream revisado | CleanYourTV v2.4.0 (`fd1ee0a`), com adaptações seletivas; a árvore não é um merge integral da 2.4.0 |
 
 ## Novidades
 
@@ -96,7 +98,7 @@ upstream CleanYourTV v2.4.0 e o que o nosso próprio benchmarking mostrou sobre 
 
 ## O que a medição mostrou
 
-### A mola nova é mais rápida, não mais lenta
+### A mola nova terminou o movimento mais cedo na medição específica da v0.5.7
 
 Comparação controlada na mesma TV, na mesma sessão, com **um único parâmetro trocado** (a mola),
 4 colunas, movimento suave, fundo preto, acessibilidade ativa. Três séries de 36 teclas por lado.
@@ -110,7 +112,7 @@ Comparação controlada na mesma TV, na mesma sessão, com **um único parâmetr
 | Quadros desenhados | 2792 | 4051 |
 | Teclas medidas | 108 de 108 | 108 de 108 |
 
-A mola nova **encerra o movimento 194 ms antes** (cerca de um terço a menos), com a mesma resposta
+Nessa medição da **v0.5.7** (não da v0.5.8), a mola nova **encerrou o movimento 194 ms antes** (cerca de um terço a menos), com a mesma resposta
 de tecla e **menos** quadro atrasado. A mola antiga mede 635 ms e 629 ms nas duas repetições, e
 o A/B de wallpaper de 19/10/2026 tinha medido 634 ms: o método novo reproduz a referência antiga.
 
