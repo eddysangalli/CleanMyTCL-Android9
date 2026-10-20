@@ -19,7 +19,7 @@ O `mediashell` foi parado à força e voltou, e o que se vê no `logcat` é o qu
 
 ```
 I cast_shell: [metrics_stat_logger] Gcm.Register.Success=2
-I cast_shell: [device_info_impl.cc(1066)] Primary IP address changed: netif=eth0, new=192.168.1.8
+I cast_shell: [device_info_impl.cc(1066)] Primary IP address changed: netif=eth0, new=<the TV's address>
 I cast_shell: [mdns_app_filter.cc(1922)] MdnsAppFilter: Done announcing.
 I cast_shell: [mdns_app_filter.cc(3358)] MdnsAppFilter: responses sent in 60 seconds: 7
 I cast_shell: [mdns_app_filter.cc(3550)] Mdns cast queries recently sent: queries=4

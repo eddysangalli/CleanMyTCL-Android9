@@ -38,7 +38,7 @@ Earlier validation builds are kept for comparison: `medicoes/apks/tvhome-0.5.7-c
 > re-enabled and bound.
 
 > The TV left the network once during this session (the ADB stopped answering and the address
-> disappeared from the ARP table; a scan of 192.168.1.0/24 found no other host with ADB open).
+> disappeared from the ARP table; a scan of the local network found no other host with ADB open).
 > It was not reinstalled over, and the measurements before and after that gap come from the same
 > build.
 

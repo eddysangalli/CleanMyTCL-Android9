@@ -12,31 +12,27 @@ Small changes go straight to `develop`. Tags:
 - `launcher-vX.Y[.Z]` — launcher builds that were installed and measured on a device.
 - `vX.Y.Z` — project releases (scripts + profiles + launcher) validated per `COMPATIBILITY.md`.
 
-## Current state of `main` and how the first stable release is published
+## Current state of `main` and how a release is published
 
-`main` currently points at the upstream baseline commit `9ef40c1` (the CleanYourTV / tv-vibehack
-README). `develop` continues from it — **all of our work is on top of the upstream history, not on a
-squashed or re-based copy.** `main` is therefore a direct ancestor of `develop`:
+`main` holds the released launcher builds and `develop` continues from it, so `main` is always an
+ancestor of `develop` and a release is a **fast-forward**, not a rewrite:
 
 ```bash
 git merge-base --is-ancestor main develop && echo "fast-forward is possible"
 ```
 
-That makes the first release a **fast-forward**, not a rewrite:
+That makes a release:
 
 ```bash
-# 1. work on a release branch, never directly on main
-git checkout -b release/v0.5.0 develop
+# 1. work on develop, never directly on main
+git checkout develop
 # ... run the full validation ...
 
 # 2. fast-forward main onto it (no merge commit, no history loss, no force push)
 git checkout main
-git merge --ff-only release/v0.5.0
+git merge --ff-only develop
 git push origin main
 git push origin --tags
-
-# 3. point GitHub's default branch at main
-gh repo edit --default-branch main
 ```
 
 **What is deliberately not done:**
@@ -56,6 +52,24 @@ gh repo edit --default-branch main
 - [ ] `benchmarks/results/` names the exact launcher version per number
 - [ ] `tools/secret-scan.ps1` reports no secrets
 - [ ] `git status` clean, working tree == tag content
+
+### Where the v0.5.8 stands against this checklist
+
+| Item | State |
+|---|---|
+| Smoke test | **Not re-run for v0.5.8.** The last full run is 2026-10-19, on v0.5.6 |
+| 3 reboots | **Not run for v0.5.8.** The last 3-run reboot test is 2026-10-19, on v0.5.6 |
+| Launcher benchmark re-run on the released build | **Partly.** The spring A/B and the `tools/bench.py` run are on the v0.5.8 build; the full 5-repetition battery is pending |
+| `COMPATIBILITY.md` | Updated to the v0.5.8 build that is on the device |
+| `benchmarks/results/` names the version | Yes, each report names the version it measured |
+| Secret scan | `tools/secret-scan.ps1` — run before tagging |
+| Clean tree | Yes |
+
+**So the v0.5.8 is published as a launcher build (tag `launcher-v0.5.8`), not as a project
+release.** The tag `vX.Y.Z` is for the whole project (scripts + profiles + launcher) and waits for
+the smoke test, the three reboots and the full battery on the released build. The version
+installed on the device is 0.5.8, and the compatibility matrix says so with the APK hash as
+evidence.
 
 ## Upstream (CleanYourTV)
 
@@ -82,6 +96,14 @@ one topic per PR and a real device to test on:
    TCL-specific README and would show up as noise in the diff.
 
 Two PRs are prepared — see [`docs/UPSTREAM-PR-DESCRIPTIONS.md`](UPSTREAM-PR-DESCRIPTIONS.md).
+
+Three have been sent and are on the upstream board:
+
+| PR | State |
+|---|---|
+| [#435](https://github.com/Gathin23/cleanyourtv/pull/435) — a vendor `FallbackHome` is not a second launcher in the Home guard | **Merged** by the maintainer |
+| [#436](https://github.com/Gathin23/cleanyourtv/pull/436) — refit the glass highlight when cold-start layout settles | **Merged** by the maintainer |
+| [#437](https://github.com/Gathin23/cleanyourtv/pull/437) — a benchmark for the launcher's key latency, jank and idle cost | **Open**, with the reviewer's three points addressed |
 
 ## Safety
 

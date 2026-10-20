@@ -252,8 +252,8 @@ diz de qual versão ele veio.
 O A/B de um parâmetro só (spring M3E 380/0,8 contra o antigo 260/0,58) tem a build de
 comparação pronta em `medicoes/apks/tvhome-0.5.7-code29-oldspring.apk` e a branch local
 `measure/old-spring`. A instalação ficou pendente porque a **TV saiu da rede** no meio da
-medição: o ADB deixou de responder, o endereço sumiu da tabela ARP e uma varredura da faixa
-192.168.1.0/24 não encontrou nenhum outro host com ADB. Nada foi reinstalado por cima, e a TV
+medição: o ADB deixou de responder, o endereço sumiu da tabela ARP e uma varredura da rede local
+não encontrou nenhum outro host com ADB. Nada foi reinstalado por cima, e a TV
 continua com a build M3E (`AAE067C6…`).
 
 ### Ordem sugerida
