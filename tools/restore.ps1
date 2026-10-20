@@ -1,5 +1,6 @@
-# Windows version of restore.sh: re-enable every package listed in a debloat file, restore the
-# stock launcher as home and reset animation scales. Pass the same list you used with disable.ps1.
+# Windows version of restore.sh: replay the state recorded by disable.ps1 (or warn and fall back
+# to "enable every listed package + reset everything" when no record exists). Pass the same list
+# you used with tools\disable.ps1.
 #
 # Usage: tools\restore.ps1 -TvHost 192.168.1.50 examples\xiaomi-mi-tv-4a\debloat.txt [-Stock stock.launcher.package]
 param(
@@ -27,12 +28,10 @@ foreach ($p in $pkgs) {
 if ($Stock -notmatch '^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$') {
     throw "refusing to run: invalid stock launcher package name: '$Stock'"
 }
-$cmds = @($pkgs | ForEach-Object { "pm enable $_" }) + @(
-    "pm enable $Stock",
-    "cmd package set-home-activity --user 0 $Stock",
-    'settings put global window_animation_scale 1.0',
-    'settings put global transition_animation_scale 1.0',
-    'settings put global animator_duration_scale 1.0',
-    'pm list packages -d'
-)
+
+# Replay the state recorded by disable.ps1 (or warn and fall back when no record exists).
+# recovery.py validates the record before anything reaches the TV: a hand-edited or damaged
+# record fails here (#317, from upstream), not halfway through.
+# 2>&1 keeps recovery.py's notes (e.g. which packages were already disabled) on screen.
+$cmds = @(& $py -I (Join-Path $repo 'tools\recovery.py') --commands $List $Stock 2>&1)
 $cmds | & $py -I (Join-Path $repo 'tools\tv.py') --batch

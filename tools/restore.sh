@@ -1,20 +1,25 @@
 #!/usr/bin/env bash
-# Re-enable every package listed in a debloat file, restore the stock launcher as home and reset
-# animation scales. Pass the same list you used with tools/disable.sh.
+# Re-enable every package listed in a debloat file, restore Home, and reset animation scales.
+# Pass the same list you used with tools/disable.sh.
 #
 # Usage: TV_HOST=192.168.1.50 tools/restore.sh examples/xiaomi-mi-tv-4a/debloat.txt [stock.launcher.package]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 LIST="${1:?usage: restore.sh <debloat list> [stock launcher package]}"
 # Resolve the list against the caller's directory, before moving into the repo.
-LIST_DIR="$(cd "$(dirname "$LIST")" && pwd)"
+# Git Bash's pwd says /c/Users/..., which the Windows Python cannot open with
+# MSYS_NO_PATHCONV=1 set; pwd -W gives C:/Users/..., the same path (and so the same record) as
+# the PowerShell scripts.
+LIST_DIR="$(cd "$(dirname "$LIST")" && { pwd -W 2>/dev/null || pwd; })"
 LIST="$LIST_DIR/$(basename "$LIST")"
 STOCK="${2:-com.google.android.tvlauncher}"
 PY=tools/venv/bin/python
 [ -x "$PY" ] || PY=tools/venv/Scripts/python.exe
 export MSYS_NO_PATHCONV=1
 
-# Same validation as tools/disable.sh: nothing from a list file reaches the TV shell unvalidated.
+# Validate the list file before invoking recovery.py, so a typo in the list fails the same way it
+# would have failed in restore.sh's old inline batch. The package-name regex is the one shared
+# across the tools.
 # See https://github.com/Gathin23/cleanyourtv/issues/165
 # shellcheck source=../scripts/tcl-pkg-validate.sh
 . scripts/tcl-pkg-validate.sh
@@ -27,13 +32,8 @@ if ! validate_package_name "$STOCK"; then
     exit 1
 fi
 
-{
-  filter_valid_package_list "$LIST" | awk '{print "pm enable " $1}'
-  echo "pm enable $STOCK"
-  # resolve the stock HOME component on the TV (Android 9 needs pkg/activity, not just pkg)
-  echo "cmd package set-home-activity --user 0 \$(cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME $STOCK | tail -n 1)"
-  echo "settings put global window_animation_scale 1.0"
-  echo "settings put global transition_animation_scale 1.0"
-  echo "settings put global animator_duration_scale 1.0"
-  echo "pm list packages -d"
-} | "$PY" -I tools/tv.py --batch
+# Replay the state recorded by disable.sh (or warn and fall back to "enable every listed
+# package + reset everything" when there is no record). recovery.py also validates the record
+# before anything reaches the TV: a hand-edited or damaged record fails here (#317, from
+# upstream), not halfway through.
+"$PY" -I tools/recovery.py --commands "$LIST" "$STOCK" | "$PY" -I tools/tv.py --batch

@@ -100,5 +100,13 @@ if ($null -ne $adbSecure -and ($adbSecure -eq '0' -or $adbSecure -eq '')) {
     Write-Warning "This TV reports ro.adb.secure=$shown, so network ADB on port 5555 accepts any device on your network without the `"Allow`" prompt. When you are done, turn USB debugging and Network/ADB debugging off on the TV, reboot it, and check that the port is gone."
 }
 
+# Record the state the list is about to change, before the first command reaches the TV (#317,
+# from upstream). Without it, restore.ps1 would enable every listed package even ones that were
+# disabled before cleanup, and would reset Home and animation scales to fixed values instead of
+# what they were. A retry after a half-applied list must not overwrite the first record, so this
+# runs before the disable batch: if it fails (e.g. tv.py cannot reach the TV), no package is
+# disabled and nothing reaches the device. The script's own exit (SystemExit) bubbles up here.
+& $py -I (Join-Path $repo 'tools\recovery.py') --save $List
+
 $cmds = @($pkgs | ForEach-Object { "pm disable-user --user 0 $_" }) + 'pm list packages -d'
 $cmds | & $py -I (Join-Path $repo 'tools\tv.py') --batch

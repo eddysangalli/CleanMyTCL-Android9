@@ -91,6 +91,14 @@ def answer(command):
         if state["adb_fails"]:
             sys.exit(1)
         return state["adb_secure"] + state["eol"]
+    if command.startswith("pm list packages"):
+        # recovery.py reads the installed and the disabled packages before it records anything
+        # (#317), so the fake has to answer both lists.
+        if command.endswith(" -d"):
+            return "".join("package:" + p + state["eol"] for p in state["disabled"])
+        return "".join("package:" + p + state["eol"] for p in state["installed"])
+    if command.startswith("settings get global"):
+        return state["scales"].get(command.split()[-1], "null") + state["eol"]
     return ""
 
 
@@ -143,6 +151,10 @@ class DebloatHarness(unittest.TestCase):
         self.tools.mkdir(parents=True)
         self.scripts.mkdir(parents=True)
         shutil.copy2(ROOT / "tools" / "disable.sh", self.tools / "disable.sh")
+        # disable.sh now calls recovery.py --save before the disable batch (#317, from upstream).
+        # The recovery record file does not exist yet for the tests, so --save writes a fresh one
+        # against the fake TV; the tests cover disable.sh end-to-end.
+        shutil.copy2(ROOT / "tools" / "recovery.py", self.tools / "recovery.py")
         shutil.copy2(ROOT / "scripts" / "tcl-pkg-validate.sh", self.scripts / "tcl-pkg-validate.sh")
         (self.tools / "tv.py").write_text(FAKE_TV, encoding="utf-8")
 
@@ -179,6 +191,14 @@ class DebloatHarness(unittest.TestCase):
             "adb_fails": False,
             # adb can end a line with CRLF; the scripts have to cope with either.
             "eol": "\n",
+            # The packages the TV has, and the ones it already had disabled. recovery.py records
+            # both before it changes anything (#317), so the fake answers both lists.
+            "installed": ["com.example.one", "com.example.two", STOCK],
+            "disabled": [],
+            # The global animation scales, which the recovery record keeps as they were.
+            "scales": {"window_animation_scale": "1.0",
+                       "transition_animation_scale": "1.0",
+                       "animator_duration_scale": "null"},
             "commands": [],
         }
         state.update(overrides)

@@ -7,7 +7,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 LIST="${1:?usage: disable.sh <debloat list>}"
 # Resolve the list against the caller's directory, before moving into the repo.
-LIST_DIR="$(cd "$(dirname "$LIST")" && pwd)"
+# Git Bash's pwd says /c/Users/..., which the Windows Python cannot open with
+# MSYS_NO_PATHCONV=1 set; pwd -W gives C:/Users/..., the same path (and so the same record) as
+# the PowerShell scripts.
+LIST_DIR="$(cd "$(dirname "$LIST")" && { pwd -W 2>/dev/null || pwd; })"
 LIST="$LIST_DIR/$(basename "$LIST")"
 PY=tools/venv/bin/python
 [ -x "$PY" ] || PY=tools/venv/Scripts/python.exe
@@ -97,6 +100,15 @@ if [ "$ADB_SECURE_READ" = "1" ] && { [ "$ADB_SECURE" = "0" ] || [ -z "$ADB_SECUR
   echo "any device on your network without the \"Allow\" prompt. When you are done, turn USB debugging" >&2
   echo "and Network/ADB debugging off on the TV, reboot it, and check that the port is gone." >&2
 fi
+
+# Record the state the list is about to change, before the first command reaches the TV (#317,
+# from upstream). Without it, restore.sh would enable every listed package even ones that were
+# disabled before cleanup, and would reset Home and animation scales to fixed values instead of
+# what they were. A retry after a half-applied list must not overwrite the first record, so this
+# runs before the disable batch: if it fails (e.g. tv.py cannot reach the TV), no package is
+# disabled and nothing reaches the device.
+# 2>&1 so the record is visible alongside the disable output. The script's own exit stops the run.
+"$PY" -I tools/recovery.py --save "$LIST"
 
 {
   if [ -n "$PKGS" ]; then printf '%s\n' "$PKGS" | awk '{print "pm disable-user --user 0 " $1}'; fi
