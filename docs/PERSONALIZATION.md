@@ -18,8 +18,8 @@ Settings) and stored in the launcher's private preferences — nothing personal 
 | Balanced preset | Home options → Experience | Smooth focus with the current spring and a black background; no wallpaper decode |
 | Visual preset | Home options → Experience | Smooth focus + Aurora; measured on the TCL BeyondTV2 with v0.5.6: +9 MB PSS and delayed frames 0.19% → 6.89%, while median key response stayed at 17 ms. [A/B](../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md) |
 | Grid columns (4/5/6) | Home options → columns | 0; 4 is the default, and the dock follows the slot count |
-| Family profiles | Home options → profiles | 0; name/message/accent and a wallpaper on/off flag, no image data or service. Loading one marks the experience as Custom |
-| Aurora wallpaper (optional) | Home options → wallpaper | Enabling it switches to Visual because this build only shows the wallpaper with smooth motion; the UI states the v0.5.6 cost before enabling. Black remains the default/Performance background |
+| Family profiles | Home options -> profiles | 0; name/message/accent and the background id, no image data or service. Loading one marks the experience as Custom |
+| Background (optional) | Home options -> wallpaper, Left/Right to step: black, six dark solid colours (about 13:1 contrast with the white text), Aurora, Earth at night (NASA, public domain) | Colours: one full-screen fill, not separately measured. Aurora: measured on the TCL BeyondTV2 with v0.5.6, +9 MB PSS and delayed frames 0.19% to 6.89%, median key response 17 ms. Earth at night and the other image options are **not measured on this device**. Ultralight always stays black. [A/B](../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md) |
 | Weather (optional, off) | Home options → city | ≤ 1 request/hour, only while Home is visible |
 | Globoplay key redirect | Home options (needs accessibility permission) | Optional accessibility service; it only receives Globoplay window events and starts the chosen app. The target app's own cold start can still take seconds |
 

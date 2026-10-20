@@ -134,7 +134,7 @@ final class HomePrefs {
         if (sp.contains(KEY_EXPERIENCE)) return;
         if (sp.getAll().isEmpty()) {
             sp.edit().putString(KEY_EXPERIENCE, Experience.PERFORMANCE.key)
-                    .putBoolean("light", true).putBoolean("wallpaper", false).apply();
+                    .putBoolean("light", true).putString("background", "black").apply();
         } else {
             sp.edit().putString(KEY_EXPERIENCE, Experience.CUSTOM.key).apply();
         }
@@ -151,8 +151,8 @@ final class HomePrefs {
             return;
         }
         boolean light = experience == Experience.PERFORMANCE;
-        boolean wallpaper = experience == Experience.VISUAL;
-        sp.edit().putBoolean("light", light).putBoolean("wallpaper", wallpaper)
+        String background = experience == Experience.VISUAL ? "aurora" : "black";
+        sp.edit().putBoolean("light", light).putString("background", background)
                 .putString(KEY_EXPERIENCE, experience.key).apply();
     }
 
@@ -170,18 +170,19 @@ final class HomePrefs {
 
     // ---- wallpaper -------------------------------------------------------------------------------
 
-    /** Static aurora wallpaper in smooth motion; ultralight always stays black. */
-    boolean wallpaper() {
-        return sp.getBoolean("wallpaper", true);
+    /** Background id from MainActivity.BG_IDS; ultralight always stays black. Older builds saved an on/off flag. */
+    String wallpaper() {
+        String id = sp.getString("background", null);
+        return id != null ? id : sp.getBoolean("wallpaper", true) ? "aurora" : "black";
     }
 
-    void setWallpaper(boolean on) {
-        sp.edit().putBoolean("wallpaper", on).putString(KEY_EXPERIENCE, Experience.CUSTOM.key).apply();
+    void setWallpaper(String id) {
+        sp.edit().putString("background", id).putString(KEY_EXPERIENCE, Experience.CUSTOM.key).apply();
     }
 
     // ---- family profiles -------------------------------------------------------------------------
 
-    /** Saved profiles by label: {label: {name, message, accent, wallpaper}}. No image data is stored. */
+    /** Saved profiles by label: {label: {name, message, accent, background}}. No image data is stored. */
     JSONObject profiles() {
         try {
             return new JSONObject(sp.getString("profiles", "{}"));
@@ -190,7 +191,7 @@ final class HomePrefs {
         }
     }
 
-    /** Saves the current name, message, accent and wallpaper flag under a label; an existing label is replaced. */
+    /** Saves the current name, message, accent and background under a label; an existing label is replaced. */
     void saveProfile(String label) {
         String key = label.trim();
         if (key.isEmpty()) return;
@@ -200,7 +201,7 @@ final class HomePrefs {
             profile.put("name", userName());
             profile.put("message", message());
             profile.put("accent", accent());
-            profile.put("wallpaper", wallpaper());
+            profile.put("background", wallpaper());
             all.put(key, profile);
             sp.edit().putString("profiles", all.toString()).apply();
         } catch (JSONException ignored) {
@@ -214,7 +215,8 @@ final class HomePrefs {
                 .putString("name", profile.optString("name", "").trim())
                 .putString("message", profile.optString("message", "").trim())
                 .putInt("accent", profile.optInt("accent", 0))
-                .putBoolean("wallpaper", profile.optBoolean("wallpaper", true))
+                .putString("background", profile.optString("background",
+                        profile.optBoolean("wallpaper", true) ? "aurora" : "black"))
                 .putString(KEY_EXPERIENCE, Experience.CUSTOM.key)
                 .apply();
     }
@@ -274,8 +276,8 @@ final class HomePrefs {
     /** Recovery: name, message, colour, motion, columns, wallpaper, profiles, dock and hidden apps back to the defaults. */
     void resetAll() {
         sp.edit().remove("name").remove("message").remove("accent").remove("light")
-                .remove("columns").remove("wallpaper").remove("profiles").remove("dock").remove("hidden")
-                .putBoolean("light", true).putBoolean("wallpaper", false)
+                .remove("columns").remove("wallpaper").remove("background").remove("profiles").remove("dock").remove("hidden")
+                .putBoolean("light", true).putString("background", "black")
                 .putString(KEY_EXPERIENCE, Experience.PERFORMANCE.key).apply();
     }
 

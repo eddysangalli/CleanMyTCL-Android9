@@ -24,3 +24,8 @@ Adaptações para a TCL BeyondTV2: pt-BR, dock e entradas da TCL, botão de voz,
 - #4 "feat(launcher): make the weather line localizable" — o clima usa o idioma do sistema, com fallback em inglês.
 - #5 "feat(launcher): Spanish translation" — tradução espanhola; strings novas dos presets caem no inglês até uma próxima passada.
 - #9 "fix(launcher): focus ring misplaced for the first seconds after the launcher starts" — correção inicial, complementada localmente em `f5d8cc6` para reaplicar o tamanho do anel depois do layout de cold start.
+
+## Wallpaper `app/src/main/res/drawable-nodpi/wallpaper_iss.jpg`
+
+[ISS-62 City lights of northeastern Europe](https://commons.wikimedia.org/wiki/File:ISS-62_City_lights_of_northeastern_Europe.jpg),
+NASA, public domain. Cropped to 1920×1080 with a dark gradient added behind the header text.

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Home</string>
     <string name="inputs">Inputs</string>
@@ -73,7 +73,21 @@
     <string name="opt_wallpaper_off">Wallpaper: black</string>
     <string name="wallpaper_title">Aurora wallpaper</string>
     <string name="wallpaper_cost" formatted="false">Measured on the TCL BeyondTV2 with v0.5.6: about 9 MB more memory, and delayed frames rose from 0.19% (black) to 6.89% (Aurora) in the navigation test. Median key response stayed at 17 ms. You can return to black at any time.</string>
-    <string name="wallpaper_enable">Enable Aurora</string>
+    <string name="wallpaper_enable">Enable background</string>
+    <string name="wallpaper_cost_unmeasured">This image background has not been measured on this TV. If you notice extra stutter, return to black.</string>
+    <string name="opt_wallpaper">Wallpaper: %1$s</string>
+    <!-- Same order as MainActivity.BG_IDS. -->
+    <string-array name="wallpaper_names">
+        <item>Black</item>
+        <item>Midnight</item>
+        <item>Forest</item>
+        <item>Plum</item>
+        <item>Wine</item>
+        <item>Graphite</item>
+        <item>Petrol</item>
+        <item>Aurora</item>
+        <item>Earth at night</item>
+    </string-array>
     <string name="wallpaper_light">Ultralight mode always uses the black background.</string>
     <string name="columns_title">Columns</string>
     <string name="profiles_title">Family profiles</string>
