@@ -1,5 +1,7 @@
 # Upstream audit — 2026-10-20
 
+> **Aviso de arquivo histórico (20/10/2026).** Este é um retrato da auditoria naquele horário: SHA de branches, versão instalada, estado dos PRs e decisões posteriores podem ter mudado. A versão do código foi avançada para v0.5.8 e as branches foram sincronizadas depois. Para o estado atual, consulte [BRANCHING](BRANCHING.md), [COMPATIBILITY](../COMPATIBILITY.md) e [RELEASE-0.5.8](RELEASE-0.5.8.md). Não interprete os dados antigos abaixo como estado vivo da TV.
+
 This is a **review record**, not an upstream merge. No upstream pull request was approved,
 commented on or merged by this repository.
 
