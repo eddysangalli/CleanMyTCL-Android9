@@ -776,7 +776,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             handler.post(() -> {
                 if (isDestroyed()) return;
                 updateGreeting();
-                Toast.makeText(this, name != null ? getString(msg, name) : getString(msg), Toast.LENGTH_SHORT).show();
+                // Only weather_set contains a format placeholder; other messages take no argument.
+                String notice = (msg == R.string.weather_set && name != null)
+                        ? getString(R.string.weather_set, name) : getString(msg);
+                Toast.makeText(this, notice, Toast.LENGTH_SHORT).show();
             });
         });
     }

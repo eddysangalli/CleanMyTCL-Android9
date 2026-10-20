@@ -1,0 +1,71 @@
+name: Validate source and docs
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-and-shell:
+    name: Python and shell safety tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+      - name: Install pinned Python dependencies
+        run: python -m pip install --require-hashes -r tools/requirements.txt
+      - name: Python unit tests (fake TV only)
+        run: python -m unittest discover -s tests -v
+      - name: Package-name validation
+        run: bash tests/test_pkg_validate.sh
+      - name: Shell syntax (no ADB)
+        run: |
+          for file in tools/*.sh scripts/*.sh; do bash -n "$file"; done
+
+  android:
+    name: Android launcher build and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      # ubuntu-latest already includes Android SDK command-line tools.
+      # Avoid setup-android@v3 here: its legacy sdkmanager 'tools' install fails on current images.
+      - name: Verify Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --version
+      - name: Install Android SDK platform and build tools
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install 'platforms;android-34' 'build-tools;34.0.0'
+      - name: Build and test launcher
+        working-directory: launcher
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --console=plain testDebugUnitTest assembleRelease
+      - name: Android Lint (required)
+        working-directory: launcher
+        run: ./gradlew --no-daemon --console=plain lintRelease
+      - name: Explain scope of validation
+        run: |
+          echo '### Build validation' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Compilation, JVM tests, Android Lint, Python safety tests and shell syntax run in CI. **Physical TV, HDMI, remote, streaming catalogue, casting and soak tests are separate release gates.**' >> "$GITHUB_STEP_SUMMARY"
+      - name: Explain hardware coverage
+        run: echo 'Hardware tests (HDMI, IR/BT remote, standby, Netflix catalogue, Cast and real-TV benchmarks) must be run on the target TV.'

@@ -12,27 +12,19 @@ Small changes go straight to `develop`. Tags:
 - `launcher-vX.Y[.Z]` — launcher builds that were installed and measured on a device.
 - `vX.Y.Z` — project releases (scripts + profiles + launcher) validated per `COMPATIBILITY.md`.
 
-## Current state of `main` and how a release is published
+## Current repository state and promotion gates (2026-10-20)
 
-`main` holds the released launcher builds and `develop` continues from it, so `main` is always an
-ancestor of `develop` and a release is a **fast-forward**, not a rewrite:
+`main` is the default branch and contains the **v0.5.8 source** (versionCode 30), including changes previously integrated through `develop`. The two branches were reconciled at commit `5922022`; subsequent review/CI/documentation commits should land in `develop` first. An ordinary commit named `release` is **not** a GitHub Release, a tag, or evidence of complete device validation.
 
-```bash
-git merge-base --is-ancestor main develop && echo "fast-forward is possible"
-```
+The repository preserves CleanYourTV history from `9ef40c1`, but **`main` no longer points at that old baseline**. Do not follow the obsolete "first release" fast-forward example.
 
-That makes a release:
+To promote a future validated version, first satisfy the release checklist below, compare the heads and review the diff. Then use an ordinary reviewed PR from `develop` to `main` (or a verified fast-forward if approved). No automatic merge or force push. Protect both branches and require successful CI before merging, where repository settings permit. Branch protection is a GitHub Settings operation and is not enabled just by adding a workflow.
 
 ```bash
-# 1. work on develop, never directly on main
-git checkout develop
-# ... run the full validation ...
-
-# 2. fast-forward main onto it (no merge commit, no history loss, no force push)
-git checkout main
-git merge --ff-only develop
-git push origin main
-git push origin --tags
+git fetch origin
+git log --oneline origin/main..origin/develop
+git diff --stat origin/main...origin/develop
+# Run the hardware checklist and review any CI results BEFORE approving a merge.
 ```
 
 **What is deliberately not done:**
@@ -81,7 +73,7 @@ git cherry-pick -x <commit>          # on a perf/* or fix/* branch, never direct
 
 Before merging any upstream change: review conflicts, behavior changes, and run
 `scripts/tcl-launcher-bench.sh`, `tcl-coldstart.sh`, `tcl-idle-probe.sh` against the previous build.
-Reject it if p50 or tail latency, idle CPU or PSS get worse.
+Reject involuntary regressions in the Performance preset. An optional Visual feature may have a measured, documented and reversible GPU/RAM cost, but never crashes, unsafe recovery or broken HDMI/remote.
 
 ## Contributing back to upstream
 
@@ -94,7 +86,7 @@ one topic per PR and a real device to test on:
 4. Open the PR from a fork of upstream — **not** from this repository's `main`, which carries our
    TCL-specific README and would show up as noise in the diff.
 
-Two PRs are prepared — see [`docs/UPSTREAM-PR-DESCRIPTIONS.md`](UPSTREAM-PR-DESCRIPTIONS.md).
+Upstream contributions may already be submitted; check their live status before referring to them as merely prepared. See [`docs/UPSTREAM-PR-DESCRIPTIONS.md`](UPSTREAM-PR-DESCRIPTIONS.md).
 
 Three have been sent and are on the upstream board:
 

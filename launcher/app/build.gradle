@@ -34,6 +34,9 @@ android {
         disable 'ExpiredTargetSdkVersion'
         // Every user-visible text lives in res/values*/strings.xml so a new language is one file
         // (docs/LOCALIZATION.md); text typed straight into a layout or setText() fails the build.
+        // Some community locales are incomplete: Android falls back to the default strings.
+        // Keep missing translations visible as warnings; genuine lint/code errors remain fatal.
+        warning 'MissingTranslation'
         fatal 'HardcodedText', 'SetTextI18n'
     }
 

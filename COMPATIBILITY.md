@@ -17,7 +17,7 @@ Each feature is validated **separately**. A green "launcher" does not mean HDMI 
 
 ### TCL BeyondTV2 — Realtek RTD2851 — R851T02 V660 — Android 9 (API 28), 32-bit, 2 GB RAM
 
-Profile: [devices/tcl-beyondtv2-rtd2851-r851t02-v660/](devices/tcl-beyondtv2-rtd2851-r851t02-v660/) · Last checked: 2026-10-20
+Profile: [devices/tcl-beyondtv2-rtd2851-r851t02-v660/](devices/tcl-beyondtv2-rtd2851-r851t02-v660/) · Last device evidence: 2026-10-20 (v0.5.8, installed and verified)
 
 | Area | Status | Evidence / notes |
 |---|---|---|
