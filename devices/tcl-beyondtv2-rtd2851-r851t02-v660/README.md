@@ -28,6 +28,12 @@ reference remain v0.5.6 (APK `8D5C15983C31F356B46D23EAFE7626C6B59E03084FE678BD9E
 launcher commit `28a0383`). The earlier local 0.5.6.1 Globoplay hotfix (versionCode 18) is superseded
 by this build.
 
+> Reinstalling the APK disables the accessibility service. After each install, re-enable it before
+> testing the Globoplay key:
+> `adb shell settings put secure enabled_accessibility_services br.eddy.tvhome/com.gathin.tvhome.KeyRemapService`
+> and `adb shell settings put secure accessibility_enabled 1`. The validation install had the service
+> re-enabled and bound.
+
 The full v0.5.6 and v0.5.7 batteries are pending; the measured performance baseline remains v0.5.2.
 The wallpaper A/B is separate:
 [key p50 17 ms, spring p50 ~634 ms, jank 0.19% black vs 6.89% aurora, PSS 23 vs 32 MB](../../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md).

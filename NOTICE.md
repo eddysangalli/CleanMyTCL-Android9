@@ -14,6 +14,7 @@ CleanMyTCL-Android9 is a **fork** of [CleanYourTV](https://github.com/Gathin23/c
 | Weather data (optional, off by default) | [Open-Meteo](https://open-meteo.com/) API | Open-Meteo | Data: CC BY 4.0 (attribution required) | `launcher/.../Weather.java` |
 | TCL scripts (`scripts/tcl-*`), device profile, docs, benchmarks | Written for this project | Eddy Sangalli and contributors | MIT | `scripts/`, `devices/`, `docs/`, `benchmarks/` |
 | TCL launcher features (voice button, menus, ultralight mode, identity, HDMI keys, Globoplay redirect) | Written for this project on top of the fork | Eddy Sangalli and contributors | MIT | `launcher/` (commits after `9ef40c1`) |
+| Configurable smoke scripts, localized weather, Spanish strings, focus-ring fix | PRs #2, #3, #4, #5 and #9 in this repository (reviewed and merged 2026-10-20) | @roky146 | MIT (contribution to this MIT project) | `scripts/tcl-smoke.sh`, `launcher/.../MainActivity.java`, `launcher/.../Weather.java`, `launcher/app/src/main/res/values-es/` |
 
 Code from the other launchers studied (BareLauncher, lightweight_androidtv_launcher, just-a-launcher,
 LtvLauncher, Arc Launcher, PortalLauncher, tvboxtools) was used **only as reference for ideas**;
