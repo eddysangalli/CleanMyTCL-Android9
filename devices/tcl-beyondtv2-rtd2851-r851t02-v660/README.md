@@ -37,6 +37,13 @@ The previous 0.5.7 validation build (versionCode 28, SHA-256 `ACDF90EC…`) is k
 > and `adb shell settings put secure accessibility_enabled 1`. The validation install had the service
 > re-enabled and bound (confirmed after the code 29 install).
 
+> **TV offline at the end of 20/10/2026.** During the spring A/B the TV stopped answering ADB and
+> left the network: the address disappeared from the ARP table and a scan of 192.168.1.0/24 found no
+> other host with ADB open. It was not reinstalled over, so it still runs the code 29 build
+> (`AAE067C6…`, with the Material 3 Expressive spring). The comparison build for the A/B
+> (`medicoes/apks/tvhome-0.5.7-code29-oldspring.apk`) is prepared and waiting. When the TV is back,
+> check `adb connect <ip>:5555` and confirm the launcher is the focused window before measuring.
+
 The full v0.5.6 and v0.5.7 batteries are pending; the measured performance baseline remains v0.5.2.
 The wallpaper A/B is separate:
 [key p50 17 ms, spring p50 ~634 ms, jank 0.19% black vs 6.89% aurora, PSS 23 vs 32 MB](../../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md).
