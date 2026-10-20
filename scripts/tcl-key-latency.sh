@@ -37,32 +37,48 @@ for s in $(seq 1 "$SERIES"); do
   log "Serie $s/$SERIES"
   tv input keyevent KEYCODE_HOME
   sleep 3
-  # Um foco previsivel no inicio: o primeiro item da grade, para que a sequencia comece sempre do
-  # mesmo lugar e o amortecimento do foco nao contamine a serie seguinte.
-  tv input keyevent 19 19 19 19 19 19 19 19 19 19 19 19 19 19
+  # Foco previsivel no inicio: o primeiro item da GRADE, nao a barra superior. O Home deixa o
+  # foco no dock; um DOWN (keycode 20) desce para a primeira linha da grade. Subir ate a barra
+  # faria a sequencia comecar no fim da barra, onde a tecla para a direita nao move nada e nao
+  # gera quadro nenhum: a medicao daquela tecla se perde.
+  tv input keyevent 20
   sleep 2
   for i in $(seq 0 $((KEYS - 1))); do
     key=${SEQ[$((i % ${#SEQ[@]}))]}
     # O reset zera os contadores do gfxinfo. Sem ele, o quadro da tecla anterior continuaria na
     # janela e o primeiro quadro "depois da tecla" seria, na verdade, o da tecla anterior.
-    tv dumpsys gfxinfo "$PKG" reset > /dev/null
-    "$ADB" -s "$SERIAL" logcat -c -b main
+    # A linha "Uptime:" que vem no mesmo dump e o relogio do Android (ms desde o boot, sem o
+    # tempo de suspensao), o mesmo dos carimbos dos quadros. O /proc/uptime NAO serve: ele conta
+    # o tempo de suspensao e anda varias horas a frente do relogio dos quadros.
+    UP_BEFORE=$(tv dumpsys gfxinfo "$PKG" reset | awk -F': ' '/^Uptime:/ { print $2; exit }' |
+                awk '{ printf "%d", $1 }')
     tv input keyevent "$key"
     sleep 1
     tv dumpsys gfxinfo "$PKG" framestats > "$OUT/framestats_s${s}_$i.txt"
-    # No Android 9 o OldestInputEvent dos quadros so e preenchido para toque, nao para teclas
-    # (fica INT64_MAX). O instante da tecla vem do log do `input` (eventTime em ms de uptime, o
-    # mesmo relogio dos quadros).
+    UP_AFTER=$(awk -F': ' '/^Uptime:/ { print $2; exit }' "$OUT/framestats_s${s}_$i.txt" |
+               awk '{ printf "%d", $1 }')
+    # O instante da tecla: o log do `input` tem o eventTime exato (ms de uptime, o mesmo relogio
+    # dos quadros). Filtra pela tecla injetada e pega a ultima: como as teclas sao injetadas uma
+    # a uma com 1 s de folga, a ultima linha da tecla procurada e a da medicao atual. Sem linha
+    # confiavel no log, cai para o instante do reset, que e anterior a tecla por poucos ms.
+    case "$key" in
+      19) KEYNAME=KEYCODE_DPAD_UP ;;
+      20) KEYNAME=KEYCODE_DPAD_DOWN ;;
+      21) KEYNAME=KEYCODE_DPAD_LEFT ;;
+      22) KEYNAME=KEYCODE_DPAD_RIGHT ;;
+      *)  KEYNAME="keyCode=$key" ;;
+    esac
     t0=$("$ADB" -s "$SERIAL" logcat -d -b main | tr -d '\r' |
-        grep -m1 "injectKeyEvent: KeyEvent { action=ACTION_DOWN" | sed -E 's/.*eventTime=([0-9]+).*/\1/')
+        grep "injectKeyEvent: KeyEvent { action=ACTION_DOWN" | grep "$KEYNAME" | tail -n 1 |
+        sed -E 's/.*eventTime=([0-9]+).*/\1/')
+    if [ -z "$t0" ] || [ "$t0" -lt "$UP_BEFORE" ] || [ "$t0" -gt "$UP_AFTER" ]; then
+      # Sem uma linha confiavel no log: usa o instante do reset, anterior a tecla por poucos ms.
+      t0=$UP_BEFORE
+      echo "s$s#$i log-inesperado (${t0})" >> "$OUT/missed.txt"
+    fi
     f=$(awk -F': ' '/Total frames rendered/ { print $2; exit }' "$OUT/framestats_s${s}_$i.txt")
     j=$(awk '/Janky frames/ { print $3; exit }' "$OUT/framestats_s${s}_$i.txt")
     FRAMES=$((FRAMES + ${f:-0})); JANKY=$((JANKY + ${j:-0}))
-    if [ -z "$t0" ]; then
-      # O log do `input` nao veio: a tecla nao foi injetada. Cuenta como perdida, nao como 0 ms.
-      echo "s$s#$i sem-log" >> "$OUT/missed.txt"
-      continue
-    fi
     # Colunas do PROFILEDATA: 1 Flags, 2 IntendedVsync, 14 FrameCompleted (ns).
     # Flags != 0 = quadro descartado.
     # Resposta = 1o quadro iniciado depois da tecla. Movimento = fim da sequencia continua de
@@ -92,7 +108,7 @@ done
 # problema de medicao, nao uma latencia. Elas sao contadas e mostradas.
 grep -v 'perdida$' "$OUT/key_latency.txt" > "$OUT/key_latency_ok.txt" || true
 MISSED=$(grep -c 'perdida$' "$OUT/key_latency.txt" || true)
-NO_LOG=$(grep -c 'sem-log' "$OUT/missed.txt" || true)
+NO_LOG=$(grep -c 'log-inesperado' "$OUT/missed.txt" || true)
 
 stats() {
     sort -n | awk '{ a[NR] = $1 } END {
@@ -110,7 +126,7 @@ Series: $SERIES x $KEYS teclas
 Controle   resposta (tecla -> 1o quadro): p50 ${RESP_P50} | p95 ${RESP_P95} | p99 ${RESP_P99} | max ${RESP_MAX} ms  (${RESP_N} teclas)
            movimento completo:            p50 ${SET_P50} | p95 ${SET_P95} | p99 ${SET_P99} | max ${SET_MAX} ms
            quadros atrasados: ${JANK_PCT}% de ${FRAMES}
-Perdidas: ${MISSED} sem quadro apos a tecla, ${NO_LOG} sem linha do log do input
+Perdidas: ${MISSED} sem quadro apos a tecla, ${NO_LOG} com o instante vindo da janela de uptime
 EOF
 cat "$OUT/resumo.txt"
 CSV=medicoes/launcher.csv
