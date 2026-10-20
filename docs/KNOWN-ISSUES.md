@@ -10,6 +10,9 @@
 - `am start -W` TotalTime over-reports launcher cold start on this TV (~3.7 s vs ~0.5 s real). Use WaitTime.
 - TCL blocks firmware-update checks over ADB (`com.tcl.permission.START_CHECK_SYSTEMUPDATE`): check manually in Settings → About.
 - WebView 138 (Aug 2025) and old Spotify builds are outdated on this firmware.
+- The optional static wallpaper (v0.5.6) adds ~9 MB PSS and a measured jank cost during the spring
+  (0.19% with black vs 6.89% with aurora over 108 keys); ultralight always forces black. See the
+  [wallpaper A/B](../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md).
 
 ## Open investigations
 
