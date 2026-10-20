@@ -102,4 +102,14 @@
     <string name="opt_remap_on">Globoplay button: opens %1$s</string>
     <string name="opt_remap_off">Globoplay button: default (Globoplay)</string>
     <string name="opt_remap_service">Globoplay button: turn on the remapper</string>
+    <!-- Weather condition after the temperature ("23° CLOUDY"); upper case on purpose. -->
+    <string name="wx_clear">CLEAR SKY</string>
+    <string name="wx_few_clouds">FEW CLOUDS</string>
+    <string name="wx_overcast">CLOUDY</string>
+    <string name="wx_fog">FOG</string>
+    <string name="wx_drizzle">DRIZZLE</string>
+    <string name="wx_rain">RAIN</string>
+    <string name="wx_snow">SNOW</string>
+    <string name="wx_showers">RAIN SHOWERS</string>
+    <string name="wx_thunderstorm">THUNDERSTORMS</string>
 </resources>
