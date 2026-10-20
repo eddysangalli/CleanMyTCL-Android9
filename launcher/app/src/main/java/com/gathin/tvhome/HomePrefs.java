@@ -23,12 +23,40 @@ final class HomePrefs {
     /** Weather older than this is fetched again, and only while the home screen is on screen. */
     static final long WEATHER_MAX_AGE_MS = 60 * 60_000L;
 
+    /**
+     * The three named experience presets, plus a marker for a configuration changed one option at a
+     * time. Performance is the default for a new install; an upgrade keeps the old preferences and
+     * starts as Custom until the viewer chooses a preset.
+     */
+    enum Experience {
+        PERFORMANCE("performance"),
+        BALANCED("balanced"),
+        VISUAL("visual"),
+        CUSTOM("custom");
+
+        final String key;
+
+        Experience(String key) {
+            this.key = key;
+        }
+
+        static Experience from(String key) {
+            for (Experience e : values()) {
+                if (e.key.equals(key)) return e;
+            }
+            return CUSTOM;
+        }
+    }
+
+    private static final String KEY_EXPERIENCE = "experience";
+
     private final SharedPreferences sp;
     private final Context ctx;
 
     HomePrefs(Context ctx) {
         this.ctx = ctx.getApplicationContext();
         this.sp = this.ctx.getSharedPreferences("home", Context.MODE_PRIVATE);
+        ensureExperience();
     }
 
     // ---- dock -----------------------------------------------------------------------------------
@@ -93,7 +121,39 @@ final class HomePrefs {
     }
 
     void setLight(boolean on) {
-        sp.edit().putBoolean("light", on).apply();
+        sp.edit().putBoolean("light", on).putString(KEY_EXPERIENCE, Experience.CUSTOM.key).apply();
+    }
+
+    // ---- experience presets ---------------------------------------------------------------------
+
+    /**
+     * New installs start in Performance. An existing install only gets the new key and keeps its
+     * saved light/wallpaper values, so an update never changes the look before the viewer chooses.
+     */
+    private void ensureExperience() {
+        if (sp.contains(KEY_EXPERIENCE)) return;
+        if (sp.getAll().isEmpty()) {
+            sp.edit().putString(KEY_EXPERIENCE, Experience.PERFORMANCE.key)
+                    .putBoolean("light", true).putBoolean("wallpaper", false).apply();
+        } else {
+            sp.edit().putString(KEY_EXPERIENCE, Experience.CUSTOM.key).apply();
+        }
+    }
+
+    Experience experience() {
+        return Experience.from(sp.getString(KEY_EXPERIENCE, Experience.CUSTOM.key));
+    }
+
+    /** Sets one of the three presets. Custom is only a marker; it does not change any value. */
+    void applyExperience(Experience experience) {
+        if (experience == Experience.CUSTOM) {
+            sp.edit().putString(KEY_EXPERIENCE, Experience.CUSTOM.key).apply();
+            return;
+        }
+        boolean light = experience == Experience.PERFORMANCE;
+        boolean wallpaper = experience == Experience.VISUAL;
+        sp.edit().putBoolean("light", light).putBoolean("wallpaper", wallpaper)
+                .putString(KEY_EXPERIENCE, experience.key).apply();
     }
 
     // ---- columns ---------------------------------------------------------------------------------
@@ -116,7 +176,7 @@ final class HomePrefs {
     }
 
     void setWallpaper(boolean on) {
-        sp.edit().putBoolean("wallpaper", on).apply();
+        sp.edit().putBoolean("wallpaper", on).putString(KEY_EXPERIENCE, Experience.CUSTOM.key).apply();
     }
 
     // ---- family profiles -------------------------------------------------------------------------
@@ -155,6 +215,7 @@ final class HomePrefs {
                 .putString("message", profile.optString("message", "").trim())
                 .putInt("accent", profile.optInt("accent", 0))
                 .putBoolean("wallpaper", profile.optBoolean("wallpaper", true))
+                .putString(KEY_EXPERIENCE, Experience.CUSTOM.key)
                 .apply();
     }
 
@@ -213,7 +274,9 @@ final class HomePrefs {
     /** Recovery: name, message, colour, motion, columns, wallpaper, profiles, dock and hidden apps back to the defaults. */
     void resetAll() {
         sp.edit().remove("name").remove("message").remove("accent").remove("light")
-                .remove("columns").remove("wallpaper").remove("profiles").remove("dock").remove("hidden").apply();
+                .remove("columns").remove("wallpaper").remove("profiles").remove("dock").remove("hidden")
+                .putBoolean("light", true).putBoolean("wallpaper", false)
+                .putString(KEY_EXPERIENCE, Experience.PERFORMANCE.key).apply();
     }
 
     // ---- weather --------------------------------------------------------------------------------

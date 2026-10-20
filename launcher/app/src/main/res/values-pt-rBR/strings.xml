@@ -59,8 +59,20 @@
     <string name="opt_motion_off">Movimento suave: desligado</string>
     <string name="opt_profiles">Perfis da família: %1$d</string>
     <string name="opt_columns">Colunas: %1$d</string>
+    <string name="opt_experience">Experiência: %1$s</string>
+    <string name="experience_title">Experiência</string>
+    <string name="experience_performance">Desempenho (padrão): fundo preto, foco imediato</string>
+    <string name="experience_balanced">Equilibrado: foco suave, fundo preto</string>
+    <string name="experience_visual" formatted="false">Visual: foco suave + Aurora\nMedido na v0.5.6: +9 MB e 0,19% → 6,89% de quadros atrasados</string>
+    <string name="experience_performance_short">Desempenho</string>
+    <string name="experience_balanced_short">Equilibrado</string>
+    <string name="experience_visual_short">Visual</string>
+    <string name="experience_custom_short">Personalizado</string>
     <string name="opt_wallpaper_on">Papel de parede: Aurora</string>
     <string name="opt_wallpaper_off">Papel de parede: preto</string>
+    <string name="wallpaper_title">Papel de parede Aurora</string>
+    <string name="wallpaper_cost" formatted="false">Medido na TCL BeyondTV2 com a v0.5.6: cerca de 9 MB a mais de memória, e os quadros atrasados passaram de 0,19% (preto) para 6,89% (Aurora) na bateria de navegação. A resposta mediana da tecla ficou em 17 ms. Você pode voltar ao fundo preto quando quiser.</string>
+    <string name="wallpaper_enable">Ativar Aurora</string>
     <string name="wallpaper_light">O modo ultralight usa sempre o fundo preto.</string>
     <string name="columns_title">Colunas</string>
     <string name="profiles_title">Perfis da família</string>

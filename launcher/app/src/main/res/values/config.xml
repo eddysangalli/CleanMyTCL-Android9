@@ -25,4 +25,9 @@
     <!-- Tiles per row in the grid; the dock always has this many slots. Tiles are 180dp wide at 4 columns and
          shrink to fit from 5 up (about 144dp at 5, 117dp at 6 on a 1080p TV). -->
     <integer name="columns">4</integer>
+
+    <!-- Vendor keycodes that mean the remote's Settings button, in addition to Android's KEYCODE_SETTINGS.
+         TCL Google TV remotes may send 83; confirm with `getevent -lt` on the TV before adding it here.
+         Empty by default so a vendor keycode is never hijacked without a measurement. -->
+    <integer-array name="settings_key_keycodes" />
 </resources>

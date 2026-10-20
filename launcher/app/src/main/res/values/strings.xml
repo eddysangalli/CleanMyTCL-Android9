@@ -58,8 +58,20 @@
     <string name="opt_motion_off">Smooth motion: off</string>
     <string name="opt_profiles">Family profiles: %1$d</string>
     <string name="opt_columns">Columns: %1$d</string>
+    <string name="opt_experience">Experience: %1$s</string>
+    <string name="experience_title">Experience</string>
+    <string name="experience_performance">Performance (default): black background, instant focus</string>
+    <string name="experience_balanced">Balanced: smooth focus, black background</string>
+    <string name="experience_visual" formatted="false">Visual: smooth focus + Aurora\nMeasured on v0.5.6: +9 MB and 0.19% → 6.89% delayed frames</string>
+    <string name="experience_performance_short">Performance</string>
+    <string name="experience_balanced_short">Balanced</string>
+    <string name="experience_visual_short">Visual</string>
+    <string name="experience_custom_short">Custom</string>
     <string name="opt_wallpaper_on">Wallpaper: Aurora</string>
     <string name="opt_wallpaper_off">Wallpaper: black</string>
+    <string name="wallpaper_title">Aurora wallpaper</string>
+    <string name="wallpaper_cost" formatted="false">Measured on the TCL BeyondTV2 with v0.5.6: about 9 MB more memory, and delayed frames rose from 0.19% (black) to 6.89% (Aurora) in the navigation test. Median key response stayed at 17 ms. You can return to black at any time.</string>
+    <string name="wallpaper_enable">Enable Aurora</string>
     <string name="wallpaper_light">Ultralight mode always uses the black background.</string>
     <string name="columns_title">Columns</string>
     <string name="profiles_title">Family profiles</string>

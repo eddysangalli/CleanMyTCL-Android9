@@ -54,6 +54,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -101,6 +102,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
     private boolean glassShown;
+    /** Vendor keycodes that mean the remote's Settings button; empty unless configured in config.xml. */
+    private int[] settingsKeycodes = new int[0];
     // Static so they survive the activity being destroyed while another app is open (low-memory TVs,
     // or Developer options → "Don't keep activities"); they only reset when the process dies.
     private static int lastFocused = 0;
@@ -141,6 +144,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         light = prefs.light();
         AppAdapter.light = light;
         density = getResources().getDisplayMetrics().density;
+        settingsKeycodes = getResources().getIntArray(R.array.settings_key_keycodes);
         COLUMNS = prefs.columns();
         liveTvPkg = getString(R.string.live_tv_package).trim();
 
@@ -160,10 +164,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         grid.setLayoutManager(new GridLayoutManager(this, COLUMNS) {
             // RecyclerView smooth-scrolls a newly focused tile into view on its own; in ultralight mode
             // that animation (~250 ms) is skipped so a move finishes in one frame.
+            //
+            // A row that is already fully on screen must not be nudged into the bottom padding. That
+            // padding only keeps the last row clear of the screen edge; treating it as the visible
+            // bottom made Down on the last row scroll the whole grid up (#289, upstream Samreay).
             @Override
             public boolean requestChildRectangleOnScreen(@NonNull RecyclerView parent, @NonNull View child,
                                                          @NonNull Rect rect, boolean immediate, boolean focusedChildVisible) {
-                return super.requestChildRectangleOnScreen(parent, child, rect, immediate || light, focusedChildVisible);
+                if (getPosition(child) < COLUMNS) return false;
+                int top = child.getTop() + rect.top;
+                int bottom = top + rect.height();
+                int limitBottom = getHeight() - getPaddingBottom();
+                int dy;
+                if (top < 0) dy = top;
+                else if (bottom <= getHeight()) dy = 0;
+                else dy = Math.min(top, bottom - limitBottom);
+                if (dy == 0) return false;
+                if (immediate || light) parent.scrollBy(0, dy);
+                else parent.smoothScrollBy(0, dy);
+                return true;
             }
         });
         grid.setHasFixedSize(true);
@@ -418,7 +437,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         AppLoader.reorder(this);
     }
 
-    /** Hold OK on Settings: ultralight mode, weather place, hidden apps and the default dock. */
+    /** Hold OK on Settings: experience preset, motion, weather, hidden apps and the default dock. */
     private void showHomeOptions(View anchor) {
         List<MenuItem> items = new ArrayList<>();
         items.add(new MenuItem(R.drawable.ic_person, getString(R.string.opt_name, prefs.userName()), () ->
@@ -439,14 +458,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             prefs.setAccent((prefs.accent() + 1) % ACCENTS.length);
             applyAccent();
         }));
+        items.add(new MenuItem(R.drawable.ic_bolt,
+                getString(R.string.opt_experience, experienceLabel()), this::askExperience));
         items.add(new MenuItem(R.drawable.ic_bolt, light ? R.string.opt_motion_off : R.string.opt_motion_on, this::toggleLight));
         items.add(new MenuItem(R.drawable.ic_person, getString(R.string.opt_profiles, prefs.profiles().length()), this::showProfiles));
         items.add(new MenuItem(R.drawable.ic_grid, getString(R.string.opt_columns, COLUMNS), this::askColumns));
-        items.add(new MenuItem(R.drawable.ic_wallpaper, prefs.wallpaper() ? R.string.opt_wallpaper_on : R.string.opt_wallpaper_off, () -> {
-            prefs.setWallpaper(!prefs.wallpaper());
-            updateWallpaper();
-            if (light) Toast.makeText(this, R.string.wallpaper_light, Toast.LENGTH_SHORT).show();
-        }));
+        items.add(new MenuItem(R.drawable.ic_wallpaper,
+                prefs.wallpaper() && !light ? R.string.opt_wallpaper_on : R.string.opt_wallpaper_off,
+                this::askWallpaper));
         if (!remapServiceEnabled()) {
             items.add(new MenuItem(R.drawable.ic_star, R.string.opt_remap_service, () ->
                     open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))));
@@ -482,9 +501,85 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void toggleLight() {
         light = !light;
         prefs.setLight(light);
+        applyExperienceState();
+    }
+
+    /** Label for the current preset; Custom means the viewer changed one option individually. */
+    private String experienceLabel() {
+        switch (prefs.experience()) {
+            case PERFORMANCE:
+                return getString(R.string.experience_performance_short);
+            case BALANCED:
+                return getString(R.string.experience_balanced_short);
+            case VISUAL:
+                return getString(R.string.experience_visual_short);
+            default:
+                return getString(R.string.experience_custom_short);
+        }
+    }
+
+    /** Three presets, same app and same components. Choosing one sets motion and wallpaper together. */
+    private void askExperience() {
+        final HomePrefs.Experience[] choices = {
+                HomePrefs.Experience.PERFORMANCE,
+                HomePrefs.Experience.BALANCED,
+                HomePrefs.Experience.VISUAL
+        };
+        final String[] labels = {
+                getString(R.string.experience_performance),
+                getString(R.string.experience_balanced),
+                getString(R.string.experience_visual)
+        };
+        int checked = -1;
+        for (int i = 0; i < choices.length; i++) {
+            if (choices[i] == prefs.experience()) checked = i;
+        }
+        new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+                .setTitle(R.string.experience_title)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    applyExperiencePreset(choices[which]);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void applyExperiencePreset(HomePrefs.Experience experience) {
+        prefs.applyExperience(experience);
+        applyExperienceState();
+    }
+
+    /** Applies the saved light/wallpaper values to the views after a preset or an individual change. */
+    private void applyExperienceState() {
+        light = prefs.light();
         AppAdapter.light = light;
+        adapter.notifyDataSetChanged();
         updateGreeting();
         updateWallpaper();
+        if (light) {
+            hideGlass();
+        } else {
+            grid.post(() -> focusTile(lastFocused));
+        }
+    }
+
+    /**
+     * Enabling the Aurora wallpaper shows its measured cost first and switches to the Visual preset,
+     * because this launcher only shows the wallpaper with smooth motion. Turning it off is immediate.
+     */
+    private void askWallpaper() {
+        if (prefs.wallpaper() && !light) {
+            prefs.setWallpaper(false);
+            updateWallpaper();
+            return;
+        }
+        new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+                .setTitle(R.string.wallpaper_title)
+                .setMessage(R.string.wallpaper_cost)
+                .setPositiveButton(R.string.wallpaper_enable, (dialog, which) ->
+                        applyExperiencePreset(HomePrefs.Experience.VISUAL))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     // ---- columns and family profiles -------------------------------------------------------------
@@ -821,7 +916,29 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (debugKeys && event.getAction() == KeyEvent.ACTION_DOWN) {
             Log.i("EddyKey", "key=" + event.getKeyCode() + " delay=" + (SystemClock.uptimeMillis() - event.getEventTime()));
         }
+        if (isSettingsKey(event)) return true;
         return super.dispatchKeyEvent(event);
+    }
+
+    /**
+     * The Settings button on some TCL remotes is a vendor keycode rather than KEYCODE_SETTINGS, and it
+     * only reaches HomeKeyService when that service is running. Consume it here too, so the button
+     * still opens Settings with the stock Home disabled. Vendor codes are opt-in in config.xml.
+     */
+    private boolean isSettingsKey(KeyEvent event) {
+        int code = event.getKeyCode();
+        boolean match = code == KeyEvent.KEYCODE_SETTINGS;
+        for (int vendor : settingsKeycodes) {
+            if (vendor == code) {
+                match = true;
+                break;
+            }
+        }
+        if (!match) return false;
+        if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
+            open(new Intent(Settings.ACTION_SETTINGS));
+        }
+        return true;
     }
 
     /** Number keys 1-4 jump straight to HDMI 1-4 (same order as the Inputs menu). */
@@ -839,13 +956,26 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (tim == null) return false;
         List<TvInputInfo> hdmi = new ArrayList<>();
         for (TvInputInfo info : tim.getTvInputList()) {
-            if (info.isPassthroughInput() && info.getType() == TvInputInfo.TYPE_HDMI) hdmi.add(info);
+            if (!info.isHidden(this) && info.isPassthroughInput() && info.getType() == TvInputInfo.TYPE_HDMI) hdmi.add(info);
         }
-        Collections.sort(hdmi, (a, b) -> String.valueOf(a.loadLabel(this)).compareToIgnoreCase(String.valueOf(b.loadLabel(this))));
+        Collections.sort(hdmi, (a, b) -> inputLabel(a).compareToIgnoreCase(inputLabel(b)));
         if (index >= hdmi.size()) return false;
         open(new Intent(Intent.ACTION_VIEW).setDataAndType(
                 TvContract.buildChannelUriForPassthroughInput(hdmi.get(index).getId()), "vnd.android.cursor.item/channel"));
         return true;
+    }
+
+    /** Settings > Inputs custom name when one exists, otherwise the standard input label. */
+    private String inputLabel(TvInputInfo info) {
+        CharSequence custom = info.loadCustomLabel(this);
+        CharSequence standard = info.loadLabel(this);
+        String label = custom != null && custom.length() > 0
+                ? custom.toString()
+                : standard != null ? standard.toString() : info.getId();
+        if (info.getType() == TvInputInfo.TYPE_HDMI && !label.toUpperCase(Locale.ROOT).contains("HDMI")) {
+            label = "HDMI " + label;
+        }
+        return label;
     }
 
     /** Home pressed three times within 10 s: recovery menu (original launcher, Settings, defaults). */
@@ -870,10 +1000,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         items.add(new MenuItem(R.drawable.ic_settings, R.string.rec_settings, () -> open(new Intent(Settings.ACTION_SETTINGS))));
         items.add(new MenuItem(R.drawable.ic_hide, R.string.rec_reset, () -> {
             prefs.resetAll();
-            light = prefs.light();
-            AppAdapter.light = light;
             applyAccent();
-            updateGreeting();
+            applyExperienceState();
             AppLoader.reorder(this);
         }));
         items.add(new MenuItem(R.drawable.ic_left, R.string.rec_close, () -> { }));
@@ -988,12 +1116,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         boolean sawNonHdmi = false;
         String tunerId = null;
         if (tim != null) {
-            List<TvInputInfo> inputs = new ArrayList<>(tim.getTvInputList());
+            List<TvInputInfo> inputs = new ArrayList<>();
+            for (TvInputInfo info : tim.getTvInputList()) {
+                // Inputs hidden in Settings > Inputs should not come back through this menu or the
+                // 1-4 shortcuts (#291, upstream mwamodo).
+                if (!info.isHidden(this)) inputs.add(info);
+            }
             // HDMI ports first in port order, then AV and the rest.
             Collections.sort(inputs, (a, b) -> {
                 boolean ha = a.getType() == TvInputInfo.TYPE_HDMI, hb = b.getType() == TvInputInfo.TYPE_HDMI;
                 if (ha != hb) return ha ? -1 : 1;
-                return String.valueOf(a.loadLabel(this)).compareToIgnoreCase(String.valueOf(b.loadLabel(this)));
+                return inputLabel(a).compareToIgnoreCase(inputLabel(b));
             });
             // Some TVs (Sony) report every HDMI port as connected whether or not anything is plugged in,
             // so drop the HDMI status then. A TV with every port really in use loses it too.
@@ -1011,10 +1144,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     tunerId = info.getId();
                 }
                 if (!info.isPassthroughInput()) continue;
-                CharSequence l = info.loadLabel(this);
-                String label = l == null ? info.getId() : l.toString();
+                String label = inputLabel(info);
                 boolean hdmi = info.getType() == TvInputInfo.TYPE_HDMI;
-                if (hdmi && !label.toUpperCase().contains("HDMI")) label = "HDMI " + label;
                 final String id = info.getId();
                 int state = hdmi && hdmiStateBogus ? -1 : tim.getInputState(id);
                 if (!hdmi && rows.getChildCount() > 0 && !sawNonHdmi) addSeparator(rows);
@@ -1040,9 +1171,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             return;
         }
 
-        // Fit the widest row: TVs that report a status on every port (Sony) would otherwise squeeze the names out.
+        // Fit the widest row, up to 360dp: a long custom input name (#291) must not make the popup
+        // wider than the useful part of a TV screen.
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        popup.setWidth(Math.max(width, panel.getMeasuredWidth()));
+        popup.setWidth(Math.min(Math.max(width, panel.getMeasuredWidth()), (int) (360 * density)));
 
         // Drop in: fade and unfold from the top edge.
         panel.setAlpha(0f);
