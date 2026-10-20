@@ -103,7 +103,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
     private int glassCardW;   // width of the tile the glass was last fitted to
-    private boolean tilesEntering;   // launch rise-in animation running; the glass waits for it
     private boolean glassShown;
     /** Vendor keycodes that mean the remote's Settings button; empty unless configured in config.xml. */
     private int[] settingsKeycodes = new int[0];
@@ -193,8 +192,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         grid.addItemDecoration(new DockDecoration(COLUMNS, density));
         grid.setLayoutAnimation(new LayoutAnimationController(
                 AnimationUtils.loadAnimation(this, R.anim.tile_enter), 0.06f));
-        // The ring sits at a tile's final spot and size; while the tiles still rise in (slow on a cold
-        // start) it floated off them, so it appears only once they have landed.
+        // After the rise-in animation, refit the ring once more: a cold start can focus a tile before
+        // the grid has its final width, and otherwise the ring would stay at the design size.
         grid.setLayoutAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation a) {
@@ -202,7 +201,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
             @Override
             public void onAnimationEnd(Animation a) {
-                tilesEntering = false;
                 focusTile(lastFocused);
             }
 
@@ -227,14 +225,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
             // On a slow cold start a tile can take focus while the grid has no width yet, at the design size;
             // the relaid-out tile is smaller, so refit the glass instead of waiting for the next focus change.
-            View item = grid.getFocusedChild();
-            View card = item == null ? null : item.findViewById(R.id.card);
-            if (glassShown && card != null && card.isFocused() && card.getWidth() != glassCardW) {
-                grid.post(() -> {
-                    int pos = grid.getChildAdapterPosition(item);
-                    if (card.isFocused() && pos != RecyclerView.NO_POSITION) onTileFocused(pos, card);
-                });
-            }
+            // Do this even before the first successful focus: the glass starts at the design size and would
+            // otherwise show a wide ring until the viewer presses a key.
+            grid.post(this::refitGlass);
         });
 
         // Keep the glass glued to its tile while the grid scrolls.
@@ -337,11 +330,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         final String returnKey = lastFocusedKey;
         final int returnSlot = lastFocused;
         adapter.setEntries(entries);
-        if (first && !light) {   // tiles rise in on launch only, not on every Home press
-            tilesEntering = true;
-            grid.scheduleLayoutAnimation();
-        }
+        if (first && !light) grid.scheduleLayoutAnimation();   // rise-in on launch only, not on every Home press
         restoreFocus(returnKey, returnSlot);
+        if (first) {
+            // Cold start: the first focus can happen before the grid has its final width, leaving the
+            // ring at the 4-column design size until a key is pressed. Retry after the layout settles;
+            // a single delayed pass can still land before AppLoader has bound the first holder.
+            for (int delay : new int[]{300, 800, 1600, 3000}) grid.postDelayed(this::refitGlass, delay);
+        }
     }
 
     /** Return to the app we left from, or the same slot if that app is gone. Posted so it runs after layout. */
@@ -372,7 +368,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     public void onTileFocused(int position, View card) {
         lastFocused = position;
         lastFocusedKey = adapter.keyAt(position);
-        if (tilesEntering) return;   // placed by the layout animation listener when the tiles land
         // Focus restored before the first layout (cold start): the tile has no size yet, and the ring
         // would be drawn as a dot. Run again once it is laid out.
         if (card.getWidth() == 0) {
@@ -757,11 +752,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         int w = (int) (cardW * AppAdapter.FOCUS_SCALE + 2 * pad);
         int h = (int) (cardH * AppAdapter.FOCUS_SCALE + 2 * pad);
         ViewGroup.LayoutParams lp = glass.getLayoutParams();
-        if (lp.width == w && lp.height == h) return;
-        lp.width = w;
-        lp.height = h;
-        glass.setLayoutParams(lp);
-        // Also apply it now: focus restored inside a layout pass would otherwise keep the old size until the next one.
+        if (lp.width != w || lp.height != h) {
+            lp.width = w;
+            lp.height = h;
+            glass.setLayoutParams(lp);
+        }
+        // Also apply it now: focus restored inside a layout pass would otherwise keep the old size until
+        // the next one. Reapply even when the params already match: the parent can lay the glass out with
+        // its previous measured size right after a cold-start focus, leaving the params and the view out of
+        // sync until the viewer presses a key.
         glass.layout(glass.getLeft(), glass.getTop(), glass.getLeft() + w, glass.getTop() + h);
         glass.setRadius(AppAdapter.cornerRadius((int) cardW, density) * AppAdapter.FOCUS_SCALE + pad);
     }
@@ -797,6 +796,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         focusTile(target);
         return true;
+    }
+
+    /** Refit the glass to the currently focused holder; used after cold-start layout settles. */
+    private void refitGlass() {
+        if (isDestroyed() || adapter.getItemCount() == 0) return;
+        int pos = Math.max(0, Math.min(lastFocused, adapter.getItemCount() - 1));
+        RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(pos);
+        View card = vh == null ? null : vh.itemView.findViewById(R.id.card);
+        if (card == null || card.getWidth() <= 0) return;
+        float pad = 6f * density;
+        int w = (int) (card.getWidth() * AppAdapter.FOCUS_SCALE + 2 * pad);
+        int h = (int) (card.getHeight() * AppAdapter.FOCUS_SCALE + 2 * pad);
+        if (!glassShown || card.getWidth() != glassCardW
+                || glass.getWidth() != w || glass.getHeight() != h) {
+            onTileFocused(pos, card);
+        }
     }
 
     private void focusTile(int position) {
