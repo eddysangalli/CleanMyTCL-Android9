@@ -229,11 +229,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         });
 
-        // Liquid feel: soft springs on the highlight's position.
+        // Material 3 Expressive "spatial default" spring (m3e_core M3EMotion.expressiveSpatialDefault:
+        // stiffness 380, damping ratio 0.8, mass 1), as on Gateway Ops Dashboard's navigation rail.
         springX = new SpringAnimation(glass, DynamicAnimation.TRANSLATION_X);
         springY = new SpringAnimation(glass, DynamicAnimation.TRANSLATION_Y);
         for (SpringAnimation s : new SpringAnimation[]{springX, springY}) {
-            s.setSpring(new SpringForce().setStiffness(260f).setDampingRatio(0.58f));
+            s.setSpring(new SpringForce().setStiffness(380f).setDampingRatio(0.8f));
         }
 
         View btnInputs = findViewById(R.id.btnInputs);
