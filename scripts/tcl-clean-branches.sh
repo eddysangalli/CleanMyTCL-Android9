@@ -27,11 +27,23 @@ echo
 CANDIDATES=$(git branch --format='%(refname:short)' | grep -vE '^(develop|main|measure/old-spring)$')
 echo "Candidates para apagar:"
 for b in $CANDIDATES; do
-  # A branch e integrated? some dos commits dela ja estao no develop?
   if git merge-base --is-ancestor "$b" develop 2>/dev/null; then
     state="ja integrada no develop"
   else
-    state="copia de inspecao (conteudo portado ou enviado)"
+    # Os commits que a branch tem alem do develop: se todos vivem num remoto (o fork de
+    # origem, ou o upstream de onde a branch foi copiada), apagar a copia local nao perde nada.
+    lost=0
+    for c in $(git rev-list origin/develop.."$b" 2>/dev/null); do
+      if ! git branch -r --contains "$c" 2>/dev/null | grep -q . \
+         && ! git branch -r --contains "$c" upstream 2>/dev/null | grep -q .; then
+        lost=$((lost + 1))
+      fi
+    done
+    if [ "$lost" = 0 ]; then
+      state="copia de inspecao, tudo recuperavel num remoto"
+    else
+      state="ATENCAO: $lost commits que nao existem em nenhum remoto"
+    fi
   fi
   echo "  $b  -- $state"
 done
@@ -45,17 +57,22 @@ fi
 echo
 echo "Apagando..."
 for b in $CANDIDATES; do
-  # Nunca apaga uma branch que tem trabalho nao publicado em develop.
   if git merge-base --is-ancestor "$b" develop 2>/dev/null; then
-    git branch -D "$b" > /dev/null 2>&1 && echo "  apagada: $b"
+    git branch -D "$b" > /dev/null 2>&1 && echo "  apagada: $b (ja no develop)"
   else
-    # Verifica se todos os commits dela ja estao no develop ou no main.
-    ahead=$(git rev-list --count develop.."$b" 2>/dev/null || echo 0)
-    behind_main=$(git rev-list --count main.."$b" 2>/dev/null || echo 0)
-    if [ "$ahead" = 0 ] || [ "$behind_main" = 0 ]; then
-      git branch -D "$b" > /dev/null 2>&1 && echo "  apagada: $b (nada unpublished)"
+    # Só apaga quando nenhum commit existe exclusively nesta branch: o que já está no fork
+    # (prfork) ou no upstream continua lá.
+    lost=0
+    for c in $(git rev-list origin/develop.."$b" 2>/dev/null); do
+      if ! git branch -r --contains "$c" 2>/dev/null | grep -q . \
+         && ! git branch -r --contains "$c" upstream 2>/dev/null | grep -q .; then
+        lost=$((lost + 1))
+      fi
+    done
+    if [ "$lost" = 0 ]; then
+      git branch -D "$b" > /dev/null 2>&1 && echo "  apagada: $b (recuperavel num remoto)"
     else
-      echo "  MANTIDA: $b (tem $ahead commits fora do develop)"
+      echo "  MANTIDA: $b ($lost commits so existem aqui)"
     fi
   fi
 done
