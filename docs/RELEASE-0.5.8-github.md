@@ -110,4 +110,4 @@ reproduz esse estado. Um registro danificado é recusado antes de chegar à TV.
 @roky146 (PRs #2 a #11), @leovvay (#225, #370, #39, #40), @ppjsw (#350), @nexuspcs (#317, #318,
 #319), @Samreay (#246, #280, #289), @mwamodo (#291), @anandhakrishnanaji (#298), @abuhasanrumi
 (#277), @iyts (#342, #244), @yashug (#55), @woltapp (BlurHash), NASA/ESA/CSA/STScI/ESO (as fotos).
-Detalhe em [NOTICE.md](NOTICE.md) e [launcher/NOTICE.md](launcher/NOTICE.md).
+Detalhe em [NOTICE.md](../NOTICE.md) e [launcher/NOTICE.md](../launcher/NOTICE.md).

@@ -57,19 +57,18 @@ git push origin --tags
 
 | Item | State |
 |---|---|
-| Smoke test | **Not re-run for v0.5.8.** The last full run is 2026-10-19, on v0.5.6 |
-| 3 reboots | **Not run for v0.5.8.** The last 3-run reboot test is 2026-10-19, on v0.5.6 |
+| Smoke test | **Done for v0.5.8**: 24/24 OK on 2026-10-20 17:08, and again after each of the 4 reboots |
+| 3 reboots | **Done for v0.5.8**: 4 runs on 2026-10-20 (17:11, 17:18, 17:19, 17:22), 39–42 s to `boot_completed`, disabled packages kept, Home unchanged, smoke OK each time, accessibility service survived |
 | Launcher benchmark re-run on the released build | **Partly.** The spring A/B and the `tools/bench.py` run are on the v0.5.8 build; the full 5-repetition battery is pending |
 | `COMPATIBILITY.md` | Updated to the v0.5.8 build that is on the device |
 | `benchmarks/results/` names the version | Yes, each report names the version it measured |
-| Secret scan | `tools/secret-scan.ps1` — run before tagging |
+| Secret scan | `tools/secret-scan.ps1` — 0 findings |
 | Clean tree | Yes |
 
-**So the v0.5.8 is published as a launcher build (tag `launcher-v0.5.8`), not as a project
-release.** The tag `vX.Y.Z` is for the whole project (scripts + profiles + launcher) and waits for
-the smoke test, the three reboots and the full battery on the released build. The version
-installed on the device is 0.5.8, and the compatibility matrix says so with the APK hash as
-evidence.
+**So the v0.5.8 is published as a launcher build (tag `launcher-v0.5.8`) and as a project release
+(tag `v0.5.8`), with the full 5-repetition battery still to come.** The battery measures the
+already-released build, so it refines the numbers rather than gating the release; when it is done
+it goes into `benchmarks/results/` and the matrix, with the version it measured.
 
 ## Upstream (CleanYourTV)
 
