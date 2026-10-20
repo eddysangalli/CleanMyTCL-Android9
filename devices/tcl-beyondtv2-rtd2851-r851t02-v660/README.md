@@ -21,9 +21,9 @@ How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
 - [`../../scripts/protected-packages.txt`](../../scripts/protected-packages.txt) — packages the scripts refuse to disable.
 - [`OPTIMIZATION-CANDIDATES.md`](OPTIMIZATION-CANDIDATES.md) — measured candidates, **not applied**, each with risk and undo.
 
-**Installed for validation on 2026-10-20:** `br.eddy.tvhome` **0.5.7** (versionCode 19), APK
-SHA-256 `20284EB87F393BCAC42F704C519E93D83828730182DABF6072DF5A436580C61F`, built from `develop`
-commit `10b2282`. This is a test/validation build, **not a release**; `main` and the published
+**Installed for validation on 2026-10-20:** `br.eddy.tvhome` **0.5.7** (versionCode 28), APK
+SHA-256 `ACDF90EC631FB0FCBAECD012C371C8ABCBF9B5E2117EC00006C34943A30FAA5B`, built from `develop`
+commit `f5d8cc6`. This is a test/validation build, **not a release**; `main` and the published
 reference remain v0.5.6 (APK `8D5C15983C31F356B46D23EAFE7626C6B59E03084FE678BD9ECEE84162EFCE1C`,
 launcher commit `28a0383`). The earlier local 0.5.6.1 Globoplay hotfix (versionCode 18) is superseded
 by this build.
@@ -33,9 +33,11 @@ The wallpaper A/B is separate:
 [key p50 17 ms, spring p50 ~634 ms, jank 0.19% black vs 6.89% aurora, PSS 23 vs 32 MB](../../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md).
 
 The validation build adds Performance/Balanced/Visual presets, the 0.5.6 columns/profiles/static
-Aurora wallpaper and the local Globoplay redirect settling fix. Existing preferences migrate to
+Aurora wallpaper, the local Globoplay redirect settling fix, and the reviewed contributions from
+@roky146: configurable smoke scripts (#2/#3), localized weather (#4), Spanish strings (#5) and the
+focus-ring fix (#9), followed by the local cold-start ring refit. Existing preferences migrate to
 **Custom** without changing motion or wallpaper. The full v0.5.7 battery, including the preset
-state, is still pending.
+state, is still pending. Review status: [`docs/PR-REVIEW-ROKY146-2026-10-20.md`](../../docs/PR-REVIEW-ROKY146-2026-10-20.md).
 
 ## Key findings on this hardware (measured)
 

@@ -16,3 +16,11 @@ Portes pontuais do upstream CleanYourTV (MIT), auditados em 20/10/2026 a partir 
 O redirecionamento do botão Globoplay e a espera de 800 ms para a sequência de abertura são uma adaptação local, testada nesta TCL.
 
 Adaptações para a TCL BeyondTV2: pt-BR, dock e entradas da TCL, botão de voz, menus pelo controle, recentes, clima opcional (Open-Meteo) e presets de experiência (Desempenho/Equilibrado/Visual).
+
+## Contribuições de @roky146 (revisadas e mescladas em `develop`, 20/10/2026)
+
+- #2 "fix(smoke): make the remote, test app and mic check configurable per device" — scripts de smoke reutilizáveis sem mudar o padrão da BeyondTV2.
+- #3 "fix(smoke): send the search key on the first Assistant attempt" — a tecla de busca é enviada já na primeira tentativa.
+- #4 "feat(launcher): make the weather line localizable" — o clima usa o idioma do sistema, com fallback em inglês.
+- #5 "feat(launcher): Spanish translation" — tradução espanhola; strings novas dos presets caem no inglês até uma próxima passada.
+- #9 "fix(launcher): focus ring misplaced for the first seconds after the launcher starts" — correção inicial, complementada localmente em `f5d8cc6` para reaplicar o tamanho do anel depois do layout de cold start.
