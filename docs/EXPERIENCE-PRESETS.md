@@ -1,8 +1,6 @@
 # Experience presets and measured cost
 
-Status: **0.5.7 (versionCode 29) on the integration branch `integrate/all-prs`, test/validation
-only**. The published reference remains **v0.5.6 on `main`**. Nothing here was published as a
-release.
+Status: the current repository source on `main` and `develop` is **v0.5.8 (versionCode 30)**. GitHub has no formal v0.5.8 release artifact or validated stable tag. The most recent explicitly identified installed APK in the published device reports is a **v0.5.7 validation build (code 29)**; actual current installation needs a new ADB check. The full v0.5.8 performance/standby/Cast/soak battery remains pending.
 
 The project rule is:
 
@@ -24,14 +22,13 @@ recovery are never optional.
 The three presets are the same app and components. They set the existing motion and wallpaper
 preferences; they do not create separate launchers, packages or services.
 
-### The spring in the 0.5.7 build
+### The Material 3 Expressive spring in the 0.5.7/0.5.8 code
 
 The integrated build uses the **Material 3 Expressive spring** from @roky146's PR #10
 (stiffness 380, damping ratio 0.8, plus a subtle lean at the grid edges). It replaced the older
 spring (stiffness 260, damping 0.58) in the Balanced and Visual presets.
 
-That spring is **not measured on this TV yet**. The numbers the author reported come from a
-different TCL (UnionTV, RTD284x) with a different protocol, so they are not transferred. The
+The spring **was compared on our BeyondTV2 in a controlled, single-parameter A/B on a v0.5.7 test build**: median full movement ~441 ms (M3E) versus ~635 ms (old), with median initial response 18 ms in both. See [spring A/B](../benchmarks/results/2026-10-20-v0.5.7-spring-m3e.md). These are not v0.5.8 results, nor a full battery for all experience modes. The
 v0.5.6 spring figures quoted below describe the *old* spring and stay labelled as v0.5.6.
 
 Performance (instant focus) is unchanged by this: with no spring, the focus moves in one frame
@@ -52,9 +49,7 @@ a 108-key navigation battery, with black on one side and Aurora on the other:
 
 Raw data and the exact conditions: [2026-10-19-v0.5.6-wallpaper.md](../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md).
 
-These numbers belong to **v0.5.6**. They are shown in the v0.5.7 UI as historical context with
-that label. They will not be reused as v0.5.7 results; a new battery must be run before claiming a
-new number.
+These numbers belong to **v0.5.6** and must remain labelled historical wherever shown in newer versions. They are not results for v0.5.7 or v0.5.8.
 
 ## Migration and individual options
 
@@ -80,7 +75,7 @@ validated on this TV and is not offered as a preset yet.
 - Options without a valid measurement say so instead of inventing a number. In particular, no
   performance claim is made for the Visual preset on v0.5.7 until it is measured.
 
-## Backgrounds available in 0.5.7
+## Backgrounds in v0.5.8 source
 
 The background is a list, cycled with Left/Right in the options, and every entry is reversible.
 `black` is the default and is what Performance uses.
@@ -100,8 +95,7 @@ full-screen image drawn every frame, so its cost has to be measured like any oth
 
 - **Wallpaper at reduced resolution**, overdraw reductions and bitmap-cache changes: candidates
   for a future A/B. Do not change the visual result without the comparison.
-- **The 0.5.7 battery** (5 repetitions) and the A/B of the new spring and of the BlurHash: pending
-  an idle TV. Until then, no v0.5.7 performance number is published.
+- **The complete v0.5.8 battery**, five matched repetitions for each preset, and the BlurHash/background A/B remain pending. The specific v0.5.7 spring A/B exists; do not relabel it as v0.5.8.
 
 ## Undo
 
