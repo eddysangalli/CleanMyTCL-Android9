@@ -169,7 +169,30 @@ worktree em `C:\Users\eddyr\AppData\Local\Temp\opencode\upstream-contrib`, com b
 - Pendência: como o upstream não tem um `refitGlass` equivalente, o PR precisa sertestado em
   pelo menos um aparelho Android 9 com 5 colunas antes de ser enviado.
 
-### 4.3 Candidatos que foram descartados (e por quê)
+### 4.3 PR 3 — "tools: a benchmark for the launcher's key latency, jank and idle cost"
+
+- Branch: `contrib/key-latency-benchmark`, commit `7fdb040` sobre `fd1ee0a`.
+- Necessidade: o upstream não tem ferramenta de medição de performance. Ele tem testes
+  automatizados, mas nada que meça a resposta do controle, o jank e o custo ocioso do launcher.
+  Sem isso, cada PR de performance no upstream é avaliado por descrição, e quem escreve a
+  descrição é quem faz a medição.
+- Equivalente no upstream: **não**. Não existe `tools/bench.py` nem equivalente.
+- Evidência: a ferramenta foi **escrita e validada nesta TCL BeyondTV2**, e é a mesma que
+  mediu o build integrado. Três erros de método foram encontrados e corrigidos no caminho, e
+  cada um deles custa uma série inteira de medições se passar:
+  1. O quadro que reage a uma tecla nasce do vsync **anterior** a ela: casar pelo
+     IntendedVsync descarta a maioria das teclas. A medição passou de 9 de 36 para 36 de 36.
+  2. Os keycodes do Android são 19 CIMA, 20 BAIXO, 21 ESQUERDA, 22 DIREITA: o filtro do log
+     procurava a tecla errada.
+  3. Uma tecla que não move nada deixa o quadro seguinte, de outra causa, entrar na medida com
+     uma latência de segundos.
+- Arquivos: `tools/bench.py` (novo).
+- Autor: Eddy Sangalli. Sem IP, sem número de série, sem conta, sem localização.
+- Pendência: rodar o CI do upstream e revisar se o formato do resultado (JSON) serve para a
+  comunidade. A ferramenta avisa e para se o launcher não for a janela em foco, em vez de
+  publicar números vazios.
+
+### 4.4 Candidatos que foram descartados (e por quê)
 
 | Candidato | Motivo |
 |---|---|
@@ -218,18 +241,26 @@ diz de qual versão ele veio.
 ## 8. Estado do GitHub e próximos passos
 
 - `main` **inalterada** em `94e4890` (v0.5.6). Nenhuma tag e nenhum release publicados.
-- `develop` **não** foi publicado nesta rodada: ela ainda está em `3ccf9b7` e a integração vive em
-  `integrate/all-prs`. Publicar `develop` com os merges de #6/#7/#8/#10/#11 faria o GitHub marcar
-  esses PRs como *merged* automaticamente — e o enunciado pede para **não encerrar nem aprovar os
-  PRs retidos sem aprovação**. A publicação fica para o comando explícito do mantenedor.
-- PRs do @roky146 continuam abertos, com o trabalho feito e pronto: 5 de 5 integrados localmente,
-  buildado, instalado e validado.
-- Contribuições ao upstream: 2 branches prontas, **nenhuma enviada**.
+- `develop` **publicada** em 20/10/2026 com os merges de #6, #7, #8, #10 e #11, os portes
+  auditados do upstream, o novo probe de latência e a documentação. O GitHub detectou
+  automaticamente os commits de merge e marcou os cinco PRs do @roky146 como *merged*; nenhum
+  foi fechado ou aprovado à mão, e todos receberam antes um comentário técnico objetivo.
+- Contribuições ao upstream: **3 branches prontas, nenhuma enviada**.
+
+### A/B do spring que ficou pendente
+
+O A/B de um parâmetro só (spring M3E 380/0,8 contra o antigo 260/0,58) tem a build de
+comparação pronta em `medicoes/apks/tvhome-0.5.7-code29-oldspring.apk` e a branch local
+`measure/old-spring`. A instalação ficou pendente porque a **TV saiu da rede** no meio da
+medição: o ADB deixou de responder, o endereço sumiu da tabela ARP e uma varredura da faixa
+192.168.1.0/24 não encontrou nenhum outro host com ADB. Nada foi reinstalado por cima, e a TV
+continua com a build M3E (`AAE067C6…`).
 
 ### Ordem sugerida
 
-1. Aprovar a publicação de `integrate/all-prs` em `develop` (ou pedir a branch para revisão).
-2. Rodar a bateria v0.5.7 completa (5 repetições) com a TV ociosa e publicar o resultado em
-   `benchmarks/results/`.
-3. Medir o A/B do spring do #10 e do BlurHash do #8 com o protocolo de ≥5 rodadas.
-4. Autorizar o envio dos 2 PRs ao upstream.
+1. Quando a TV voltar à rede: instalar a build de mola antiga e refazer as três séries de 36
+   teclas nas **mesmas** condições (6 colunas, movimento suave, acessibilidade ligada), para
+   fechar o A/B do #10.
+2. A/B do BlurHash (#8) contra o Aurora, com 5 repetições.
+3. Bateria completa da v0.5.7 (5 repetições), com a TV ociosa.
+4. Autorizar o envio dos 3 PRs ao upstream.

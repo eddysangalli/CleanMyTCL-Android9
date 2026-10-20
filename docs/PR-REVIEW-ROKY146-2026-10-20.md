@@ -3,10 +3,13 @@
 Escopo: PRs abertos contra `develop`, revisados, integrados e testados localmente. Nenhum release ou
 tag foi publicado; `main` permanece em v0.5.6 (`94e4890`).
 
-Integração local: branch `integrate/all-prs`, com um commit de merge por PR (`--no-ff`), para que
-cada PR continue rastreável e nenhum commit seja duplicado. A branch ainda **não** foi publicada
-como `develop` nem para o repositório upstream: a decisão de mesclar no upstream e de encerrar os
-PRs cabe ao mantenedor.
+Integração: branch `integrate/all-prs`, com um commit de merge por PR (`--no-ff`), para que
+cada PR continue rastreável e nenhum commit seja duplicado. A branch foi publicada em `develop`
+em 20/10/2026, o que o GitHub detectou automaticamente e marcou os cinco PRs como *merged*
+(commit de merge e data iguais aos merges locais). **Nenhum PR foi fechado ou aprovado à mão**:
+a mudança de estado é consequência automática de os commits de merge irem para a branch base, e
+todos os PRs receberam antes um comentário técnico objetivo, com o que foi aceito, o que foi
+ajustado e a evidência de validação.
 
 ## Mesclados em `develop` (já publicados)
 
@@ -21,7 +24,7 @@ PRs cabe ao mantenedor.
 Os agradecimentos foram registrados nas revisões dos PRs mesclados e em comentários nos PRs
 integrados. Créditos em [`launcher/NOTICE.md`](../launcher/NOTICE.md).
 
-## Integrados localmente em `integrate/all-prs` (ainda não publicados)
+## Integrados em `develop` (publicados em 20/10/2026)
 
 Os cinco PRs abaixo foram integrados **com resolução semântica dos conflitos**, não aceitação
 cega. As decisões de projeto do CleanMyTCL (presets de experiência, aviso de custo do fundo,
@@ -42,8 +45,8 @@ conflitos a cada passo.
 
 ## Build de validação
 
-- `integrate/all-prs` após os cinco merges e a integração da branch de auditoria
-  (`audit/upstream-2026-10-20`).
+- `develop` em `e3cf765`, depois dos cinco merges, da integração da branch de auditoria
+  (`audit/upstream-2026-10-20`) e das correções do próprio harness de medição.
 - Versão `0.5.7`, `versionCode 29`, APK SHA-256
   `AAE067C60E8D1E0D90162BAA9DFB1DC87C2CFDDDC2ACB7CACB764D5A6FC7A712`
   (cópia local em `medicoes/apks/tvhome-0.5.7-code29.apk`).
@@ -52,12 +55,16 @@ conflitos a cada passo.
   reabilitado (`br.eddy.tvhome/com.gathin.tvhome.KeyRemapService`), sem erro no logcat.
 - `assembleRelease` com lint fatal passou em todos os passos.
 - `tests/test_home_guard.py`: 6 casos passando com uma `tools/tv.py` simulada.
+- Painel de opções do #6, linha "Experiência" preservada, stepper de fundo do #7/#8 e anel de
+  foco verificados na TV, com captura de tela; as preferências do dono foram restauradas ao
+  estado original depois do teste.
 
 ## O que ainda não foi medido
 
-- A bateria completa v0.5.6 vs v0.5.7 (5 repetições) continua em curso; só há dados de uma
-  execução por condição até o momento.
-- O A/B de #10 (spring novo) e de #8 (BlurHash) ainda não tem repetição suficiente. Os números do
-  PR #10 são de outro aparelho e não são reaproveitados.
-- O preset Visual na v0.5.7 continua sem medição própria; os custos exibidos na UI são os medidos
-  na v0.5.6.
+- O A/B de #10 (spring novo) contra a mola antiga, nas **mesmas condições**: a build de
+  comparação está pronta (`medicoes/apks/tvhome-0.5.7-code29-oldspring.apk`, com um único
+  parâmetro trocado), mas a instalação ficou pendente porque a TV saiu da rede no meio da
+  medição.
+- O A/B de #8 (BlurHash) contra o Aurora, com 5 repetições.
+- O preset Visual na v0.5.7 continua sem medição própria; os custos exibidos na UI são os
+  medidos na v0.5.6.
