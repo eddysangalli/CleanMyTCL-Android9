@@ -1,6 +1,8 @@
 tools/venv/
 tools/adbkey/
 tools/__pycache__/
+tests/__pycache__/
+__pycache__/
 launcher/.gradle/
 launcher/build/
 launcher/app/build/
