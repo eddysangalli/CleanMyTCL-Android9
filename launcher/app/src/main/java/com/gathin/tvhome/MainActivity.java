@@ -3,6 +3,7 @@ package com.gathin.tvhome;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -74,6 +75,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     static int COLUMNS = 4;
     private static final long MINUTE_MS = 60_000L;
     private String liveTvPkg;
+    /** TVs with no TvInputManager (TCL Android TV 9): component (service or activity) and action of the
+     *  TV's own source-selection panel. Empty by default; the fields only matter when their XML keys are
+     *  filled in. Set in onCreate. */
+    private String sourcePanelService;
+    private String sourcePanelAction;
 
     private HomePrefs prefs;
     /** Ultralight mode (HomePrefs): apps only, no glow, title, weather or springs. */
@@ -156,6 +162,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         settingsKeycodes = getResources().getIntArray(R.array.settings_key_keycodes);
         COLUMNS = prefs.columns();
         liveTvPkg = getString(R.string.live_tv_package).trim();
+        sourcePanelService = getString(R.string.source_panel_service).trim();
+        sourcePanelAction = getString(R.string.source_panel_action).trim();
 
         root = findViewById(R.id.root);
         glass = findViewById(R.id.glass);
@@ -1407,16 +1415,23 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                                 TvContract.buildChannelUriForPassthroughInput(id), "vnd.android.cursor.item/channel")));
             }
         }
-        Intent liveTv = liveTvPkg.isEmpty() ? null : getPackageManager().getLeanbackLaunchIntentForPackage(liveTvPkg);
+        Intent liveTv = liveTvIntent();
         if (liveTv != null && tunerId != null) {
             liveTv = new Intent(Intent.ACTION_VIEW)
                     .setDataAndType(TvContract.buildChannelUriForPassthroughInput(tunerId), "vnd.android.cursor.item/channel")
                     .setPackage(liveTvPkg);
         }
+        // A configured source panel and no Live TV row to offer next to it: the panel is the whole menu.
+        // The BYINTEK U4 needs this, as its TvInputManager lists three HDMI ports and an AV input it doesn't have.
+        if (!sourcePanelService.isEmpty() && liveTv == null) {
+            openSourcePanel();
+            popup.dismiss();
+            return;
+        }
         if (liveTv != null) {
             if (rows.getChildCount() > 0) addSeparator(rows);
-            final Intent liveTvIntent = liveTv;
-            addInputRow(rows, popup, R.drawable.ic_livetv, getString(R.string.live_tv), -1, () -> open(liveTvIntent));
+            final Intent liveTvLaunch = liveTv;
+            addInputRow(rows, popup, R.drawable.ic_livetv, getString(R.string.live_tv), -1, () -> open(liveTvLaunch));
         }
         if (rows.getChildCount() == 0) {
             Toast.makeText(this, R.string.no_inputs, Toast.LENGTH_SHORT).show();
@@ -1437,6 +1452,30 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         panel.animate().alpha(1f).scaleY(1f).translationY(0f).setDuration(220)
                 .setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f)).start();
         rows.getChildAt(0).requestFocus();
+    }
+
+    /** The Live TV app's launch intent, or null when no Live TV row should be added to the menu. */
+    private Intent liveTvIntent() {
+        return liveTvPkg.isEmpty() ? null : getPackageManager().getLeanbackLaunchIntentForPackage(liveTvPkg);
+    }
+
+    /** The TV's own source-selection panel, for TVs that have no TvInputManager (TCL Android TV 9): a
+     *  service, or an activity on sets whose panel is a dialog (BYINTEK U4's QuickSourceActivity). */
+    private void openSourcePanel() {
+        Intent i = new Intent(sourcePanelAction);
+        ComponentName c = ComponentName.unflattenFromString(sourcePanelService);
+        if (c != null) i.setComponent(c);
+        try {
+            // The component may be an activity (BYINTEK U4) or a service (the older TCL sets);
+            // resolveActivity distinguishes the two and the IF is harmless when the config is empty.
+            if (getPackageManager().resolveActivity(i, 0) != null) {
+                startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                return;
+            }
+            startService(i);
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void addSeparator(LinearLayout rows) {

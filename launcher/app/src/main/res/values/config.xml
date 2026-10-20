@@ -22,6 +22,14 @@
     <!-- The TV's Live TV / tuner app (opens HDMI, AV and antenna: com.tcl.tv/.TVActivity). -->
     <string name="live_tv_package" translatable="false">com.tcl.tv</string>
 
+    <!-- TVs with no TvInputManager have no HDMI list to read, but their own source-selection panel
+         still switches inputs (TCL Android TV 9 again). When nothing could be listed, the Inputs menu
+         offers one row that starts this service: component first, then action. The component can also
+         be an activity, for sets whose panel is a dialog (BYINTEK U4). With no Live TV app either, the
+         Inputs pill opens the panel directly instead of a menu. Leave empty to omit. -->
+    <string name="source_panel_service" translatable="false"></string>
+    <string name="source_panel_action" translatable="false"></string>
+
     <!-- Tiles per row in the grid; the dock always has this many slots. Tiles are 180dp wide at 4 columns and
          shrink to fit from 5 up (about 144dp at 5, 117dp at 6 on a 1080p TV). -->
     <integer name="columns">4</integer>
