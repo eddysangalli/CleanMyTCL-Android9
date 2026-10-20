@@ -30,6 +30,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.widget.EditText;
@@ -101,6 +102,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
     private int glassCardW;   // width of the tile the glass was last fitted to
+    private boolean tilesEntering;   // launch rise-in animation running; the glass waits for it
     private boolean glassShown;
     // Static so they survive the activity being destroyed while another app is open (low-memory TVs,
     // or Developer options → "Don't keep activities"); they only reset when the process dies.
@@ -172,6 +174,23 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         grid.addItemDecoration(new DockDecoration(COLUMNS, density));
         grid.setLayoutAnimation(new LayoutAnimationController(
                 AnimationUtils.loadAnimation(this, R.anim.tile_enter), 0.06f));
+        // The ring sits at a tile's final spot and size; while the tiles still rise in (slow on a cold
+        // start) it floated off them, so it appears only once they have landed.
+        grid.setLayoutAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation a) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation a) {
+                tilesEntering = false;
+                focusTile(lastFocused);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation a) {
+            }
+        });
         adapter = new AppAdapter(this, COLUMNS);
         grid.setAdapter(adapter);
 
@@ -299,7 +318,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         final String returnKey = lastFocusedKey;
         final int returnSlot = lastFocused;
         adapter.setEntries(entries);
-        if (first && !light) grid.scheduleLayoutAnimation();   // tiles rise in on launch only, not on every Home press
+        if (first && !light) {   // tiles rise in on launch only, not on every Home press
+            tilesEntering = true;
+            grid.scheduleLayoutAnimation();
+        }
         restoreFocus(returnKey, returnSlot);
     }
 
@@ -331,6 +353,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     public void onTileFocused(int position, View card) {
         lastFocused = position;
         lastFocusedKey = adapter.keyAt(position);
+        if (tilesEntering) return;   // placed by the layout animation listener when the tiles land
         // Focus restored before the first layout (cold start): the tile has no size yet, and the ring
         // would be drawn as a dot. Run again once it is laid out.
         if (card.getWidth() == 0) {
