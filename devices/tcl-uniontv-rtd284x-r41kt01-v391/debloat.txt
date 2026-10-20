@@ -1,4 +1,4 @@
-# TCL UnionTV profile — debloat list (Android TV 9, V8-R41KT01-LF1V391)
+# TCL L32S6500 (UnionTV) profile — debloat list (Android TV 9, V8-R41KT01-LF1V391)
 # Format compatible with upstream tools/disable.sh and tools/restore.sh (one package per line, # comments).
 #
 # Device: TCL "UnionTV" (Central America firmware, client TCL-CA-RT41KA-S1), Realtek RTD284x family

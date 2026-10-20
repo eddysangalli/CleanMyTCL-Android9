@@ -44,7 +44,7 @@ Profile: [devices/tcl-beyondtv2-rtd2851-r851t02-v660/](devices/tcl-beyondtv2-rtd
 | Google Play / DRM playback | 🟡 | Play Store present; Netflix opens; `android.hardware.drm@1.1-service.widevine`, clearkey, `drmserver` and `mediadrmserver` all running. Protected playback itself is a visual/audio check |
 | Remap of the "Globoplay" button | 🧪 | No root: the key is injected by TCL software. v0.5 redirects by window event, which needs the accessibility service — **currently off**, and its cost to key delivery is **not measured** (the two attempts that were run collided with other measurements) |
 
-### TCL UnionTV — Realtek RTD284x — R41KT01 V391 — Android 9 (API 28), 32-bit, ~1.4 GB RAM
+### TCL L32S6500 (UnionTV) — Realtek RTD284x — R41KT01 V391 — Android 9 (API 28), 32-bit, ~1.4 GB RAM
 
 Profile: [devices/tcl-uniontv-rtd284x-r41kt01-v391/](devices/tcl-uniontv-rtd284x-r41kt01-v391/) · Last checked: 2026-10-20 · Reported by a contributor, not reproduced by maintainers
 

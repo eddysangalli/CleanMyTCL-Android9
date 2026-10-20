@@ -1,4 +1,4 @@
-# TCL UnionTV — Realtek RTD284x — R41KT01 V391
+# TCL L32S6500 (UnionTV) — Realtek RTD284x — R41KT01 V391
 
 | Field | Value |
 |---|---|
@@ -10,7 +10,7 @@
 | Storage | eMMC, `/data` 4.2 GB |
 | Display | UI at 1280×720, density 213 |
 | Remote | IR only (no Bluetooth remote paired, no microphone) |
-| Commercial name | Not exposed by the system |
+| Commercial name | TCL **L32S6500** (32-inch S6500 line), from the label on the back; the system only reports `UnionTV` |
 
 How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
 `adb shell getprop ro.software.version_id`. Same fingerprint = closest match. Different firmware = treat as

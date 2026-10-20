@@ -61,7 +61,7 @@ during the spring — see the [wallpaper A/B](benchmarks/results/2026-10-19-v0.5
 | Device profile | Chipset | Firmware | Status |
 |---|---|---|---|
 | [TCL BeyondTV2](devices/tcl-beyondtv2-rtd2851-r851t02-v660/) | Realtek RTD2851 | R851T02 V660 (Android 9, API 28, 32-bit, 2 GB) | Partially validated (see matrix) |
-| [TCL UnionTV](devices/tcl-uniontv-rtd284x-r41kt01-v391/) | Realtek RTD284x | R41KT01 V391 (Android 9, API 28, 32-bit, ~1.4 GB) | Reported by a contributor (see matrix) |
+| [TCL L32S6500 (UnionTV)](devices/tcl-uniontv-rtd284x-r41kt01-v391/) | Realtek RTD284x | R41KT01 V391 (Android 9, API 28, 32-bit, ~1.4 GB) | Reported by a contributor (see matrix) |
 
 ---
 
