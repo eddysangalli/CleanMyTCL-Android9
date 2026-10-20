@@ -11,7 +11,7 @@ commented on or merged by this repository.
 | Upstream `main` inspected | `09fe4e4` |
 | Divergence | 494 upstream commits since the base; substantial launcher rewrite (`Config`, `Cards`, `HomeKeyService`, themes) |
 | Upstream merge batch | 2026-10-20, seen at 09:08 UTC |
-| Local validation branch | `develop` (test build 0.5.7, versionCode 19); `main` remains v0.5.6 |
+| Local validation branch | `develop` (test build 0.5.7, versionCode 19 at the time of that snapshot; the integrated build is now versionCode 29 — see [UPSTREAM-AUDIT-2026-10-20-ROUND2.md](UPSTREAM-AUDIT-2026-10-20-ROUND2.md)); `main` remains v0.5.6 |
 
 A full tree merge was rejected: it would overwrite the TCL-specific navigation, recovery,
 accessibility and personalization code before those changes could be reviewed and measured. The

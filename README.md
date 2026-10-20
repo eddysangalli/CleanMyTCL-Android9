@@ -82,6 +82,10 @@ The same Home has three presets, not three launchers. Individual options remain 
 | **Balanced** | Smooth focus; current spring | Black | No wallpaper; uses the same spring as Visual |
 | **Visual** | Smooth focus; current spring | Aurora wallpaper | Measured on the TCL BeyondTV2 with v0.5.6: +9 MB PSS, delayed frames 0.19% → 6.89%; median key response stayed at 17 ms |
 
+Other backgrounds (solid colours, Earth at night, BlurHash blurs) are optional and reversible in the
+same menu. Only Aurora has a measured cost on this TV; the others are labelled **not measured
+here**, and the launcher says so before enabling them.
+
 The v0.5.6 A/B and its method are in [benchmarks/results/2026-10-19-v0.5.6-wallpaper.md](benchmarks/results/2026-10-19-v0.5.6-wallpaper.md). Those numbers belong to v0.5.6, not to future builds; they will be re-measured before being attributed to v0.5.7. Upgrades keep the existing motion/wallpaper values and show **Custom** until the viewer chooses a preset. Details: [docs/EXPERIENCE-PRESETS.md](docs/EXPERIENCE-PRESETS.md).
 
 ---
@@ -90,9 +94,9 @@ The v0.5.6 A/B and its method are in [benchmarks/results/2026-10-19-v0.5.6-wallp
 
 | Path | What |
 |---|---|
-| `launcher/` | Lightweight Home (`com.gathin.tvhome` code from upstream + TCL features: Performance/Balanced/Visual presets, D-pad menus, HDMI shortcuts, voice button, on-TV settings, configurable greeting, 4/5/6 columns, family profiles, optional static Aurora wallpaper) |
+| `launcher/` | Lightweight Home (`com.gathin.tvhome` code from upstream + TCL features: Performance/Balanced/Visual presets, D-pad menus, HDMI shortcuts, voice button, on-TV settings, configurable greeting, 4/5/6 columns, family profiles, optional backgrounds: solid colours, static Aurora, Earth at night and BlurHash blurs) |
 | `scripts/` | Windows PowerShell + Git Bash tools: backup, restore, safe disable, smoke test, reboot test, benchmarks |
-| `tools/` | Upstream CleanYourTV tools (`tv.py`, `disable.*`, `restore.*`) — kept unchanged |
+| `tools/` | Upstream CleanYourTV tools (`tv.py`, `disable.*`, `restore.*`) — with the upstream Home guard ported in |
 | `devices/` | Per-model profiles: debloat list, protected packages, what was tested |
 | `benchmarks/` | Methodology and curated results |
 | `docs/` | Setup on Windows 11, ADB, backup/restore, recovery, personalization, known issues, provenance |
@@ -117,7 +121,7 @@ powershell -ExecutionPolicy Bypass -File scripts\tcl-restore.ps1          # dry-
 
 ## Relationship with upstream
 
-This repo keeps CleanYourTV's history up to commit `9ef40c1` and branches from there. Upstream has moved on (v2.x, themes, Home-key service). We track it as the `upstream` remote and **cherry-pick** fixes after reviewing conflicts, behavior changes and measured performance impact ([docs/BRANCHING.md](docs/BRANCHING.md)). The 2026-10-20 review, including the small ports and the changes deliberately left out, is in [docs/UPSTREAM-AUDIT-2026-10-20.md](docs/UPSTREAM-AUDIT-2026-10-20.md). Improvements that are not TCL-specific should be offered back to CleanYourTV.
+This repo keeps CleanYourTV's history up to commit `9ef40c1` and branches from there. Upstream has moved on (v2.4.0, themes, Home-key service). We track it as the `upstream` remote and **cherry-pick** fixes after reviewing conflicts, behavior changes and measured performance impact ([docs/BRANCHING.md](docs/BRANCHING.md)). The 2026-10-20 reviews — the first round of ports and the second round, which audited upstream v2.4.0, the fork network, and prepared two contributions to send back — are in [docs/UPSTREAM-AUDIT-2026-10-20.md](docs/UPSTREAM-AUDIT-2026-10-20.md) and [docs/UPSTREAM-AUDIT-2026-10-20-ROUND2.md](docs/UPSTREAM-AUDIT-2026-10-20-ROUND2.md). Improvements that are not TCL-specific should be offered back to CleanYourTV.
 
 ---
 
