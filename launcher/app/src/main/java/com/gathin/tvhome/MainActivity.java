@@ -583,7 +583,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 if (p == null) {
                     message = R.string.weather_not_found;
                 } else {
-                    String now = Weather.current(p.lat, p.lon);
+                    String now = Weather.current(getApplicationContext(), p.lat, p.lon);
                     prefs.setWeatherPlace(p.name, p.lat, p.lon);
                     prefs.setWeatherText(now);
                     place = p.name;
@@ -611,7 +611,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         final double lat = prefs.weatherLat(), lon = prefs.weatherLon();
         WEATHER.execute(() -> {
             try {
-                prefs.setWeatherText(Weather.current(lat, lon));
+                prefs.setWeatherText(Weather.current(getApplicationContext(), lat, lon));
                 handler.post(() -> {
                     if (!isDestroyed()) updateGreeting();
                 });
