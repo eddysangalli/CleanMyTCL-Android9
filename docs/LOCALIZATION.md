@@ -8,6 +8,7 @@ never types user-visible text itself: the release build fails (lint `HardcodedTe
 |---|---|---|
 | `values/` | English (default, used when the TV's language has no folder) | complete |
 | `values-pt-rBR/` | Portuguese (Brazil) | complete |
+| `values-es/` | Spanish (all regions) | complete |
 | `values-de/` | German | partial — missing strings fall back to English |
 
 ## Adding a language

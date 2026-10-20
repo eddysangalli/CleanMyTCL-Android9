@@ -74,41 +74,49 @@
 
                 <TextView
                     android:id="@+id/greeting"
-                    android:layout_width="wrap_content"
+                    android:layout_width="390dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:maxWidth="390dp"
                     android:textColor="#FFFFFFFF"
                     android:textSize="42sp"
                     android:fontFamily="@font/outfit"
                     android:fontVariationSettings="'wght' 300"
                     android:letterSpacing="-0.02"
                     android:includeFontPadding="false"
-                    android:singleLine="true"
-                    android:ellipsize="end" />
-
-                <TextView
-                    android:id="@+id/subtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="2dp"
-                    android:layout_marginTop="8dp"
-                    android:maxWidth="390dp"
-                    android:textColor="#99FFFFFF"
-                    android:textSize="16sp"
-                    android:fontFamily="@font/outfit"
-                    android:fontVariationSettings="'wght' 400"
-                    android:singleLine="true"
-                    android:ellipsize="end" />
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="30sp"
+                    android:autoSizeMaxTextSize="42sp"
+                    android:autoSizeStepGranularity="2sp" />
             </LinearLayout>
 
+            <!-- Outside leftBlock so a message that wraps to a second line does not push the pills down. -->
+            <TextView
+                android:id="@+id/subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/leftBlock"
+                android:layout_alignParentStart="true"
+                android:layout_marginStart="2dp"
+                android:layout_marginTop="8dp"
+                android:maxWidth="390dp"
+                android:textColor="#99FFFFFF"
+                android:textSize="16sp"
+                android:fontFamily="@font/outfit"
+                android:fontVariationSettings="'wght' 400"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <!-- Fixed offset from the top, where the pills sat when they followed a one-line header, so
+                 neither the greeting's auto-size nor a two-line message moves them. -->
             <LinearLayout
                 android:id="@+id/topButtons"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:layout_alignBottom="@id/leftBlock"
-                android:layout_marginBottom="6dp"
+                android:layout_alignParentTop="true"
+                android:layout_marginTop="53dp"
                 android:orientation="horizontal">
 
                 <TextView
