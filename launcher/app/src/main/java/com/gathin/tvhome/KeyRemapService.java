@@ -4,6 +4,8 @@ import android.accessibilityservice.AccessibilityService;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.view.accessibility.AccessibilityEvent;
 
@@ -12,7 +14,9 @@ import android.view.accessibility.AccessibilityEvent;
  * key service injects keycode 4097 and starts Globoplay itself, and injected keys never reach an accessibility
  * key filter. So instead of the key, this watches for Globoplay coming to the front and switches to the chosen app.
  * Globoplay is left in the background on purpose: closing it made the next press a cold start, ~4 s of Globoplay
- * loading before the switch instead of ~0.05 s, and Android drops a cached app first anyway when memory runs low.
+ * loading before the switch. We wait for its startup window changes to settle (~0.8 s) before switching; an
+ * immediate switch was taken back by Globoplay's own main screen and account chooser. Android drops a cached app
+ * first anyway when memory runs low.
  *
  * Any Globoplay screen counts: when its task already exists, the button brings back whatever screen was on top
  * (the profile chooser, a show), not the splash. Globoplay opened from an Eddy TV tile is left alone until the
@@ -25,16 +29,32 @@ import android.view.accessibility.AccessibilityEvent;
 public class KeyRemapService extends AccessibilityService {
 
     static final String SOURCE = "com.globo.globotv";
-    /** Globoplay emits a few window changes while it starts; one redirect per burst is enough. */
-    private static final long BURST_MS = 300;
+    /**
+     * Globoplay emits several window changes while it starts (splash, main screen, account chooser).
+     * Redirecting on the first one was too early: the later windows took focus back. Wait until the
+     * source has been quiet for this long, then switch once.
+     */
+    private static final long SETTLE_MS = 800;
 
     /** Globoplay was opened from Eddy TV. Static: the Home and this service share the process. */
     private static volatile boolean allowed;
 
     private volatile String target = "";
-    private long lastRedirect;
     /** Kept as a field: SharedPreferences holds change listeners weakly. */
     private SharedPreferences.OnSharedPreferenceChangeListener prefsListener;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private long lastSourceEvent;
+
+    /** Runs after Globoplay's startup window changes have settled. */
+    private final Runnable redirect = new Runnable() {
+        @Override
+        public void run() {
+            if (SystemClock.uptimeMillis() - lastSourceEvent < SETTLE_MS) return;
+            String to = target;
+            if (to.isEmpty() || allowed) return;
+            launch(to);
+        }
+    };
 
     /** Called by the Home just before it opens Globoplay itself. */
     static void allowSource() {
@@ -63,10 +83,9 @@ public class KeyRemapService extends AccessibilityService {
         if (pkg == null || !SOURCE.contentEquals(pkg)) return;
         String to = target;
         if (to.isEmpty() || allowed) return;     // remap off, or opened from the Home
-        long now = SystemClock.uptimeMillis();
-        if (now - lastRedirect < BURST_MS) return;
-        lastRedirect = now;
-        launch(to);
+        lastSourceEvent = SystemClock.uptimeMillis();
+        handler.removeCallbacks(redirect);
+        handler.postDelayed(redirect, SETTLE_MS);
     }
 
     private void launch(String pkg) {
@@ -84,5 +103,11 @@ public class KeyRemapService extends AccessibilityService {
 
     @Override
     public void onInterrupt() {
+    }
+
+    @Override
+    public void onDestroy() {
+        handler.removeCallbacks(redirect);
+        super.onDestroy();
     }
 }
