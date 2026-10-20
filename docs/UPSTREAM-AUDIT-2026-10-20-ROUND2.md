@@ -1,5 +1,7 @@
 # Auditoria do upstream CleanYourTV, dos forks e das contribuições de retorno — 20/10/2026
 
+> **Aviso de arquivo histórico (20/10/2026).** Este é um retrato da auditoria naquele horário: SHA de branches, versão instalada, estado dos PRs e decisões posteriores podem ter mudado. A versão do código foi avançada para v0.5.8 e as branches foram sincronizadas depois. Para o estado atual, consulte [BRANCHING](BRANCHING.md), [COMPATIBILITY](../COMPATIBILITY.md) e [RELEASE-0.5.8](RELEASE-0.5.8.md). Não interprete os dados antigos abaixo como estado vivo da TV.
+
 Escopo desta rodada: auditoria de código real do upstream (v2.4.0, `main` = `fd1ee0a`), levantamento
 da rede de forks, integração dos PRs de @roky146, implementação das melhorias selecionadas e
 preparação de contribuições de volta ao projeto original.
