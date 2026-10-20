@@ -27,6 +27,8 @@
     <string name="menu_pin">Pin to dock</string>
     <string name="menu_hide">Hide</string>
     <string name="menu_info">App info</string>
+    <!-- Shown at the end of a menu row whose value changes with Left/Right. -->
+    <string name="menu_stepper_hint" translatable="false">‹  ›</string>
     <string name="dock_full">The dock is full: remove an app first</string>
     <string name="opt_light_on">Ultralight mode: on</string>
     <string name="opt_light_off">Ultralight mode: off</string>
