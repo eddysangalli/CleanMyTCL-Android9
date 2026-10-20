@@ -963,6 +963,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
+     * "Label: value" rows (from the opt_* strings, in any language that uses a colon) show the label
+     * fixed and the value in the scrolling view; anything else goes whole into the scrolling view.
+     */
+    private void setRowText(TextView label, TextView value, String text) {
+        int colon = text.indexOf(':');
+        boolean split = colon > 0 && colon < text.length() - 1;
+        label.setVisibility(split ? View.VISIBLE : View.GONE);
+        if (split) label.setText(text.substring(0, colon + 1));
+        value.setText(split ? text.substring(colon + 1).trim() : text);
+        ((ViewGroup.MarginLayoutParams) value.getLayoutParams()).setMarginStart((int) ((split ? 5 : 10) * density));
+    }
+
+    /**
      * A dropdown of actions in the Inputs menu's style, below the anchor (or above it near the bottom).
      * With no anchor it is a wider panel fixed at the right edge, vertically centred (the Home options).
      */
@@ -978,9 +991,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         for (MenuItem item : items) {
             View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
             ((ImageView) row.findViewById(R.id.icon)).setImageResource(item.icon);
+            TextView label = row.findViewById(R.id.label);
             TextView title = row.findViewById(R.id.title);
-            title.setText(item.title);
-            // A label too long for the row scrolls once into view while the row has focus.
+            setRowText(label, title, item.title);
+            // A value too long for the row scrolls once into view while the row has focus.
             title.setMarqueeRepeatLimit(1);
             row.setOnFocusChangeListener((v, focused) -> {
                 title.setEllipsize(focused ? TextUtils.TruncateAt.MARQUEE : TextUtils.TruncateAt.END);
@@ -1000,13 +1014,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 status.setTextColor(title.getTextColors());
                 row.setOnClickListener(v -> {
                     item.step.step(1);
-                    title.setText(item.label.get());
+                    setRowText(label, title, item.label.get());
                 });
                 row.setOnKeyListener((v, keyCode, event) -> {
                     if (keyCode != KeyEvent.KEYCODE_DPAD_LEFT && keyCode != KeyEvent.KEYCODE_DPAD_RIGHT) return false;
                     if (event.getAction() == KeyEvent.ACTION_DOWN) {
                         item.step.step(keyCode == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1);
-                        title.setText(item.label.get());
+                        setRowText(label, title, item.label.get());
                     }
                     return true;
                 });
