@@ -24,7 +24,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -469,30 +471,41 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Hold OK on Settings: experience preset, motion, weather, hidden apps and the default dock. */
     private void showHomeOptions(View anchor) {
+        showHomeOptions(anchor, 0);
+    }
+
+    /**
+     * Settings with values (accent, motion, columns, wallpaper, Globoplay key) change in place with
+     * OK/Left/Right and keep the menu open; name and message reopen it on the same row after typing.
+     */
+    private void showHomeOptions(View anchor, int focusIndex) {
         List<MenuItem> items = new ArrayList<>();
         items.add(new MenuItem(R.drawable.ic_person, getString(R.string.opt_name, prefs.userName()), () ->
                 askText(R.string.name_title, prefs.userName(), 0, text -> {
                     prefs.setUserName(text);
                     updateGreeting();
-                })));
+                }, () -> showHomeOptions(anchor, 0))));
         String message = prefs.message();
         items.add(new MenuItem(R.drawable.ic_edit, getString(R.string.opt_message,
                 message.isEmpty() ? getString(R.string.opt_message_auto) : message), () ->
                 askText(R.string.message_title, prefs.message(), R.string.message_hint, text -> {
                     prefs.setMessage(text);
                     updateGreeting();
-                })));
+                }, () -> showHomeOptions(anchor, 1))));
         String[] accentNames = getResources().getStringArray(R.array.accent_names);
-        items.add(new MenuItem(R.drawable.ic_circle, getString(R.string.opt_accent,
-                accentNames[prefs.accent() % accentNames.length]), () -> {
-            prefs.setAccent((prefs.accent() + 1) % ACCENTS.length);
+        items.add(new MenuItem(R.drawable.ic_circle,
+                () -> getString(R.string.opt_accent, accentNames[prefs.accent() % accentNames.length]), dir -> {
+            prefs.setAccent((prefs.accent() + dir + ACCENTS.length) % ACCENTS.length);
             applyAccent();
         }));
         items.add(new MenuItem(R.drawable.ic_bolt,
                 getString(R.string.opt_experience, experienceLabel()), this::askExperience));
-        items.add(new MenuItem(R.drawable.ic_bolt, light ? R.string.opt_motion_off : R.string.opt_motion_on, this::toggleLight));
+        items.add(new MenuItem(R.drawable.ic_bolt,
+                () -> getString(light ? R.string.opt_motion_off : R.string.opt_motion_on), dir -> toggleLight()));
         items.add(new MenuItem(R.drawable.ic_person, getString(R.string.opt_profiles, prefs.profiles().length()), this::showProfiles));
-        items.add(new MenuItem(R.drawable.ic_grid, getString(R.string.opt_columns, COLUMNS), this::askColumns));
+        // Changing the columns rebuilds the Home, so the new count is applied when the menu closes.
+        items.add(new MenuItem(R.drawable.ic_grid, () -> getString(R.string.opt_columns, prefs.columns()),
+                dir -> prefs.setColumns(Math.max(4, Math.min(6, prefs.columns() + dir)))));
         items.add(new MenuItem(R.drawable.ic_wallpaper,
                 prefs.wallpaper() && !light ? R.string.opt_wallpaper_on : R.string.opt_wallpaper_off,
                 this::askWallpaper));
@@ -500,10 +513,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             items.add(new MenuItem(R.drawable.ic_star, R.string.opt_remap_service, () ->
                     open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))));
         } else {
-            String target = prefs.remapTarget();
-            items.add(new MenuItem(R.drawable.ic_star, target.isEmpty() ? getString(R.string.opt_remap_off)
-                    : getString(R.string.opt_remap_on, appLabel(target)), () ->
-                    prefs.setRemapTarget(target.isEmpty() ? HomePrefs.DEFAULT_REMAP : "")));
+            items.add(new MenuItem(R.drawable.ic_star, () -> {
+                String target = prefs.remapTarget();
+                return target.isEmpty() ? getString(R.string.opt_remap_off)
+                        : getString(R.string.opt_remap_on, appLabel(target));
+            }, dir -> prefs.setRemapTarget(prefs.remapTarget().isEmpty() ? HomePrefs.DEFAULT_REMAP : "")));
         }
         if (prefs.hasWeatherPlace()) {
             items.add(new MenuItem(R.drawable.ic_cloud, getString(R.string.opt_weather, prefs.weatherPlace()), this::askWeatherPlace));
@@ -525,7 +539,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             prefs.resetDock();
             AppLoader.reorder(this);
         }));
-        showMenu(anchor, items);
+        showMenu(null, items, focusIndex, () -> {
+            if (prefs.columns() != COLUMNS) recreate();
+        });
     }
 
     private void toggleLight() {
@@ -613,24 +629,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     // ---- columns and family profiles -------------------------------------------------------------
-
-    /** 4, 5 or 6 tiles per row; the dock grows to the same number of slots. Recreates the Home to relayout. */
-    private void askColumns() {
-        final String[] labels = {"4", "5", "6"};
-        int current = Math.max(0, Math.min(labels.length - 1, COLUMNS - 4));
-        new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
-                .setTitle(R.string.columns_title)
-                .setSingleChoiceItems(labels, current, (dialog, which) -> {
-                    dialog.dismiss();
-                    int columns = which + 4;
-                    if (columns != COLUMNS) {
-                        prefs.setColumns(columns);
-                        recreate();
-                    }
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
-    }
 
     /** Lists the saved profiles; tapping one offers load/delete, and the button saves the current look. */
     private void showProfiles() {
@@ -933,6 +931,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void askText(int title, String current, int hint, TextResult result) {
+        askText(title, current, hint, result, null);
+    }
+
+    /** {@code after} runs when the dialog closes, OK or Cancel (after {@code result}). */
+    private void askText(int title, String current, int hint, TextResult result, Runnable after) {
         EditText input = new EditText(this);
         input.setSingleLine(true);
         if (hint != 0) input.setHint(hint);
@@ -943,6 +946,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 .setView(input)
                 .setPositiveButton(R.string.ok, (d, w) -> result.accept(input.getText().toString()))
                 .setNegativeButton(R.string.cancel, null)
+                .setOnDismissListener(d -> {
+                    if (after != null && !isDestroyed()) after.run();
+                })
                 .show();
     }
 
@@ -1092,10 +1098,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
+    private interface Label {
+        String get();
+    }
+
+    private interface Step {
+        void step(int direction);   // -1 = left, +1 = right or OK
+    }
+
     private final class MenuItem {
         final int icon;
         final String title;
         final Runnable action;
+        // A setting with values: OK and Right step forward, Left steps back, and the menu stays open.
+        final Label label;
+        final Step step;
 
         MenuItem(int icon, int title, Runnable action) {
             this(icon, getString(title), action);
@@ -1105,14 +1122,45 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             this.icon = icon;
             this.title = title;
             this.action = action;
+            this.label = null;
+            this.step = null;
+        }
+
+        MenuItem(int icon, Label label, Step step) {
+            this.icon = icon;
+            this.title = label.get();
+            this.action = null;
+            this.label = label;
+            this.step = step;
         }
     }
 
-    /** A dropdown of actions in the Inputs menu's style, below the anchor (or above it near the bottom). */
     private void showMenu(View anchor, List<MenuItem> items) {
+        showMenu(anchor, items, 0, null);
+    }
+
+    /**
+     * "Label: value" rows (from the opt_* strings, in any language that uses a colon) show the label
+     * fixed and the value in the scrolling view; anything else goes whole into the scrolling view.
+     */
+    private void setRowText(TextView label, TextView value, String text) {
+        int colon = text.indexOf(':');
+        boolean split = colon > 0 && colon < text.length() - 1;
+        label.setVisibility(split ? View.VISIBLE : View.GONE);
+        if (split) label.setText(text.substring(0, colon + 1));
+        value.setText(split ? text.substring(colon + 1).trim() : text);
+        ((ViewGroup.MarginLayoutParams) value.getLayoutParams()).setMarginStart((int) ((split ? 5 : 10) * density));
+    }
+
+    /**
+     * A dropdown of actions in the Inputs menu's style, below the anchor (or above it near the bottom).
+     * With no anchor it is a wider panel fixed at the right edge, vertically centred (the Home options).
+     */
+    private void showMenu(View anchor, List<MenuItem> items, int focusIndex, Runnable onDismiss) {
         View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
         LinearLayout rows = panel.findViewById(R.id.rows);
-        final PopupWindow popup = new PopupWindow(panel, (int) (300 * density), ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        int popupWidth = (int) ((anchor == null ? 380 : 300) * density);
+        final PopupWindow popup = new PopupWindow(panel, popupWidth, ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));   // needed for Back to dismiss
         popup.setOutsideTouchable(true);
         popup.setAnimationStyle(0);
@@ -1120,14 +1168,47 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         for (MenuItem item : items) {
             View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
             ((ImageView) row.findViewById(R.id.icon)).setImageResource(item.icon);
-            ((TextView) row.findViewById(R.id.title)).setText(item.title);
-            row.findViewById(R.id.status).setVisibility(View.GONE);
-            row.findViewById(R.id.dot).setVisibility(View.GONE);
-            row.setOnClickListener(v -> {
-                popup.dismiss();
-                item.action.run();
+            TextView label = row.findViewById(R.id.label);
+            TextView title = row.findViewById(R.id.title);
+            setRowText(label, title, item.title);
+            // A value too long for the row scrolls once into view while the row has focus.
+            title.setMarqueeRepeatLimit(1);
+            row.setOnFocusChangeListener((v, focused) -> {
+                title.setEllipsize(focused ? TextUtils.TruncateAt.MARQUEE : TextUtils.TruncateAt.END);
+                title.setSelected(focused);
             });
+            TextView status = row.findViewById(R.id.status);
+            row.findViewById(R.id.dot).setVisibility(View.GONE);
+            if (item.step == null) {
+                status.setVisibility(View.GONE);
+                row.setOnClickListener(v -> {
+                    popup.dismiss();
+                    item.action.run();
+                });
+            } else {
+                status.setText(R.string.menu_stepper_hint);
+                status.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+                status.setTextColor(title.getTextColors());
+                row.setOnClickListener(v -> {
+                    item.step.step(1);
+                    setRowText(label, title, item.label.get());
+                });
+                row.setOnKeyListener((v, keyCode, event) -> {
+                    if (keyCode != KeyEvent.KEYCODE_DPAD_LEFT && keyCode != KeyEvent.KEYCODE_DPAD_RIGHT) return false;
+                    if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                        item.step.step(keyCode == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1);
+                        setRowText(label, title, item.label.get());
+                    }
+                    return true;
+                });
+            }
             rows.addView(row);
+        }
+        if (onDismiss != null) popup.setOnDismissListener(onDismiss::run);
+        if (anchor == null) {
+            popup.showAtLocation(root, Gravity.END | Gravity.CENTER_VERTICAL, (int) (40 * density), 0);
+            rows.getChildAt(Math.max(0, Math.min(focusIndex, rows.getChildCount() - 1))).requestFocus();
+            return;
         }
         // PopupWindow only flips above the anchor when it knows its height, and a WRAP_CONTENT one never does:
         // near the bottom the menu was cut off by the screen edge. Measure it and place it above by hand.
@@ -1145,7 +1226,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         } else {
             popup.showAsDropDown(anchor, 0, gap, Gravity.START);
         }
-        rows.getChildAt(0).requestFocus();
+        rows.getChildAt(Math.max(0, Math.min(focusIndex, rows.getChildCount() - 1))).requestFocus();
     }
 
     /** Dropdown menu under the Inputs pill: HDMI ports (with connection state), AV and Live TV. */

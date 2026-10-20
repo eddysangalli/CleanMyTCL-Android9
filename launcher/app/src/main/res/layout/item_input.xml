@@ -18,6 +18,20 @@
         android:duplicateParentState="true"
         android:contentDescription="@null" />
 
+    <!-- Fixed part of a "Label: value" row; only the value after it scrolls when too long. -->
+    <TextView
+        android:id="@+id/label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:textColor="@drawable/pill_text"
+        android:duplicateParentState="true"
+        android:textSize="15sp"
+        android:fontFamily="@font/outfit"
+        android:fontVariationSettings="'wght' 500"
+        android:singleLine="true"
+        android:visibility="gone" />
+
     <TextView
         android:id="@+id/title"
         android:layout_width="0dp"
