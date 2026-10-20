@@ -45,6 +45,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.dynamicanimation.animation.DynamicAnimation;
+import androidx.dynamicanimation.animation.FloatPropertyCompat;
 import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.dynamicanimation.animation.SpringForce;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -104,7 +105,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean debugKeys;
     private TextView btnWifi;
     private SpringAnimation springX, springY;
-    private float glassTargetX, glassTargetY;
+    private float glassTargetX, glassTargetY;   // X in root coordinates, Y in grid content coordinates
+    private int gridScrollY;   // how far the grid content has scrolled, summed from onScrolled
     private int glassCardW;   // width of the tile the glass was last fitted to
     private boolean glassShown;
     /** Vendor keycodes that mean the remote's Settings button; empty unless configured in config.xml. */
@@ -233,22 +235,32 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             grid.post(this::refitGlass);
         });
 
-        // Keep the glass glued to its tile while the grid scrolls.
+        // Keep the glass glued to its tile while the grid scrolls. A running Y spring works in content
+        // coordinates, so it keeps the same feel as the X one instead of chasing a moving target.
         grid.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
-                if (!glassShown) return;
-                glassTargetY -= dy;
-                if (springY.isRunning()) springY.animateToFinalPosition(glassTargetY);
-                else glass.setTranslationY(glassTargetY);
+                gridScrollY += dy;
+                if (glassShown) glass.setTranslationY(glass.getTranslationY() - dy);
             }
         });
 
-        // Liquid feel: soft springs on the highlight's position.
+        // Material 3 Expressive "spatial default" spring (m3e_core M3EMotion.expressiveSpatialDefault:
+        // stiffness 380, damping ratio 0.8, mass 1), as on Gateway Ops Dashboard's navigation rail.
         springX = new SpringAnimation(glass, DynamicAnimation.TRANSLATION_X);
-        springY = new SpringAnimation(glass, DynamicAnimation.TRANSLATION_Y);
+        springY = new SpringAnimation(glass, new FloatPropertyCompat<View>("contentY") {
+            @Override
+            public float getValue(View v) {
+                return v.getTranslationY() + gridScrollY;
+            }
+
+            @Override
+            public void setValue(View v, float value) {
+                v.setTranslationY(value - gridScrollY);
+            }
+        });
         for (SpringAnimation s : new SpringAnimation[]{springX, springY}) {
-            s.setSpring(new SpringForce().setStiffness(260f).setDampingRatio(0.58f));
+            s.setSpring(new SpringForce().setStiffness(380f).setDampingRatio(0.8f));
         }
 
         View btnInputs = findViewById(R.id.btnInputs);
@@ -389,7 +401,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         float x = r.exactCenterX() - glass.getLayoutParams().width / 2f;
         float y = r.exactCenterY() - glass.getLayoutParams().height / 2f;
         glassTargetX = x;
-        glassTargetY = y;
+        glassTargetY = y + gridScrollY;   // content coordinates, like springY
         if (!glassShown || light) {
             springX.cancel();
             springY.cancel();
@@ -400,7 +412,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             glassShown = true;
         } else {
             springX.animateToFinalPosition(x);
-            springY.animateToFinalPosition(y);
+            springY.animateToFinalPosition(glassTargetY);
         }
         View item = (View) card.getParent();
         if (position < COLUMNS) {
@@ -801,17 +813,24 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // Horizontal: swallow the key at a row's ends so focus never wraps to the next row or
         // escapes up into the top bar. Mid-row moves fall through to the default focus search.
         if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-            return position % COLUMNS == 0;
+            if (position % COLUMNS != 0) return false;
+            nudgeGlass(-1, 0);
+            return true;
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-            return position % COLUMNS == COLUMNS - 1 || position == count - 1;
+            if (position % COLUMNS != COLUMNS - 1 && position != count - 1) return false;
+            nudgeGlass(1, 0);
+            return true;
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
             if (position < COLUMNS) return false;          // dock row: let focus move to the top bar
             target = position - COLUMNS;
         } else {
             int lastRowStart = ((count - 1) / COLUMNS) * COLUMNS;
-            if (position >= lastRowStart) return true;     // already on the last row: stay put
+            if (position >= lastRowStart) {                // already on the last row: stay put
+                nudgeGlass(0, 1);
+                return true;
+            }
             target = Math.min(position + COLUMNS, count - 1);
         }
         focusTile(target);
@@ -832,6 +851,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 || glass.getWidth() != w || glass.getHeight() != h) {
             onTileFocused(pos, card);
         }
+    }
+
+    /** At a grid edge, a key with nowhere to go: the highlight leans that way and springs back. */
+    private void nudgeGlass(int dirX, int dirY) {
+        if (light || !glassShown || springX.isRunning() || springY.isRunning()) return;
+        // An impulse at rest peaks at ~0.022 s × velocity with this spring: ~6dp, subtle on purpose.
+        float v = 280f * density;
+        if (dirX != 0) springX.setStartVelocity(dirX * v).animateToFinalPosition(glassTargetX);
+        if (dirY != 0) springY.setStartVelocity(dirY * v).animateToFinalPosition(glassTargetY);
     }
 
     private void focusTile(int position) {
