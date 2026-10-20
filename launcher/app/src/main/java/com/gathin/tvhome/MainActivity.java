@@ -699,21 +699,37 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // Horizontal: swallow the key at a row's ends so focus never wraps to the next row or
         // escapes up into the top bar. Mid-row moves fall through to the default focus search.
         if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-            return position % COLUMNS == 0;
+            if (position % COLUMNS != 0) return false;
+            nudgeGlass(-1, 0);
+            return true;
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-            return position % COLUMNS == COLUMNS - 1 || position == count - 1;
+            if (position % COLUMNS != COLUMNS - 1 && position != count - 1) return false;
+            nudgeGlass(1, 0);
+            return true;
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
             if (position < COLUMNS) return false;          // dock row: let focus move to the top bar
             target = position - COLUMNS;
         } else {
             int lastRowStart = ((count - 1) / COLUMNS) * COLUMNS;
-            if (position >= lastRowStart) return true;     // already on the last row: stay put
+            if (position >= lastRowStart) {                // already on the last row: stay put
+                nudgeGlass(0, 1);
+                return true;
+            }
             target = Math.min(position + COLUMNS, count - 1);
         }
         focusTile(target);
         return true;
+    }
+
+    /** At a grid edge, a key with nowhere to go: the highlight leans that way and springs back. */
+    private void nudgeGlass(int dirX, int dirY) {
+        if (light || !glassShown || springX.isRunning() || springY.isRunning()) return;
+        // An impulse at rest peaks at ~0.022 s × velocity with this spring: ~6dp, subtle on purpose.
+        float v = 280f * density;
+        if (dirX != 0) springX.setStartVelocity(dirX * v).animateToFinalPosition(glassTargetX);
+        if (dirY != 0) springY.setStartVelocity(dirY * v).animateToFinalPosition(glassTargetY);
     }
 
     private void focusTile(int position) {
