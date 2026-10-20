@@ -1,0 +1,37 @@
+# TCL L32S6500 (UnionTV) profile — debloat list (Android TV 9, V8-R41KT01-LF1V391)
+# Format compatible with upstream tools/disable.sh and tools/restore.sh (one package per line, # comments).
+#
+# Device: TCL "UnionTV" (Central America firmware, client TCL-CA-RT41KA-S1), Realtek RTD284x family
+# (ro.board.platform = rtd284x), Android 9 (API 28), 32-bit (armeabi-v7a), ~1.4 GB RAM visible to Android.
+# Fingerprint: TCL/UnionTV/UnionTV:9/PPR2.180905.006.A1/builder.20210125.083312:user/release-keys
+#
+# Test date: 2026-10-20. Each package below was disabled ALONE with scripts/tcl-try-disable.sh (smoke test
+# passed after each), then the TV passed scripts/tcl-reboot-test.sh with all four disabled.
+# Smoke variables for this TV (IR remote, no microphone, Netflix not used):
+#   TCL_REMOTE_NAME= TCL_MIC_HAL_LOG= TCL_SMOKE_APP=com.google.android.youtube.tv/com.google.android.apps.youtube.tv.activity.ShellActivity
+#
+# IMPORTANT — how far the testing went:
+# One session (disable -> smoke test -> reboot -> smoke test). NOT lived with for several days, and no
+# speed benchmark was run for this list (on the BeyondTV2 the same kind of list gave no measurable gain).
+# Kept for less telemetry/ads, not for speed. Treat it as "survives a reboot and the smoke test".
+#
+# Apply (one at a time is recommended):  bash scripts/tcl-try-disable.sh <package>
+# Undo:                                   adb shell pm enable <package>
+#
+# Found already disabled on this unit before testing (factory or owner; no action needed):
+#   com.amazon.amazonvideo.livingroom com.android.providers.contacts com.google.android.play.games
+#   com.google.android.syncadapters.calendar com.google.android.syncadapters.contacts
+#   com.google.android.tts com.google.android.videos com.google.android.youtube.tvmusic com.netflix.ninja
+#
+# NEVER disable: see ../../scripts/protected-packages.txt
+
+# Telemetry
+com.tcl.bi                              # TCL analytics
+com.google.android.feedback             # Google feedback / crash report uploader
+com.google.android.tv.bugreportsender   # sends bug reports
+
+# Promotional content
+com.tcl.tv.tclhome_passive              # pushes TCL content at boot
+
+# Only AFTER the new launcher is installed, set as Home and smoke-tested (done here, see README):
+# com.google.android.tvlauncher # stock Android TV home (restore: pm enable com.google.android.tvlauncher)

@@ -44,6 +44,25 @@ Profile: [devices/tcl-beyondtv2-rtd2851-r851t02-v660/](devices/tcl-beyondtv2-rtd
 | Google Play / DRM playback | 🟡 | Play Store present; Netflix opens; `android.hardware.drm@1.1-service.widevine`, clearkey, `drmserver` and `mediadrmserver` all running. Protected playback itself is a visual/audio check |
 | Remap of the "Globoplay" button | 🧪 | No root: the key is injected by TCL software. v0.5 redirects by window event, which needs the accessibility service — **currently off**, and its cost to key delivery is **not measured** (the two attempts that were run collided with other measurements) |
 
+### TCL L32S6500 (UnionTV) — Realtek RTD284x — R41KT01 V391 — Android 9 (API 28), 32-bit, ~1.4 GB RAM
+
+Profile: [devices/tcl-uniontv-rtd284x-r41kt01-v391/](devices/tcl-uniontv-rtd284x-r41kt01-v391/) · Last checked: 2026-10-20 · Reported by a contributor, not reproduced by maintainers
+
+| Area | Status | Evidence / notes |
+|---|---|---|
+| ADB over network | 🔵 | Port 5555, Windows 11 + platform-tools. USB not possible (host-only ports) |
+| Backup of package state | 🔵 | `tcl-backup.ps1` before any change |
+| Debloat (profile list, 4 packages) | 🔵 | `com.tcl.bi`, `com.tcl.tv.tclhome_passive`, `com.google.android.feedback`, `com.google.android.tv.bugreportsender`: one at a time with `tcl-try-disable.sh`, smoke OK after each. One session, not several days; no speed benchmark |
+| Launcher install + Home swap | 🔵 | `br.eddy.tvhome` 0.5.6 as Home, stock launcher disabled and recoverable |
+| Launcher performance | 🔵 | `tcl-launcher-bench.sh`, 36 keys: response p50 20 / p95 21 ms, full move p50 413 ms (M3E spring), 0.0% jank, idle 0 fps |
+| Reboot (`adb reboot`) | 🔵 | 1 run after the debloat: 63 s to `boot_completed`, disabled packages kept, smoke OK |
+| Smoke test | 🔵 | Passes with `TCL_REMOTE_NAME=`, `TCL_MIC_HAL_LOG=` and YouTube as `TCL_SMOKE_APP` (see the profile) |
+| HDMI | 🔵 | HDMI 1 input opens in `com.tcl.tv` with an active session (smoke) |
+| IR remote | 🔵 | D-pad, Home, Back and Menu used throughout; latency not measured with `sendevent` |
+| Bluetooth remote / microphone | ⚪ | This unit has neither |
+| Assistant | 🔵 | Opens, listens and connects (smoke); voice capture not checked |
+| Live TV / tuner, Chromecast, standby | ⚪ | Not tested |
+
 ### Other TCL Android 9 models
 
 | Model | Status | Notes |
