@@ -15,8 +15,8 @@ Settings) and stored in the launcher's private preferences — nothing personal 
 | HDMI 1/2/3 and Live TV shortcuts | Inputs row; number keys jump to HDMI | 0 |
 | Ultralight mode (no motion, focus in 1 frame) | Home options (**code default on**; the v0.5.2 battery TV was left in normal) | Saves ~0.6 s of animation per move; also forces the black background (the wallpaper is a smooth-motion feature). The greeting and weather line are the same in both modes |
 | Grid columns (4/5/6) | Home options → columns | 0; 4 is the default, and the dock follows the slot count |
-| Family profiles | Home options → profiles | 0; name/message/accent and a wallpaper on/off flag, no image data or service |
-| Aurora wallpaper (optional) | Home options → wallpaper | +9 MB PSS and a measured jank cost during the spring (0.19% with black → 6.89% with aurora); ultralight always stays black. [A/B](../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md) |
+| Family profiles | Home options → profiles | 0; name/message/accent and the background id, no image data or service |
+| Background | Home options → wallpaper, Left/Right to step: black, six dark solid colours (≥ 13:1 contrast with the white text), Aurora, Earth at night (NASA, public domain) | Colours: one full-screen fill. Photos: +9 MB PSS and a measured jank cost during the spring (0.19% with black → 6.89% with aurora); ultralight always stays black. [A/B](../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md) |
 | Weather (optional, off) | Home options → city | ≤ 1 request/hour, only while Home is visible |
 | Globoplay key redirect | Home options (needs accessibility permission) | Being measured |
 
