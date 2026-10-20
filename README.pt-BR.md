@@ -57,7 +57,7 @@ Não presuma que outra TCL com Android 9 funciona igual. Veja a [matriz de compa
 3. **Sem promessas sem medição.** Números vêm com método, aparelho e dados brutos. Medições antigas nunca são apresentadas como resultado de um build novo.
 4. **O launcher original nunca é desativado antes de o novo estar instalado e testado.**
 
-## Presets de experiência
+**Estado do projeto (20/10/2026):** o código da `main` está na **v0.5.8 / versionCode 30**, mas ainda não existe uma GitHub Release/tag formal. A última instalação documentada com hash conferido na TV é a build de validação v0.5.7 (code 29); a bateria completa e o teste de estabilidade de 8 horas da v0.5.8 ainda estão pendentes. Veja [compatibilidade](COMPATIBILITY.md) e [notas da v0.5.8](docs/RELEASE-0.5.8.md).\n\n## Presets de experiência
 
 A mesma Home tem três presets, não três launchers. As opções individuais continuam ajustáveis; mudar uma delas marca a experiência como **Personalizado**.
 
