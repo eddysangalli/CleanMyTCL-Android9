@@ -66,5 +66,20 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
+
+        <!-- The remote's Input/Source button (KEYCODE_TV / KEYCODE_TV_INPUT / KEYCODE_MEDIA_RECORD)
+             opens the launcher's own Inputs dropdown; see InputKeyService. -->
+        <service
+            android:name=".InputKeyService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/input_key_service" />
+        </service>
     </application>
 </manifest>

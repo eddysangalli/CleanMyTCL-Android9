@@ -118,6 +118,10 @@
     </string-array>
     <string name="remap_label">Eddy TV: remote buttons</string>
     <string name="remap_description">When the remote\'s Globoplay button opens Globoplay, switches to another app instead. Globoplay still opens from the Home screen. It does not read the screen or what you type; it only notices Globoplay opening.</string>
+    <!-- Mirrors remap_description, for the optional Input-button service: switches the remote's Input/Source
+         key (KEYCODE_TV / KEYCODE_TV_INPUT / KEYCODE_MEDIA_RECORD depending on the remote) to the launcher's
+         own Inputs dropdown, which the launcher's open Inputs pill already offers. -->
+    <string name="input_key_service_description">Opens the Inputs menu when the remote\'s Input/Source button is pressed. Different remotes send different key codes for that button; this service catches them all. Off by default.</string>
     <string name="opt_remap_on">Globoplay button: opens %1$s</string>
     <string name="opt_remap_off">Globoplay button: default (Globoplay)</string>
     <string name="opt_remap_service">Globoplay button: turn on the remapper</string>

@@ -71,6 +71,19 @@ import java.util.concurrent.Executors;
  */
 public class MainActivity extends Activity implements AppAdapter.TileListener {
 
+    /**
+     * Intent action: open the Inputs dropdown (sent by {@link InputKeyService} when the remote's
+     * Input/Source key is pressed - KEYCODE_TV, KEYCODE_TV_INPUT or KEYCODE_MEDIA_RECORD).
+     */
+    public static final String ACTION_OPEN_INPUTS = "com.gathin.tvhome.action.OPEN_INPUTS";
+
+    /**
+     * The Inputs popup, when one is on screen. Set by {@link #showInputs()} so a second press of the
+     * remote's Input key (delivered via {@link InputKeyService} and the {@link #ACTION_OPEN_INPUTS}
+     * intent) can close it again.
+     */
+    private PopupWindow inputsPopup;
+
     /** Tiles per row and dock slots (res/values/config.xml, columns). Set in onCreate. */
     static int COLUMNS = 4;
     private static final long MINUTE_MS = 60_000L;
@@ -1167,6 +1180,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if (intent != null && ACTION_OPEN_INPUTS.equals(intent.getAction())) {
+            // The remote's Input/Source button (via InputKeyService) toggles the Inputs dropdown,
+            // opening it from any app and closing it again on the next press (#244).
+            handler.post(() -> {
+                if (inputsPopup != null) {
+                    inputsPopup.dismiss();
+                } else {
+                    showInputs();
+                }
+            });
+            return;
+        }
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
         long now = SystemClock.elapsedRealtime();
         homePresses[homePressIndex++ % homePresses.length] = now;
@@ -1366,11 +1391,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         // Compact: as wide as the Inputs pill (a touch wider so "HDMI 1" fits), hanging right below it.
         int width = Math.max(anchor.getWidth(), (int) (150 * density));
-        final PopupWindow popup = new PopupWindow(panel, width, ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        PopupWindow popup = new PopupWindow(panel, width, ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));   // needed for Back to dismiss
         popup.setOutsideTouchable(true);
         popup.setAnimationStyle(0);
         popup.setElevation(0f);
+        // Remember this popup so a second press of the remote's Input button (delivered as
+        // ACTION_OPEN_INPUTS via InputKeyService) can dismiss it again.
+        if (inputsPopup != null) inputsPopup.dismiss();
+        inputsPopup = popup;
+        popup.setOnDismissListener(() -> inputsPopup = null);
 
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
         boolean sawNonHdmi = false;
