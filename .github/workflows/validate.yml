@@ -45,9 +45,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      # ubuntu-latest already includes Android SDK command-line tools.
+      # Avoid setup-android@v3 here: its legacy sdkmanager 'tools' install fails on current images.
+      - name: Verify Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          sdkmanager --version
       - name: Install Android SDK platform and build tools
-        run: sdkmanager --install 'platforms;android-34' 'build-tools;34.0.0'
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --install 'platforms;android-34' 'build-tools;34.0.0'
       - name: Build and test launcher
         working-directory: launcher
         run: |
