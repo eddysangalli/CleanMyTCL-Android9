@@ -85,6 +85,9 @@
         <item>Petróleo</item>
         <item>Aurora</item>
         <item>Terra à noite</item>
+        <item>Nebulosa desfocada</item>
+        <item>Via Láctea desfocada</item>
+        <item>Rastros de estrelas desfocados</item>
     </string-array>
     <string name="wallpaper_light">O modo ultralight usa sempre o fundo preto.</string>
     <string name="columns_title">Colunas</string>

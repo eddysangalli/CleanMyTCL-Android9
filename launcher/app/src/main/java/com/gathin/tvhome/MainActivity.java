@@ -508,9 +508,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         items.add(new MenuItem(R.drawable.ic_grid, () -> getString(R.string.opt_columns, prefs.columns()),
                 dir -> prefs.setColumns(Math.max(4, Math.min(6, prefs.columns() + dir)))));
         String[] wallpaperNames = getResources().getStringArray(R.array.wallpaper_names);
-        items.add(new MenuItem(R.drawable.ic_wallpaper,
-                () -> getString(R.string.opt_wallpaper, wallpaperNames[backgroundIndex(prefs.wallpaper())]),
-                this::stepWallpaper));
+        items.add(new MenuItem(R.drawable.ic_wallpaper, () -> {
+            int i = backgroundIndex(prefs.wallpaper());
+            // A translation that lags behind BG_IDS shows the id instead of crashing.
+            return getString(R.string.opt_wallpaper, i < wallpaperNames.length ? wallpaperNames[i] : BG_IDS[i]);
+        }, this::stepWallpaper));
         if (!remapServiceEnabled()) {
             items.add(new MenuItem(R.drawable.ic_star, R.string.opt_remap_service, () ->
                     open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))));
@@ -612,20 +614,24 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
-     * Cycles the background with Left/Right. Solid colours switch immediately; an image background
-     * shows the measured Aurora cost before it is enabled (the other images are explicitly
-     * unmeasured). Ultralight always draws black.
+     * Cycles the background with Left/Right. Solid colours switch immediately; an image or BlurHash
+     * background shows the measured Aurora cost or an explicit unmeasured notice before it is enabled.
+     * Ultralight always draws black.
      */
     private void stepWallpaper(int dir) {
         int n = BG_IDS.length;
-        final String next = BG_IDS[(backgroundIndex(prefs.wallpaper()) + dir + n) % n];
+        String current = prefs.wallpaper();
+        int currentIndex = backgroundIndex(current);
+        final String next = BG_IDS[(currentIndex + dir + n) % n];
         int nextIndex = backgroundIndex(next);
-        boolean image = BG_IMAGES[nextIndex] != 0;
-        boolean alreadyImage = BG_IMAGES[backgroundIndex(prefs.wallpaper())] != 0;
-        if (image && !alreadyImage && !light) {
+        boolean image = BG_IMAGES[nextIndex] != 0 || BG_HASHES[nextIndex] != null;
+        boolean alreadyImage = BG_IMAGES[currentIndex] != 0 || BG_HASHES[currentIndex] != null;
+        boolean enteringUnmeasured = image && !"aurora".equals(next) && "aurora".equals(current);
+        if (image && (!alreadyImage || enteringUnmeasured) && !light) {
+            String[] names = getResources().getStringArray(R.array.wallpaper_names);
+            String label = nextIndex < names.length ? names[nextIndex] : BG_IDS[nextIndex];
             new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
-                    .setTitle(getString(R.string.opt_wallpaper,
-                            getResources().getStringArray(R.array.wallpaper_names)[nextIndex]))
+                    .setTitle(getString(R.string.opt_wallpaper, label))
                     .setMessage("aurora".equals(next) ? R.string.wallpaper_cost
                             : R.string.wallpaper_cost_unmeasured)
                     .setPositiveButton(R.string.wallpaper_enable, (dialog, which) -> applyBackground(next))
@@ -895,14 +901,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /**
      * Home backgrounds in menu order: saved id, then a solid colour (0 = none, the window's black) or a
-     * bundled image. Names are R.array.wallpaper_names in the same order. Colours keep at least 13:1
-     * contrast with the white header text; the photo has a dark scrim baked in behind it.
+     * bundled image or a BlurHash of a photo that is not bundled. Names are R.array.wallpaper_names in the same
+     * order. Colours keep at least 13:1 contrast with the white header text; the photos (and the hashes,
+     * taken from them) have a dark scrim baked in behind it. Hash sources: launcher/NOTICE.md.
      */
     static final String[] BG_IDS = {"black", "midnight", "forest", "plum", "wine", "graphite", "petrol",
-            "aurora", "iss"};
+            "aurora", "iss", "nebula_blur", "milkyway_blur", "trails_blur"};
     private static final int[] BG_COLORS = {0, 0xFF0B1A2E, 0xFF0E2A1C, 0xFF2A1033, 0xFF3A0D16, 0xFF1C1E22, 0xFF062F33,
-            0, 0};
-    private static final int[] BG_IMAGES = {0, 0, 0, 0, 0, 0, 0, R.drawable.wallpaper_aurora, R.drawable.wallpaper_iss};
+            0, 0, 0, 0, 0};
+    private static final int[] BG_IMAGES = {0, 0, 0, 0, 0, 0, 0, R.drawable.wallpaper_aurora, R.drawable.wallpaper_iss,
+            0, 0, 0};
+    private static final String[] BG_HASHES = {null, null, null, null, null, null, null, null, null,
+            "LJC$i-E1WXRj0e%2oJj]M{bcoLjs", "L47nOID*IAs:E4%LRiWA00xuozRj", "LB9%|]?cD%o#4WRV-poeH;W9S%WC"};
 
     private static int backgroundIndex(String id) {
         return Math.max(0, Arrays.asList(BG_IDS).indexOf(id));
@@ -912,6 +922,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void updateWallpaper() {
         if (wallpaperView == null) return;
         int i = backgroundIndex(prefs.wallpaper());
+        if (!light && BG_HASHES[i] != null) {
+            if (wallpaperBitmap == null || wallpaperRes != -1 - i) {
+                wallpaperRequest++;
+                wallpaperLoadingRes = 0;
+                releaseWallpaper();
+                wallpaperBitmap = BlurHash.decode(BG_HASHES[i], 32, 18);   // ~600 pixels: fine on the main thread
+                wallpaperRes = -1 - i;
+            }
+            wallpaperView.setBackgroundColor(0);
+            wallpaperView.setImageBitmap(wallpaperBitmap);
+            wallpaperView.setVisibility(View.VISIBLE);
+            return;
+        }
         int image = light ? 0 : BG_IMAGES[i];
         if (image == 0) {
             int color = light ? 0 : BG_COLORS[i];
