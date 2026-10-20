@@ -41,7 +41,7 @@ GitHub's fork UI, or make the upstream repository the source of truth for issues
 - Upstream is tracked locally as the `upstream` remote (push disabled)
 - Upstream pull requests #39 and #55 were applied here before being merged upstream; see
   [`docs/PROVENANCE.md`](docs/PROVENANCE.md) for the file-by-file origin
-- Upstream credits stay intact in [`launcher/NOTICE-pt-BR.md`](launcher/NOTICE-pt-BR.md)
+- Upstream credits stay intact in [`launcher/NOTICE.md`](launcher/NOTICE.md)
 
 Contributions that are not TCL-specific should be offered back to upstream; see
 [`docs/BRANCHING.md`](docs/BRANCHING.md) for how to do that without forking the workflow.

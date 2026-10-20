@@ -1,0 +1,4 @@
+Launcher br.eddy.tvhome/com.gathin.tvhome.MainActivity - v056-black-r1 - 2026-10-19 21:48
+Controle   resposta (tecla -> 1o quadro): p50 17 | p95 20 | p99 27 | max 27 ms  (36 teclas)
+           movimento completo:            p50 633 | p95 642 | p99 642 | max 642 ms
+           quadros atrasados: 0.4% de 1372

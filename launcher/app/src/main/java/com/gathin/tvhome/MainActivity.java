@@ -6,6 +6,8 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
@@ -45,9 +47,12 @@ import androidx.dynamicanimation.animation.SpringForce;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -66,6 +71,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** Ultralight mode (HomePrefs): apps only, no glow, title, weather or springs. */
     private boolean light;
     private static final ExecutorService WEATHER = Executors.newSingleThreadExecutor();
+    /** One static wallpaper decode at a time; the bitmap is released when the Home is destroyed or turned black. */
+    private static final ExecutorService WALLPAPER = Executors.newSingleThreadExecutor();
     /** After a failed weather fetch, wait this long before trying again. */
     private static final long WEATHER_RETRY_MS = 10 * 60_000L;
     private static long lastWeatherTry;
@@ -73,6 +80,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private RecyclerView grid;
     private FrameLayout root;
     private GlassView glass;
+    private ImageView wallpaperView;
+    private Bitmap wallpaperBitmap;
+    /** Incremented whenever the wallpaper is hidden or reloaded, so a late decode is discarded. */
+    private int wallpaperRequest;
+    private boolean wallpaperLoading;
     private TextView brand;
     private TextView greeting;
     private TextView subtitle;
@@ -129,11 +141,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         light = prefs.light();
         AppAdapter.light = light;
         density = getResources().getDisplayMetrics().density;
-        COLUMNS = Math.max(1, getResources().getInteger(R.integer.columns));
+        COLUMNS = prefs.columns();
         liveTvPkg = getString(R.string.live_tv_package).trim();
 
         root = findViewById(R.id.root);
         glass = findViewById(R.id.glass);
+        wallpaperView = findViewById(R.id.wallpaper);
         // Sized for a focused tile before the first frame: left at the 10dp placeholder it showed as a dot.
         sizeGlass(getResources().getDimension(R.dimen.tile_width), getResources().getDimension(R.dimen.tile_height));
         brand = findViewById(R.id.brand);
@@ -246,6 +259,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glass.setAlpha(0f);
         light = prefs.light();
         AppAdapter.light = light;
+        updateWallpaper();
         debugKeys = Settings.Global.getInt(getContentResolver(), "eddy_debug_keys", 0) == 1;
         updateGreeting();
         updateWifiLabel();
@@ -288,6 +302,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     protected void onDestroy() {
+        wallpaperRequest++;
+        releaseWallpaper();
         super.onDestroy();
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         if (cm != null) cm.unregisterNetworkCallback(networkCallback);
@@ -424,6 +440,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             applyAccent();
         }));
         items.add(new MenuItem(R.drawable.ic_bolt, light ? R.string.opt_motion_off : R.string.opt_motion_on, this::toggleLight));
+        items.add(new MenuItem(R.drawable.ic_person, getString(R.string.opt_profiles, prefs.profiles().length()), this::showProfiles));
+        items.add(new MenuItem(R.drawable.ic_grid, getString(R.string.opt_columns, COLUMNS), this::askColumns));
+        items.add(new MenuItem(R.drawable.ic_wallpaper, prefs.wallpaper() ? R.string.opt_wallpaper_on : R.string.opt_wallpaper_off, () -> {
+            prefs.setWallpaper(!prefs.wallpaper());
+            updateWallpaper();
+            if (light) Toast.makeText(this, R.string.wallpaper_light, Toast.LENGTH_SHORT).show();
+        }));
         if (!remapServiceEnabled()) {
             items.add(new MenuItem(R.drawable.ic_star, R.string.opt_remap_service, () ->
                     open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))));
@@ -461,6 +484,78 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         prefs.setLight(light);
         AppAdapter.light = light;
         updateGreeting();
+        updateWallpaper();
+    }
+
+    // ---- columns and family profiles -------------------------------------------------------------
+
+    /** 4, 5 or 6 tiles per row; the dock grows to the same number of slots. Recreates the Home to relayout. */
+    private void askColumns() {
+        final String[] labels = {"4", "5", "6"};
+        int current = Math.max(0, Math.min(labels.length - 1, COLUMNS - 4));
+        new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+                .setTitle(R.string.columns_title)
+                .setSingleChoiceItems(labels, current, (dialog, which) -> {
+                    dialog.dismiss();
+                    int columns = which + 4;
+                    if (columns != COLUMNS) {
+                        prefs.setColumns(columns);
+                        recreate();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    /** Lists the saved profiles; tapping one offers load/delete, and the button saves the current look. */
+    private void showProfiles() {
+        JSONObject all = prefs.profiles();
+        List<String> keys = new ArrayList<>();
+        for (Iterator<String> it = all.keys(); it.hasNext(); ) keys.add(it.next());
+        Collections.sort(keys, String.CASE_INSENSITIVE_ORDER);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+                .setTitle(R.string.profiles_title)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.profile_save, (dialog, which) -> askProfileName());
+        if (keys.isEmpty()) {
+            builder.setMessage(R.string.profile_empty);
+        } else {
+            String[] labels = new String[keys.size()];
+            for (int i = 0; i < keys.size(); i++) {
+                JSONObject profile = all.optJSONObject(keys.get(i));
+                String savedName = profile == null ? "" : profile.optString("name", "");
+                labels[i] = savedName.isEmpty() || savedName.equals(keys.get(i))
+                        ? keys.get(i) : keys.get(i) + " — " + savedName;
+            }
+            builder.setItems(labels, (dialog, which) -> showProfileActions(keys.get(which)));
+        }
+        builder.show();
+    }
+
+    private void askProfileName() {
+        askText(R.string.profile_name_title, prefs.userName(), 0, text -> {
+            String label = text.trim();
+            if (label.isEmpty()) return;
+            prefs.saveProfile(label);
+            Toast.makeText(this, getString(R.string.profile_saved, label), Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void showProfileActions(String label) {
+        new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+                .setTitle(label)
+                .setPositiveButton(R.string.profile_load, (dialog, which) -> {
+                    prefs.applyProfile(label);
+                    updateGreeting();
+                    applyAccent();
+                    updateWallpaper();
+                })
+                .setNeutralButton(R.string.profile_delete, (dialog, which) -> {
+                    prefs.deleteProfile(label);
+                    Toast.makeText(this, getString(R.string.profile_deleted, label), Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     // ---- weather ---------------------------------------------------------------------------------
@@ -637,6 +732,55 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         int color = ACCENTS[prefs.accent() % ACCENTS.length];
         brand.setTextColor(color);
         glass.setRing(FOCUS_RING);
+    }
+
+    /** Shows the bundled aurora wallpaper, or black in ultralight mode. Decoded off the main thread. */
+    private void updateWallpaper() {
+        if (wallpaperView == null) return;
+        boolean show = prefs.wallpaper() && !light;
+        if (!show) {
+            wallpaperRequest++;
+            wallpaperLoading = false;
+            wallpaperView.setVisibility(View.GONE);
+            releaseWallpaper();
+            return;
+        }
+        wallpaperView.setVisibility(View.VISIBLE);
+        if (wallpaperBitmap != null) {
+            wallpaperView.setImageBitmap(wallpaperBitmap);
+            return;
+        }
+        if (wallpaperLoading) return;
+        wallpaperLoading = true;
+        final int request = ++wallpaperRequest;
+        WALLPAPER.execute(() -> {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPreferredConfig = Bitmap.Config.RGB_565;
+            options.inScaled = false;
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.wallpaper_aurora, options);
+            runOnUiThread(() -> {
+                if (request != wallpaperRequest || isFinishing() || isDestroyed()
+                        || light || !prefs.wallpaper()) {
+                    if (bitmap != null) bitmap.recycle();
+                    return;
+                }
+                wallpaperLoading = false;
+                if (bitmap == null) return;
+                releaseWallpaper();
+                wallpaperBitmap = bitmap;
+                wallpaperView.setImageBitmap(bitmap);
+                wallpaperView.setVisibility(View.VISIBLE);
+            });
+        });
+    }
+
+    /** Drops the only wallpaper bitmap: black mode, destroy, or just before a new decode is shown. */
+    private void releaseWallpaper() {
+        if (wallpaperView != null) wallpaperView.setImageDrawable(null);
+        if (wallpaperBitmap != null) {
+            wallpaperBitmap.recycle();
+            wallpaperBitmap = null;
+        }
     }
 
     private interface TextResult {

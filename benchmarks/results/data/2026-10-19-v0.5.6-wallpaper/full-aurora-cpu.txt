@@ -1,0 +1,13 @@
+15.1
+  26.4 voice_ap
+  26.1 niss:interactor
+   6.2 sitatvservice
+   2.0 ueventd
+   1.0 m.netflix.ninja
+   0.8 composer@2.1-se
+   0.6 system_server
+   0.6 m.globo.globotv
+   0.5 roid.youtube.tv
+   0.5 kworker/3:2
+   0.5 audioserver
+   0.5 audio@2.0-servi

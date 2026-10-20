@@ -1,0 +1,8 @@
+Launcher br.eddy.tvhome/com.gathin.tvhome.MainActivity (0.5.6) - v056-wall-aurora - 2026-10-19 21:00
+Controle   resposta (tecla -> 1o quadro): p50 17 | p95 20 | p99 22 | max 22 ms  (36 teclas)
+           movimento completo:            p50 634 | p95 653 | p99 654 | max 654 ms
+           quadros atrasados: 2.9% de 1364
+Abertura   a frio: p50 404 | max 525 ms
+Volta Home p50 40 | p95 194 | max 194 ms
+Parada     CPU total 15.1% | launcher 0% de 1 nucleo | 0.0 quadros/s
+Memoria    PSS 32 MB (apos 10 voltas: 30 MB)

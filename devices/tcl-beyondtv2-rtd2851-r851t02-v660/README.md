@@ -21,10 +21,14 @@ How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
 - [`../../scripts/protected-packages.txt`](../../scripts/protected-packages.txt) — packages the scripts refuse to disable.
 - [`OPTIMIZATION-CANDIDATES.md`](OPTIMIZATION-CANDIDATES.md) — measured candidates, **not applied**, each with risk and undo.
 
-**Currently installed:** `br.eddy.tvhome` **0.5.5** (versionCode 16, installed 2026-10-19 17:16),
-APK SHA-256 `17C70DFBE36F00DEB033E841FBB75AC4C73BE868382F24CEA3EC1BA54E10AE9F` — identical to the
-stored `tvhome-0.5.5.apk` (launcher commit `c250429`). The performance battery for 0.5.5 is pending;
-the measured figures below are from v0.1–v0.5.2.
+**Currently installed:** `br.eddy.tvhome` **0.5.6** (versionCode 17, installed 2026-10-19 22:14),
+APK SHA-256 `8D5C15983C31F356B46D23EAFE7626C6B59E03084FE678BD9ECEE84162EFCE1C` — identical to the
+stored `tvhome-0.5.6.apk` (launcher commit `28a0383`). The full v0.5.6 battery is pending; the
+measured performance baseline remains v0.5.2. The wallpaper A/B is separate:
+[key p50 17 ms, spring p50 ~634 ms, jank 0.19% black vs 6.89% aurora, PSS 23 vs 32 MB](../../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md).
+
+The installed 0.5.6 adds on-TV 4/5/6 columns, family profiles and an optional static aurora
+wallpaper. The wallpaper is decoded RGB_565 off the main thread and ultralight always stays black.
 
 ## Key findings on this hardware (measured)
 

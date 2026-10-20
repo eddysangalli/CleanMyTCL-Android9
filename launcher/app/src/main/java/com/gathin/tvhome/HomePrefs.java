@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -93,6 +96,74 @@ final class HomePrefs {
         sp.edit().putBoolean("light", on).apply();
     }
 
+    // ---- columns ---------------------------------------------------------------------------------
+
+    /** Tiles per row chosen on the TV (4-6), or res/values/config.xml when nothing valid is saved. */
+    int columns() {
+        int saved = sp.getInt("columns", 0);
+        return saved >= 4 && saved <= 6 ? saved : ctx.getResources().getInteger(R.integer.columns);
+    }
+
+    void setColumns(int n) {
+        sp.edit().putInt("columns", n).apply();
+    }
+
+    // ---- wallpaper -------------------------------------------------------------------------------
+
+    /** Static aurora wallpaper in smooth motion; ultralight always stays black. */
+    boolean wallpaper() {
+        return sp.getBoolean("wallpaper", true);
+    }
+
+    void setWallpaper(boolean on) {
+        sp.edit().putBoolean("wallpaper", on).apply();
+    }
+
+    // ---- family profiles -------------------------------------------------------------------------
+
+    /** Saved profiles by label: {label: {name, message, accent, wallpaper}}. No image data is stored. */
+    JSONObject profiles() {
+        try {
+            return new JSONObject(sp.getString("profiles", "{}"));
+        } catch (JSONException e) {
+            return new JSONObject();
+        }
+    }
+
+    /** Saves the current name, message, accent and wallpaper flag under a label; an existing label is replaced. */
+    void saveProfile(String label) {
+        String key = label.trim();
+        if (key.isEmpty()) return;
+        try {
+            JSONObject all = profiles();
+            JSONObject profile = new JSONObject();
+            profile.put("name", userName());
+            profile.put("message", message());
+            profile.put("accent", accent());
+            profile.put("wallpaper", wallpaper());
+            all.put(key, profile);
+            sp.edit().putString("profiles", all.toString()).apply();
+        } catch (JSONException ignored) {
+        }
+    }
+
+    void applyProfile(String label) {
+        JSONObject profile = profiles().optJSONObject(label);
+        if (profile == null) return;
+        sp.edit()
+                .putString("name", profile.optString("name", "").trim())
+                .putString("message", profile.optString("message", "").trim())
+                .putInt("accent", profile.optInt("accent", 0))
+                .putBoolean("wallpaper", profile.optBoolean("wallpaper", true))
+                .apply();
+    }
+
+    void deleteProfile(String label) {
+        JSONObject all = profiles();
+        all.remove(label);
+        sp.edit().putString("profiles", all.toString()).apply();
+    }
+
     // ---- identity (Eddy TV) ----------------------------------------------------------------------
 
     String userName() {
@@ -139,10 +210,10 @@ final class HomePrefs {
         sp.registerOnSharedPreferenceChangeListener(listener);
     }
 
-    /** Recovery: name, message, colour, motion, dock and hidden apps back to the defaults. */
+    /** Recovery: name, message, colour, motion, columns, wallpaper, profiles, dock and hidden apps back to the defaults. */
     void resetAll() {
         sp.edit().remove("name").remove("message").remove("accent").remove("light")
-                .remove("dock").remove("hidden").apply();
+                .remove("columns").remove("wallpaper").remove("profiles").remove("dock").remove("hidden").apply();
     }
 
     // ---- weather --------------------------------------------------------------------------------

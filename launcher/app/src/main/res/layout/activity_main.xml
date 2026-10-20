@@ -5,6 +5,19 @@
     android:layout_height="match_parent">
     <!-- No background: the window is already black (Theme.TvHome), a second full-screen fill only costs GPU time. -->
 
+    <!-- Static wallpaper. Decoded on a worker thread at RGB_565 and hidden in ultralight mode; no blur,
+         parallax or animation is computed on the TV. -->
+    <ImageView
+        android:id="@+id/wallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:focusable="false"
+        android:clickable="false"
+        android:importantForAccessibility="no"
+        android:contentDescription="@null" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"

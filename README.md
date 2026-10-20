@@ -35,6 +35,14 @@ screenshot is blurred for privacy; the rest are the original PNGs.*
 | ![Inputs](docs/assets/eddy-inputs.png) | ![Ultralight](docs/assets/eddy-ultralight.png) |
 | *The HDMI inputs and Live TV, straight from the Home: keys 1–3 open the three HDMI inputs this unit lists, in the same order as the Inputs menu (the launcher maps keys 1–4 to the inputs the system reports; there is no fourth input entry here)* | *Smooth motion off: the focus jumps instead of gliding, 1 frame drawn per move instead of 38* |
 
+### Aurora wallpaper (v0.5.6)
+
+![Eddy TV Home with the optional aurora wallpaper](docs/assets/eddy-wallpaper.png)
+
+*Static 1920×1080 asset, decoded off the main thread at RGB_565; ultralight always uses black. The
+wallpaper keeps the key response and spring duration, but adds ~9 MB PSS and a measured jank cost
+during the spring — see the [wallpaper A/B](benchmarks/results/2026-10-19-v0.5.6-wallpaper.md).*
+
 > Every number in [benchmarks/results/](benchmarks/results/) is tagged with the exact launcher
 > version and the conditions it was measured in. Charts are generated from the measured data by
 > `scripts/tcl-make-charts.py`; no number is typed into a drawing tool.
@@ -58,7 +66,7 @@ screenshot is blurred for privacy; the rest are the original PNGs.*
 
 ## Principles
 
-1. **Performance first.** No feature is kept if it makes Home, navigation or app launch slower. Every change is measured (p50 and tail latency) against the previous version.
+1. **Performance first.** No feature is kept if it makes Home, navigation or app launch slower. Every change is measured (p50 and tail latency) against the previous version. The optional wallpaper is the documented exception: it keeps key response and spring duration, but adds jank/PSS; ultralight stays black and the cost is published.
 2. **Reversible.** System apps are only `pm disable-user`'d, one at a time, with a smoke test and an undo command. Nothing is uninstalled from `/system`. No root, no firmware flashing.
 3. **Evidence over claims.** Speed numbers come with method, device and raw-data location ([benchmarks/](benchmarks/)). Untested means untested.
 4. **The stock launcher is never disabled before the new Home is installed and verified**, and the way back is documented ([docs/RECOVERY.md](docs/RECOVERY.md)).
@@ -69,7 +77,7 @@ screenshot is blurred for privacy; the rest are the original PNGs.*
 
 | Path | What |
 |---|---|
-| `launcher/` | Lightweight Home (`com.gathin.tvhome` code from upstream + TCL features: ultralight mode, D-pad menus, HDMI shortcuts, voice button, on-TV settings, configurable greeting) |
+| `launcher/` | Lightweight Home (`com.gathin.tvhome` code from upstream + TCL features: ultralight mode, D-pad menus, HDMI shortcuts, voice button, on-TV settings, configurable greeting, 4/5/6 columns, family profiles, optional static aurora wallpaper) |
 | `scripts/` | Windows PowerShell + Git Bash tools: backup, restore, safe disable, smoke test, reboot test, benchmarks |
 | `tools/` | Upstream CleanYourTV tools (`tv.py`, `disable.*`, `restore.*`) — kept unchanged |
 | `devices/` | Per-model profiles: debloat list, protected packages, what was tested |

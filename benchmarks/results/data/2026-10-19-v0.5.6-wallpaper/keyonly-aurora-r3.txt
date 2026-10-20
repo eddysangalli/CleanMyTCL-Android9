@@ -1,0 +1,4 @@
+Launcher br.eddy.tvhome/com.gathin.tvhome.MainActivity - v056-aurora-r3 - 2026-10-19 21:56
+Controle   resposta (tecla -> 1o quadro): p50 16 | p95 18 | p99 18 | max 18 ms  (36 teclas)
+           movimento completo:            p50 635 | p95 646 | p99 658 | max 658 ms
+           quadros atrasados: 6.5% de 1370

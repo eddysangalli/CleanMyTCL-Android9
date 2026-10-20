@@ -7,6 +7,9 @@ Method: [../METHODOLOGY.md](../METHODOLOGY.md). System-wide CPU is the share of 
 > Numbers are never carried over from one version to the next. If a version has no row, it was not measured.
 > The detailed 2026-10-19 v0.5.2 battery is in [2026-10-19-v0.5.2.md](2026-10-19-v0.5.2.md); the charts
 > in the README are generated from the measured data by `scripts/tcl-make-charts.py`.
+>
+> The v0.5.6 wallpaper A/B is separate: [2026-10-19-v0.5.6-wallpaper.md](2026-10-19-v0.5.6-wallpaper.md).
+> The rows below remain v0.5.2 results and are not carried over to v0.5.6.
 
 ## Stock Home vs light launcher (`tcl-bench.sh`, 3 reps each)
 
