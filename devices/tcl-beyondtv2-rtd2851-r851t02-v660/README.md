@@ -21,42 +21,43 @@ How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
 - [`../../scripts/protected-packages.txt`](../../scripts/protected-packages.txt) — packages the scripts refuse to disable.
 - [`OPTIMIZATION-CANDIDATES.md`](OPTIMIZATION-CANDIDATES.md) — measured candidates, **not applied**, each with risk and undo.
 
-**Installed for validation on 2026-10-20 11:38:** `br.eddy.tvhome` **0.5.7** (versionCode 29), APK
-SHA-256 `AAE067C60E8D1E0D90162BAA9DFB1DC87C2CFDDDC2ACB7CACB764D5A6FC7A712`, built from
-`integrate/all-prs` (integrated PRs #6, #7, #8, #10 and #11 from @roky146, plus the audited
-upstream ports). The `base.apk` pulled back from the TV hashes to the same value. This is a
-test/validation build, **not a release**; `main` and the published reference remain v0.5.6 (APK
-`8D5C15983C31F356B46D23EAFE7626C6B59E03084FE678BD9ECEE84162EFCE1C`, launcher commit `28a0383`).
-The previous 0.5.7 validation build (versionCode 28, SHA-256 `ACDF90EC…`) is kept as
-`medicoes/apks/tvhome-0.5.7-code28.apk` for comparison. The earlier local 0.5.6.1 Globoplay hotfix
-(versionCode 18) is superseded by this build.
+**Installed on 2026-10-20 15:36:** `br.eddy.tvhome` **0.5.8** (versionCode 30), APK
+SHA-256 `D9EDA30FE285FC3AE643F26FB19C05121F30DC7E963DF4B6DB9F4A461A96EF10`, built from `main`
+(commit `5922022`, tag `launcher-v0.5.8`). The `base.apk` pulled back from the TV hashes to the
+same value. The published reference for the scripts and profiles is still **v0.5.6** (APK
+`8D5C15983C31F356B46D23EAFE7626C6B59E03084FE678BD9ECEE84162EFCE1C`, launcher commit `28a0383`);
+the v0.5.8 launcher build is tagged as an installed-and-measured build, not as a project release.
+Earlier validation builds are kept for comparison: `medicoes/apks/tvhome-0.5.7-code28.apk`
+(SHA-256 `ACDF90EC…`), `tvhome-0.5.7-code29.apk` (`AAE067C6…`) and
+`tvhome-0.5.7-code29-oldspring.apk` (`84DE3E4C…`, the A/B counterpart of the spring).
 
 > Reinstalling the APK disables the accessibility service. After each install, re-enable it before
 > testing the Globoplay key:
 > `adb shell settings put secure enabled_accessibility_services br.eddy.tvhome/com.gathin.tvhome.KeyRemapService`
-> and `adb shell settings put secure accessibility_enabled 1`. The validation install had the service
-> re-enabled and bound (confirmed after the code 29 install).
+> and `adb shell settings put secure accessibility_enabled 1`. The v0.5.8 install had the service
+> re-enabled and bound.
 
-> **TV offline at the end of 20/10/2026.** During the spring A/B the TV stopped answering ADB and
-> left the network: the address disappeared from the ARP table and a scan of 192.168.1.0/24 found no
-> other host with ADB open. It was not reinstalled over, so it still runs the code 29 build
-> (`AAE067C6…`, with the Material 3 Expressive spring). The comparison build for the A/B
-> (`medicoes/apks/tvhome-0.5.7-code29-oldspring.apk`) is prepared and waiting. When the TV is back,
-> check `adb connect <ip>:5555` and confirm the launcher is the focused window before measuring.
+> The TV left the network once during this session (the ADB stopped answering and the address
+> disappeared from the ARP table; a scan of 192.168.1.0/24 found no other host with ADB open).
+> It was not reinstalled over, and the measurements before and after that gap come from the same
+> build.
 
-The full v0.5.6 and v0.5.7 batteries are pending; the measured performance baseline remains v0.5.2.
-The wallpaper A/B is separate:
+The full v0.5.8 battery is pending; the measured performance baseline remains v0.5.2. The
+wallpaper A/B is separate:
 [key p50 17 ms, spring p50 ~634 ms, jank 0.19% black vs 6.89% aurora, PSS 23 vs 32 MB](../../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md).
 
-The validation build adds Performance/Balanced/Visual presets, the 0.5.6 columns/profiles/static
+The v0.5.8 build adds Performance/Balanced/Visual presets, the 0.5.6 columns/profiles/static
 Aurora wallpaper, the local Globoplay redirect settling fix, and the reviewed contributions from
 @roky146: configurable smoke scripts (#2/#3), localized weather (#4), Spanish strings (#5) and the
-focus-ring fix (#9), followed by the local cold-start ring refit. The code 29 build adds the
-integrated #6 (options panel with steppers), #7 (extra backgrounds), #8 (BlurHash), #10
-(Material 3 Expressive spring) and #11 (TCL L32S6500 profile) plus the audited upstream ports
-(font weights built once, integer colour sampling, Home guard in the debloat scripts). Existing
-preferences migrate to **Custom** without changing motion or wallpaper. The full v0.5.7 battery,
-including the preset state, is still pending. Review status:
+focus-ring fix (#9), followed by the local cold-start ring refit. It also integrates #6 (options
+panel with steppers), #7 (extra backgrounds), #8 (BlurHash), #10 (Material 3 Expressive spring) and
+#11 (TCL L32S6500 profile) plus the audited upstream ports: font weights built once, integer
+colour sampling, the Home guard, the HDMI/AV driver guard, the recovery record, the network-ADB
+warning, the pinned dependencies, the wallpaper at screen size, the tested grid, the CEC
+deduplication in the Inputs menu and the source-panel-as-activity. Existing preferences migrate to
+**Custom** without changing motion or wallpaper. The spring was measured on this TV with one
+parameter apart: [movement p50 441 ms against 635 ms, key response p50 18 ms on both
+sides](../../benchmarks/results/2026-10-20-v0.5.7-spring-m3e.md). Review status:
 [`docs/PR-REVIEW-ROKY146-2026-10-20.md`](../../docs/PR-REVIEW-ROKY146-2026-10-20.md).
 
 ## Key findings on this hardware (measured)
