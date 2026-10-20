@@ -60,8 +60,19 @@
     <string name="opt_motion_off">Smooth motion: off</string>
     <string name="opt_profiles">Family profiles: %1$d</string>
     <string name="opt_columns">Columns: %1$d</string>
-    <string name="opt_wallpaper_on">Wallpaper: Aurora</string>
-    <string name="opt_wallpaper_off">Wallpaper: black</string>
+    <string name="opt_wallpaper">Wallpaper: %1$s</string>
+    <!-- Same order as MainActivity.BG_IDS. -->
+    <string-array name="wallpaper_names">
+        <item>Black</item>
+        <item>Midnight</item>
+        <item>Forest</item>
+        <item>Plum</item>
+        <item>Wine</item>
+        <item>Graphite</item>
+        <item>Petrol</item>
+        <item>Aurora</item>
+        <item>Earth at night</item>
+    </string-array>
     <string name="wallpaper_light">Ultralight mode always uses the black background.</string>
     <string name="columns_title">Columns</string>
     <string name="profiles_title">Family profiles</string>

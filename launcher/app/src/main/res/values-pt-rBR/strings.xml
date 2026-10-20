@@ -59,8 +59,18 @@
     <string name="opt_motion_off">Movimento suave: desligado</string>
     <string name="opt_profiles">Perfis da família: %1$d</string>
     <string name="opt_columns">Colunas: %1$d</string>
-    <string name="opt_wallpaper_on">Papel de parede: Aurora</string>
-    <string name="opt_wallpaper_off">Papel de parede: preto</string>
+    <string name="opt_wallpaper">Papel de parede: %1$s</string>
+    <string-array name="wallpaper_names">
+        <item>Preto</item>
+        <item>Meia-noite</item>
+        <item>Floresta</item>
+        <item>Ameixa</item>
+        <item>Vinho</item>
+        <item>Grafite</item>
+        <item>Petróleo</item>
+        <item>Aurora</item>
+        <item>Terra à noite</item>
+    </string-array>
     <string name="wallpaper_light">O modo ultralight usa sempre o fundo preto.</string>
     <string name="columns_title">Colunas</string>
     <string name="profiles_title">Perfis da família</string>

@@ -52,6 +52,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Iterator;
@@ -86,7 +87,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private Bitmap wallpaperBitmap;
     /** Incremented whenever the wallpaper is hidden or reloaded, so a late decode is discarded. */
     private int wallpaperRequest;
-    private boolean wallpaperLoading;
+    private int wallpaperRes, wallpaperLoadingRes;   // image shown / being decoded, 0 = none
     private TextView brand;
     private TextView greeting;
     private TextView subtitle;
@@ -455,9 +456,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // Changing the columns rebuilds the Home, so the new count is applied when the menu closes.
         items.add(new MenuItem(R.drawable.ic_grid, () -> getString(R.string.opt_columns, prefs.columns()),
                 dir -> prefs.setColumns(Math.max(4, Math.min(6, prefs.columns() + dir)))));
+        String[] wallpaperNames = getResources().getStringArray(R.array.wallpaper_names);
         items.add(new MenuItem(R.drawable.ic_wallpaper,
-                () -> getString(prefs.wallpaper() ? R.string.opt_wallpaper_on : R.string.opt_wallpaper_off), dir -> {
-            prefs.setWallpaper(!prefs.wallpaper());
+                () -> getString(R.string.opt_wallpaper, wallpaperNames[backgroundIndex(prefs.wallpaper())]), dir -> {
+            int n = BG_IDS.length;
+            prefs.setWallpaper(BG_IDS[(backgroundIndex(prefs.wallpaper()) + dir + n) % n]);
             updateWallpaper();
             if (light) Toast.makeText(this, R.string.wallpaper_light, Toast.LENGTH_SHORT).show();
         }));
@@ -733,40 +736,59 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glass.setRing(FOCUS_RING);
     }
 
-    /** Shows the bundled aurora wallpaper, or black in ultralight mode. Decoded off the main thread. */
+    /**
+     * Home backgrounds in menu order: saved id, then a solid colour (0 = none, the window's black) or a
+     * bundled image. Names are R.array.wallpaper_names in the same order. Colours keep at least 13:1
+     * contrast with the white header text; the photo has a dark scrim baked in behind it.
+     */
+    static final String[] BG_IDS = {"black", "midnight", "forest", "plum", "wine", "graphite", "petrol",
+            "aurora", "iss"};
+    private static final int[] BG_COLORS = {0, 0xFF0B1A2E, 0xFF0E2A1C, 0xFF2A1033, 0xFF3A0D16, 0xFF1C1E22, 0xFF062F33,
+            0, 0};
+    private static final int[] BG_IMAGES = {0, 0, 0, 0, 0, 0, 0, R.drawable.wallpaper_aurora, R.drawable.wallpaper_iss};
+
+    private static int backgroundIndex(String id) {
+        return Math.max(0, Arrays.asList(BG_IDS).indexOf(id));
+    }
+
+    /** Shows the chosen colour or image (decoded off the main thread), or black in ultralight mode. */
     private void updateWallpaper() {
         if (wallpaperView == null) return;
-        boolean show = prefs.wallpaper() && !light;
-        if (!show) {
+        int i = backgroundIndex(prefs.wallpaper());
+        int image = light ? 0 : BG_IMAGES[i];
+        if (image == 0) {
+            int color = light ? 0 : BG_COLORS[i];
             wallpaperRequest++;
-            wallpaperLoading = false;
-            wallpaperView.setVisibility(View.GONE);
+            wallpaperLoadingRes = 0;
             releaseWallpaper();
+            wallpaperView.setBackgroundColor(color);
+            wallpaperView.setVisibility(color == 0 ? View.GONE : View.VISIBLE);
             return;
         }
+        wallpaperView.setBackgroundColor(0);
         wallpaperView.setVisibility(View.VISIBLE);
-        if (wallpaperBitmap != null) {
+        if (wallpaperBitmap != null && wallpaperRes == image) {
             wallpaperView.setImageBitmap(wallpaperBitmap);
             return;
         }
-        if (wallpaperLoading) return;
-        wallpaperLoading = true;
+        if (wallpaperLoadingRes == image) return;
+        wallpaperLoadingRes = image;
         final int request = ++wallpaperRequest;
         WALLPAPER.execute(() -> {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inPreferredConfig = Bitmap.Config.RGB_565;
             options.inScaled = false;
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.wallpaper_aurora, options);
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), image, options);
             runOnUiThread(() -> {
-                if (request != wallpaperRequest || isFinishing() || isDestroyed()
-                        || light || !prefs.wallpaper()) {
+                if (request != wallpaperRequest || isFinishing() || isDestroyed()) {
                     if (bitmap != null) bitmap.recycle();
                     return;
                 }
-                wallpaperLoading = false;
+                wallpaperLoadingRes = 0;
                 if (bitmap == null) return;
                 releaseWallpaper();
                 wallpaperBitmap = bitmap;
+                wallpaperRes = image;
                 wallpaperView.setImageBitmap(bitmap);
                 wallpaperView.setVisibility(View.VISIBLE);
             });
@@ -779,6 +801,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (wallpaperBitmap != null) {
             wallpaperBitmap.recycle();
             wallpaperBitmap = null;
+            wallpaperRes = 0;
         }
     }
 

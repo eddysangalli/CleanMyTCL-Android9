@@ -110,13 +110,14 @@ final class HomePrefs {
 
     // ---- wallpaper -------------------------------------------------------------------------------
 
-    /** Static aurora wallpaper in smooth motion; ultralight always stays black. */
-    boolean wallpaper() {
-        return sp.getBoolean("wallpaper", true);
+    /** Background id from MainActivity.BG_IDS; ultralight always stays black. Older builds saved an on/off flag. */
+    String wallpaper() {
+        String id = sp.getString("background", null);
+        return id != null ? id : sp.getBoolean("wallpaper", true) ? "aurora" : "black";
     }
 
-    void setWallpaper(boolean on) {
-        sp.edit().putBoolean("wallpaper", on).apply();
+    void setWallpaper(String id) {
+        sp.edit().putString("background", id).apply();
     }
 
     // ---- family profiles -------------------------------------------------------------------------
@@ -140,7 +141,7 @@ final class HomePrefs {
             profile.put("name", userName());
             profile.put("message", message());
             profile.put("accent", accent());
-            profile.put("wallpaper", wallpaper());
+            profile.put("background", wallpaper());
             all.put(key, profile);
             sp.edit().putString("profiles", all.toString()).apply();
         } catch (JSONException ignored) {
@@ -154,7 +155,8 @@ final class HomePrefs {
                 .putString("name", profile.optString("name", "").trim())
                 .putString("message", profile.optString("message", "").trim())
                 .putInt("accent", profile.optInt("accent", 0))
-                .putBoolean("wallpaper", profile.optBoolean("wallpaper", true))
+                .putString("background", profile.optString("background",
+                        profile.optBoolean("wallpaper", true) ? "aurora" : "black"))
                 .apply();
     }
 
@@ -213,7 +215,7 @@ final class HomePrefs {
     /** Recovery: name, message, colour, motion, columns, wallpaper, profiles, dock and hidden apps back to the defaults. */
     void resetAll() {
         sp.edit().remove("name").remove("message").remove("accent").remove("light")
-                .remove("columns").remove("wallpaper").remove("profiles").remove("dock").remove("hidden").apply();
+                .remove("columns").remove("wallpaper").remove("background").remove("profiles").remove("dock").remove("hidden").apply();
     }
 
     // ---- weather --------------------------------------------------------------------------------
