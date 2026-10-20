@@ -225,11 +225,15 @@ final class AppLoader {
         float bestScore = -1f;
         long r = 0, g = 0, b = 0;
         for (int p : px) {
-            r += Color.red(p);
-            g += Color.green(p);
-            b += Color.blue(p);
-            Color.colorToHSV(p, hsv);
-            float score = hsv[1] * Math.min(1f, hsv[2] * 1.4f);   // saturated and not too dark
+            int pr = (p >> 16) & 0xFF, pg = (p >> 8) & 0xFF, pb = p & 0xFF;
+            r += pr;
+            g += pg;
+            b += pb;
+            int max = Math.max(pr, Math.max(pg, pb));
+            int min = Math.min(pr, Math.min(pg, pb));
+            float sat = max == 0 ? 0f : (max - min) / (float) max;
+            float val = max / 255f;
+            float score = sat * Math.min(1f, val * 1.4f);   // saturated and not too dark
             if (score > bestScore) {
                 bestScore = score;
                 best = p;

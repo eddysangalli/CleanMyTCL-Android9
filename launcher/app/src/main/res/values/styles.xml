@@ -12,8 +12,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">#8CFFFFFF</item>
         <item name="android:textSize">13sp</item>
-        <item name="android:fontFamily">@font/outfit</item>
-        <item name="android:fontVariationSettings">\'wght\' 500</item>
+        <item name="android:fontFamily">@font/outfit_medium</item>
         <item name="android:letterSpacing">0.16</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:singleLine">true</item>
@@ -30,8 +29,7 @@
         <item name="android:background">@drawable/pill_bg</item>
         <item name="android:textColor">@drawable/pill_text</item>
         <item name="android:textSize">15sp</item>
-        <item name="android:fontFamily">@font/outfit</item>
-        <item name="android:fontVariationSettings">\'wght\' 500</item>
+        <item name="android:fontFamily">@font/outfit_medium</item>
         <item name="android:letterSpacing">0.01</item>
         <item name="android:drawablePadding">9dp</item>
         <item name="android:drawableTint">@drawable/pill_text</item>

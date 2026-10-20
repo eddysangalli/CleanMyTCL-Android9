@@ -28,5 +28,36 @@ foreach ($p in $pkgs) {
     }
 }
 
+# Home guard (#239/#350): never disable the app that owns Home while no other real HOME activity
+# remains enabled. Fallback homes (com.android.tv.settings/.FallbackHome and vendor equivalents) do
+# not count as a usable launcher. $env:FORCE_HOME=1 overrides the guard.
+if (-not $env:FORCE_HOME) {
+    $homeQuery = 'cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME'
+    try {
+        $homeLine = @(& $py -I (Join-Path $repo 'tools\tv.py') $homeQuery 2>$null |
+            Where-Object { $_ -match '/' }) | Select-Object -Last 1
+    } catch {
+        $homeLine = $null
+    }
+    $homePkg = "$homeLine".Trim() -split '/' | Select-Object -First 1
+    if ($homePkg -and ($pkgs -contains $homePkg)) {
+        $claimQuery = 'cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.HOME'
+        try {
+            $claims = @(& $py -I (Join-Path $repo 'tools\tv.py') $claimQuery 2>$null | ForEach-Object {
+                if ($_ -match '^\s*([A-Za-z0-9_.]+)/([A-Za-z0-9_.$]+)$' -and $Matches[2] -notmatch 'FallbackHome$') {
+                    $Matches[1]
+                }
+            } | Sort-Object -Unique)
+        } catch {
+            $claims = @()
+        }
+        $others = @($claims | Where-Object { $_ -ne $homePkg -and $pkgs -notcontains $_ })
+        if ($others.Count -eq 0) {
+            Write-Warning "Skipping ${homePkg}: it owns Home, and no other real app that can answer Home is installed and staying enabled. Make the new launcher Home first, then run this list again to disable the old one; or set `$env:FORCE_HOME=1 if you can still reach the TV."
+            $pkgs = @($pkgs | Where-Object { $_ -ne $homePkg })
+        }
+    }
+}
+
 $cmds = @($pkgs | ForEach-Object { "pm disable-user --user 0 $_" }) + 'pm list packages -d'
 $cmds | & $py -I (Join-Path $repo 'tools\tv.py') --batch
