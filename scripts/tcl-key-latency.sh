@@ -98,16 +98,17 @@ for s in $(seq 1 "$SERIES"); do
             last = $14; prev = $2
         }
         END {
-            if (first) printf "%d %d %d %s\n", (first - t0 * 1e6) / 1e6, (last - t0 * 1e6) / 1e6, key, tag
-            else printf "0 0 %s %s-perdida\n", key, tag
+            if (!first) printf "0 0 %s %s-sem-quadro\n", key, tag
+            else if ((first - t0 * 1e6) / 1e6 > 150) printf "0 0 %s %s-sem-reacao\n", key, tag
+            else printf "%d %d %d %s\n", (first - t0 * 1e6) / 1e6, (last - t0 * 1e6) / 1e6, key, tag
         }' "$OUT/framestats_s${s}_$i.txt" >> "$OUT/key_latency.txt"
   done
 done
 
-# Uma tecla "perdida" (sem quadro concluido depois dela) fica fora das estatisticas: e um
-# problema de medicao, nao uma latencia. Elas sao contadas e mostradas.
-grep -v 'perdida$' "$OUT/key_latency.txt" > "$OUT/key_latency_ok.txt" || true
-MISSED=$(grep -c 'perdida$' "$OUT/key_latency.txt" || true)
+# Uma tecla sem reacao visual fica fora das estatisticas: nao e uma latencia, e sim um movimento
+# que nao aconteceu (o fim de uma linha, o foco na barra superior). Elas sao contadas e mostradas.
+grep -vE 'sem-quadro$|sem-reacao$' "$OUT/key_latency.txt" > "$OUT/key_latency_ok.txt" || true
+MISSED=$(grep -cE 'sem-quadro$|sem-reacao$' "$OUT/key_latency.txt" || true)
 NO_LOG=$(grep -c 'log-inesperado' "$OUT/missed.txt" || true)
 
 stats() {
@@ -126,7 +127,7 @@ Series: $SERIES x $KEYS teclas
 Controle   resposta (tecla -> 1o quadro): p50 ${RESP_P50} | p95 ${RESP_P95} | p99 ${RESP_P99} | max ${RESP_MAX} ms  (${RESP_N} teclas)
            movimento completo:            p50 ${SET_P50} | p95 ${SET_P95} | p99 ${SET_P99} | max ${SET_MAX} ms
            quadros atrasados: ${JANK_PCT}% de ${FRAMES}
-Perdidas: ${MISSED} sem quadro apos a tecla, ${NO_LOG} com o instante vindo da janela de uptime
+Perdidas: ${MISSED} sem reacao visual, ${NO_LOG} com o instante vindo da janela de uptime
 EOF
 cat "$OUT/resumo.txt"
 CSV=medicoes/launcher.csv
