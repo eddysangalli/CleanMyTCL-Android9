@@ -72,6 +72,9 @@
         <item>Petrol</item>
         <item>Aurora</item>
         <item>Earth at night</item>
+        <item>Nebula blur</item>
+        <item>Milky Way blur</item>
+        <item>Star trails blur</item>
     </string-array>
     <string name="wallpaper_light">Ultralight mode always uses the black background.</string>
     <string name="columns_title">Columns</string>
