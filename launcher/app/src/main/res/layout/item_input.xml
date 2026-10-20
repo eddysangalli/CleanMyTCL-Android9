@@ -28,8 +28,7 @@
         android:textColor="@drawable/pill_text"
         android:duplicateParentState="true"
         android:textSize="15sp"
-        android:fontFamily="@font/outfit"
-        android:fontVariationSettings="'wght' 500"
+        android:fontFamily="@font/outfit_medium"
         android:singleLine="true" />
 
     <View
@@ -46,6 +45,6 @@
         android:textColor="@drawable/pill_text_dim"
         android:duplicateParentState="true"
         android:textSize="11sp"
-        android:fontFamily="@font/outfit"
+        android:fontFamily="@font/outfit_regular"
         android:letterSpacing="0.04" />
 </LinearLayout>

@@ -48,7 +48,7 @@
                     <TextView
                         android:id="@+id/brand"
                         style="@style/BrandText"
-                        android:fontVariationSettings="'wght' 700" />
+                        android:fontFamily="@font/outfit_bold" />
 
                     <TextClock
                         android:id="@+id/clock"
@@ -79,8 +79,7 @@
                     android:layout_marginTop="10dp"
                     android:textColor="#FFFFFFFF"
                     android:textSize="42sp"
-                    android:fontFamily="@font/outfit"
-                    android:fontVariationSettings="'wght' 300"
+                    android:fontFamily="@font/outfit_light"
                     android:letterSpacing="-0.02"
                     android:includeFontPadding="false"
                     android:maxLines="1"
@@ -103,8 +102,7 @@
                 android:maxWidth="390dp"
                 android:textColor="#99FFFFFF"
                 android:textSize="16sp"
-                android:fontFamily="@font/outfit"
-                android:fontVariationSettings="'wght' 400"
+                android:fontFamily="@font/outfit_regular"
                 android:maxLines="2"
                 android:ellipsize="end" />
 
