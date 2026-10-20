@@ -112,7 +112,11 @@ sleep 2
 # repetido logo depois, passa). O teste entao tenta ate 3 vezes e so reprova se as tres
 # falharem. O log da ultima tentativa fica em private/ para diagnostico.
 VOICE=""
-VOICE_TRIES=0
+VOICE_TRIES=1
+# A 1a tentativa tambem limpa o logcat e aperta a busca: sem isso ela so lia o log antigo
+# e podia aprovar por um LIBAS_S3_CONNECTION_UP de uma rodada anterior.
+"$ADB" -s "$SERIAL" logcat -c -b main -b system
+tv input keyevent KEYCODE_SEARCH
 for _ in $(seq 1 25); do
     sleep 1
     VOICE=$("$ADB" -s "$SERIAL" logcat -d -b main -b system | tr -d '\r')
