@@ -60,17 +60,12 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon --console=plain testDebugUnitTest assembleRelease
-      # Existing lint debt is explicitly reported, not silently suppressed in build.gradle.
-      # Do not make this a release-quality claim until the Android Lint errors are resolved.
-      - name: Android Lint diagnostics (known errors; not yet a release gate)
-        id: lint
-        continue-on-error: true
+      - name: Android Lint (required)
         working-directory: launcher
         run: ./gradlew --no-daemon --console=plain lintRelease
-      - name: Publish Android Lint diagnostics
-        if: always()
+      - name: Explain scope of validation
         run: |
-          echo '### Android Lint (diagnostic)' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Lint currently reports errors in the project. Its step is non-blocking for build validation; **a green workflow is not a clean lint or hardware signoff**. Review the lint step and resolve its findings before enabling it as a release gate.' >> "$GITHUB_STEP_SUMMARY"
+          echo '### Build validation' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Compilation, JVM tests, Android Lint, Python safety tests and shell syntax run in CI. **Physical TV, HDMI, remote, streaming catalogue, casting and soak tests are separate release gates.**' >> "$GITHUB_STEP_SUMMARY"
       - name: Explain hardware coverage
         run: echo 'Hardware tests (HDMI, IR/BT remote, standby, Netflix catalogue, Cast and real-TV benchmarks) must be run on the target TV.'
