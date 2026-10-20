@@ -21,14 +21,21 @@ How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
 - [`../../scripts/protected-packages.txt`](../../scripts/protected-packages.txt) — packages the scripts refuse to disable.
 - [`OPTIMIZATION-CANDIDATES.md`](OPTIMIZATION-CANDIDATES.md) — measured candidates, **not applied**, each with risk and undo.
 
-**Currently installed:** `br.eddy.tvhome` **0.5.6** (versionCode 17, installed 2026-10-19 22:14),
-APK SHA-256 `8D5C15983C31F356B46D23EAFE7626C6B59E03084FE678BD9ECEE84162EFCE1C` — identical to the
-stored `tvhome-0.5.6.apk` (launcher commit `28a0383`). The full v0.5.6 battery is pending; the
-measured performance baseline remains v0.5.2. The wallpaper A/B is separate:
+**Installed for validation on 2026-10-20:** `br.eddy.tvhome` **0.5.7** (versionCode 19), APK
+SHA-256 `20284EB87F393BCAC42F704C519E93D83828730182DABF6072DF5A436580C61F`, built from `develop`
+commit `10b2282`. This is a test/validation build, **not a release**; `main` and the published
+reference remain v0.5.6 (APK `8D5C15983C31F356B46D23EAFE7626C6B59E03084FE678BD9ECEE84162EFCE1C`,
+launcher commit `28a0383`). The earlier local 0.5.6.1 Globoplay hotfix (versionCode 18) is superseded
+by this build.
+
+The full v0.5.6 and v0.5.7 batteries are pending; the measured performance baseline remains v0.5.2.
+The wallpaper A/B is separate:
 [key p50 17 ms, spring p50 ~634 ms, jank 0.19% black vs 6.89% aurora, PSS 23 vs 32 MB](../../benchmarks/results/2026-10-19-v0.5.6-wallpaper.md).
 
-The installed 0.5.6 adds on-TV 4/5/6 columns, family profiles and an optional static aurora
-wallpaper. The wallpaper is decoded RGB_565 off the main thread and ultralight always stays black.
+The validation build adds Performance/Balanced/Visual presets, the 0.5.6 columns/profiles/static
+Aurora wallpaper and the local Globoplay redirect settling fix. Existing preferences migrate to
+**Custom** without changing motion or wallpaper. The full v0.5.7 battery, including the preset
+state, is still pending.
 
 ## Key findings on this hardware (measured)
 

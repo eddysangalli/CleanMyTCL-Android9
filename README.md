@@ -66,10 +66,22 @@ during the spring — see the [wallpaper A/B](benchmarks/results/2026-10-19-v0.5
 
 ## Principles
 
-1. **Performance first.** No feature is kept if it makes Home, navigation or app launch slower. Every change is measured (p50 and tail latency) against the previous version. The optional wallpaper is the documented exception: it keeps key response and spring duration, but adds jank/PSS; ultralight stays black and the cost is published.
+1. **Performance by default. Personalization by choice. Transparency about cost.** New installs start in Performance: instant navigation, black background, no continuous graphics. Balanced and Visual are optional presets built from the same components. They may use more GPU/RAM and add measured jank; each one is reversible and states its measured cost, or says it has not been measured on this device. Stability, remote/HDMI/audio/app compatibility and recovery are never optional.
 2. **Reversible.** System apps are only `pm disable-user`'d, one at a time, with a smoke test and an undo command. Nothing is uninstalled from `/system`. No root, no firmware flashing.
-3. **Evidence over claims.** Speed numbers come with method, device and raw-data location ([benchmarks/](benchmarks/)). Untested means untested.
+3. **Evidence over claims.** Speed numbers come with method, device and raw-data location ([benchmarks/](benchmarks/)). Untested means untested; old measurements are never presented as results for a new build.
 4. **The stock launcher is never disabled before the new Home is installed and verified**, and the way back is documented ([docs/RECOVERY.md](docs/RECOVERY.md)).
+
+## Experience presets
+
+The same Home has three presets, not three launchers. Individual options remain adjustable; changing one marks the experience as **Custom**.
+
+| Preset | Motion | Background | Known cost |
+|---|---|---|---|
+| **Performance** (default on a new install) | Instant focus; no spring | Black | No wallpaper decode, no continuous effects |
+| **Balanced** | Smooth focus; current spring | Black | No wallpaper; uses the same spring as Visual |
+| **Visual** | Smooth focus; current spring | Aurora wallpaper | Measured on the TCL BeyondTV2 with v0.5.6: +9 MB PSS, delayed frames 0.19% → 6.89%; median key response stayed at 17 ms |
+
+The v0.5.6 A/B and its method are in [benchmarks/results/2026-10-19-v0.5.6-wallpaper.md](benchmarks/results/2026-10-19-v0.5.6-wallpaper.md). Those numbers belong to v0.5.6, not to future builds; they will be re-measured before being attributed to v0.5.7. Upgrades keep the existing motion/wallpaper values and show **Custom** until the viewer chooses a preset. Details: [docs/EXPERIENCE-PRESETS.md](docs/EXPERIENCE-PRESETS.md).
 
 ---
 
@@ -77,7 +89,7 @@ during the spring — see the [wallpaper A/B](benchmarks/results/2026-10-19-v0.5
 
 | Path | What |
 |---|---|
-| `launcher/` | Lightweight Home (`com.gathin.tvhome` code from upstream + TCL features: ultralight mode, D-pad menus, HDMI shortcuts, voice button, on-TV settings, configurable greeting, 4/5/6 columns, family profiles, optional static aurora wallpaper) |
+| `launcher/` | Lightweight Home (`com.gathin.tvhome` code from upstream + TCL features: Performance/Balanced/Visual presets, D-pad menus, HDMI shortcuts, voice button, on-TV settings, configurable greeting, 4/5/6 columns, family profiles, optional static Aurora wallpaper) |
 | `scripts/` | Windows PowerShell + Git Bash tools: backup, restore, safe disable, smoke test, reboot test, benchmarks |
 | `tools/` | Upstream CleanYourTV tools (`tv.py`, `disable.*`, `restore.*`) — kept unchanged |
 | `devices/` | Per-model profiles: debloat list, protected packages, what was tested |
@@ -104,7 +116,7 @@ powershell -ExecutionPolicy Bypass -File scripts\tcl-restore.ps1          # dry-
 
 ## Relationship with upstream
 
-This repo keeps CleanYourTV's history up to commit `9ef40c1` and branches from there. Upstream has moved on (v2.x, themes, Home-key service). We track it as the `upstream` remote and **cherry-pick** fixes after reviewing conflicts, behavior changes and measured performance impact ([docs/BRANCHING.md](docs/BRANCHING.md)). Improvements that are not TCL-specific should be offered back to CleanYourTV.
+This repo keeps CleanYourTV's history up to commit `9ef40c1` and branches from there. Upstream has moved on (v2.x, themes, Home-key service). We track it as the `upstream` remote and **cherry-pick** fixes after reviewing conflicts, behavior changes and measured performance impact ([docs/BRANCHING.md](docs/BRANCHING.md)). The 2026-10-20 review, including the small ports and the changes deliberately left out, is in [docs/UPSTREAM-AUDIT-2026-10-20.md](docs/UPSTREAM-AUDIT-2026-10-20.md). Improvements that are not TCL-specific should be offered back to CleanYourTV.
 
 ---
 

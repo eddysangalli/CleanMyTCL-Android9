@@ -52,10 +52,22 @@ Não presuma que outra TCL com Android 9 funciona igual. Veja a [matriz de compa
 
 ## Regras do projeto
 
-1. **Desempenho acima de tudo.** Nada que deixe o Home, a navegação ou a abertura de apps mais lentos. Toda mudança é medida (p50 e piores casos) contra a versão anterior.
+1. **Desempenho por padrão. Personalização por escolha. Transparência sobre o custo.** Uma instalação nova começa em Desempenho: navegação imediata, fundo preto e nenhum efeito contínuo. Equilibrado e Visual são presets opcionais, feitos com os mesmos componentes. Eles podem usar mais GPU/RAM e adicionar jank medido; cada um é reversível e informa o custo conhecido, ou diz que ainda não foi medido neste aparelho. Estabilidade, controle, HDMI, áudio, aplicativos e recuperação nunca são opcionais.
 2. **Tudo reversível.** Apps de sistema só com `pm disable-user`, um por vez, com teste e comando de volta. Nada de root, firmware, desinstalar de `/system`.
-3. **Sem promessas sem medição.** Números vêm com método, aparelho e dados brutos.
+3. **Sem promessas sem medição.** Números vêm com método, aparelho e dados brutos. Medições antigas nunca são apresentadas como resultado de um build novo.
 4. **O launcher original nunca é desativado antes de o novo estar instalado e testado.**
+
+## Presets de experiência
+
+A mesma Home tem três presets, não três launchers. As opções individuais continuam ajustáveis; mudar uma delas marca a experiência como **Personalizado**.
+
+| Preset | Movimento | Fundo | Custo conhecido |
+|---|---|---|---|
+| **Desempenho** (padrão em instalação nova) | Foco imediato, sem mola | Preto | Sem decodificação de wallpaper, sem efeitos contínuos |
+| **Equilibrado** | Foco suave, mola atual | Preto | Sem wallpaper; usa a mesma mola do Visual |
+| **Visual** | Foco suave, mola atual | Papel de parede Aurora | Medido na TCL BeyondTV2 com a v0.5.6: +9 MB de PSS, quadros atrasados de 0,19% para 6,89%; a resposta mediana da tecla ficou em 17 ms |
+
+O A/B da v0.5.6 e o método estão em [benchmarks/results/2026-10-19-v0.5.6-wallpaper.md](benchmarks/results/2026-10-19-v0.5.6-wallpaper.md). Esses números pertencem à v0.5.6, não a builds futuros; serão medidos novamente antes de serem atribuídos à v0.5.7. Atualizações mantêm o movimento/wallpaper atuais e mostram **Personalizado** até você escolher um preset. Detalhes: [docs/EXPERIENCE-PRESETS.md](docs/EXPERIENCE-PRESETS.md).
 
 ---
 
@@ -167,13 +179,13 @@ Os scripts e mensagens estão em português; a documentação principal está em
 
 ## Personalização (ex.: "Eddy TV")
 
-O launcher público não tem nome fixo: nome do usuário, nome do sistema, cor de destaque, dock e modo ultraleve são configurados **na própria TV** (Opções do Início). Veja [docs/PERSONALIZATION.md](docs/PERSONALIZATION.md).
+O launcher público não tem nome fixo: nome do usuário, nome do sistema, cor de destaque, dock e preset de experiência são configurados **na própria TV** (Opções do Início). Veja [docs/PERSONALIZATION.md](docs/PERSONALIZATION.md) e [docs/EXPERIENCE-PRESETS.md](docs/EXPERIENCE-PRESETS.md).
 
 ---
 
 ## Relação com upstream
 
-Este repositório mantém o histórico do CleanYourTV até o commit `9ef40c1` e faz branch a partir daí. O upstream evoluiu (v2.x, temas, serviço de tecla Home). Rastreamos como remote `upstream` e fazemos **cherry-pick** de correções após revisar conflitos, mudanças de comportamento e impacto de performance medido ([docs/BRANCHING.md](docs/BRANCHING.md)). Melhorias que não são específicas de TCL devem ser oferecidas de volta ao CleanYourTV.
+Este repositório mantém o histórico do CleanYourTV até o commit `9ef40c1` e faz branch a partir daí. O upstream evoluiu (v2.x, temas, serviço de tecla Home). Rastreamos como remote `upstream` e fazemos **cherry-pick** de correções após revisar conflitos, mudanças de comportamento e impacto de performance medido ([docs/BRANCHING.md](docs/BRANCHING.md)). A revisão de 20/10/2026, com os portes pequenos e o que ficou de fora, está em [docs/UPSTREAM-AUDIT-2026-10-20.md](docs/UPSTREAM-AUDIT-2026-10-20.md). Melhorias que não são específicas de TCL devem ser oferecidas de volta ao CleanYourTV.
 
 ---
 
