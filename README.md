@@ -72,7 +72,7 @@ during the spring — see the [wallpaper A/B](benchmarks/results/2026-10-19-v0.5
 3. **Evidence over claims.** Speed numbers come with method, device and raw-data location ([benchmarks/](benchmarks/)). Untested means untested; old measurements are never presented as results for a new build.
 4. **The stock launcher is never disabled before the new Home is installed and verified**, and the way back is documented ([docs/RECOVERY.md](docs/RECOVERY.md)).
 
-## Experience presets
+**Current code status (2026-10-20):** `main` contains **v0.5.8 / versionCode 30**. A GitHub Release/tag has not been published. The last APK installation explicitly confirmed in the public device evidence is the v0.5.7 test build (code 29); a full v0.5.8 hardware benchmark and 8-hour soak remain pending. See [compatibility status](COMPATIBILITY.md) and [v0.5.8 change notes](docs/RELEASE-0.5.8.md).\n\n## Experience presets
 
 The same Home has three presets, not three launchers. Individual options remain adjustable; changing one marks the experience as **Custom**.
 
