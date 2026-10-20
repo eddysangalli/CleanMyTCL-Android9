@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Inicio</string>
+    <string name="inputs">Entradas</string>
+    <string name="wifi">Wi-Fi</string>
+    <string name="settings">Ajustes</string>
+    <string name="choose_input">Entradas</string>
+    <string name="connected">Conectado</string>
+    <string name="standby">En espera</string>
+    <string name="not_connected">Sin dispositivo</string>
+    <string name="live_tv">TV en vivo</string>
+    <string name="no_inputs">No se encontraron entradas</string>
+    <string name="good_morning">Buenos días</string>
+    <string name="good_afternoon">Buenas tardes</string>
+    <string name="good_evening">Buenas noches</string>
+    <string name="good_night">Buenas noches</string>
+    <string name="ethernet">Cable</string>
+    <string name="offline">Sin conexión</string>
+    <string name="not_available">No disponible en esta TV</string>
+    <string name="cant_open">No se pudo abrir %1$s</string>
+    <!-- Corto a proposito: el dia completo en espanol invade el boton Entradas. -->
+    <string name="date_format">EEE, d \'de\' MMM</string>
+    <string name="dream_name">Reloj</string>
+    <string name="voice">Voz</string>
+    <string name="menu_move_left">Mover a la izquierda</string>
+    <string name="menu_move_right">Mover a la derecha</string>
+    <string name="menu_unpin">Quitar del dock</string>
+    <string name="menu_pin">Fijar en el dock</string>
+    <string name="menu_hide">Ocultar</string>
+    <string name="menu_info">Información de la app</string>
+    <string name="dock_full">El dock está lleno: quita una app primero</string>
+    <string name="opt_light_on">Modo ultraligero: activado</string>
+    <string name="opt_light_off">Modo ultraligero: desactivado</string>
+    <string name="opt_weather">Clima: %1$s</string>
+    <string name="opt_weather_off">Clima: desactivado</string>
+    <string name="opt_weather_disable">Desactivar el clima</string>
+    <string name="opt_unhide">Mostrar apps ocultas (%1$d)</string>
+    <string name="opt_reset_dock">Restaurar el dock predeterminado</string>
+    <string name="weather_title">Ciudad para el clima</string>
+    <string name="weather_hint">Ej.: Madrid</string>
+    <string name="weather_not_found">Ciudad no encontrada</string>
+    <string name="weather_failed">No se pudo obtener el clima</string>
+    <string name="weather_set">Clima: %1$s</string>
+    <string name="ok">Aceptar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="default_name">Eddy</string>
+    <string name="brand_format">%1$s TV</string>
+    <string name="greet_morning">Buenos días, %1$s.</string>
+    <string name="greet_afternoon">Buenas tardes, %1$s.</string>
+    <string name="greet_night">Buenas noches, %1$s.</string>
+    <string name="sub_morning">Todo listo para empezar el día.</string>
+    <string name="sub_afternoon">Todo listo para tu tarde.</string>
+    <string name="sub_night">Hora de relajarse.</string>
+    <string name="opt_name">Tu nombre: %1$s</string>
+    <string name="opt_message">Mensaje: %1$s</string>
+    <string name="opt_message_auto">automático</string>
+    <string name="opt_accent">Color de acento: %1$s</string>
+    <string name="opt_motion_on">Movimiento suave: activado</string>
+    <string name="opt_motion_off">Movimiento suave: desactivado</string>
+    <string name="opt_profiles">Perfiles de la familia: %1$d</string>
+    <string name="opt_columns">Columnas: %1$d</string>
+    <string name="opt_wallpaper_on">Fondo de pantalla: Aurora</string>
+    <string name="opt_wallpaper_off">Fondo de pantalla: negro</string>
+    <string name="wallpaper_light">El modo ultraligero siempre usa el fondo negro.</string>
+    <string name="columns_title">Columnas</string>
+    <string name="profiles_title">Perfiles de la familia</string>
+    <string name="profile_save">Guardar el perfil actual</string>
+    <string name="profile_name_title">Nombre del perfil</string>
+    <string name="profile_saved">Perfil %1$s guardado</string>
+    <string name="profile_load">Cargar</string>
+    <string name="profile_delete">Borrar</string>
+    <string name="profile_deleted">Perfil %1$s borrado</string>
+    <string name="profile_empty">Aún no hay perfiles. Guarda el aspecto actual para crear el primero.</string>
+    <string name="name_title">Tu nombre</string>
+    <string name="message_title">Mensaje debajo del saludo</string>
+    <string name="message_hint">Déjalo vacío para usar el automático</string>
+    <string name="rec_tvlauncher">Reactivar la pantalla de inicio original</string>
+    <string name="rec_settings">Abrir Ajustes</string>
+    <string name="rec_reset">Restaurar los valores del Inicio</string>
+    <string name="rec_close">Cerrar</string>
+    <string-array name="accent_names">
+        <item>Azul</item>
+        <item>Verde</item>
+        <item>Naranja</item>
+        <item>Rosa</item>
+        <item>Morado</item>
+        <item>Blanco</item>
+    </string-array>
+    <string name="remap_label">Eddy TV: botones del control</string>
+    <string name="remap_description">Cuando el botón Globoplay del control abre Globoplay, cambia a otra app. Desde la pantalla de inicio Globoplay abre normalmente. No lee la pantalla ni lo que escribes; solo detecta cuando se abre Globoplay.</string>
+    <string name="opt_remap_on">Botón Globoplay: abre %1$s</string>
+    <string name="opt_remap_off">Botón Globoplay: predeterminado (Globoplay)</string>
+    <string name="opt_remap_service">Botón Globoplay: activar el reasignador</string>
+    <string name="wx_clear">DESPEJADO</string>
+    <string name="wx_few_clouds">POCAS NUBES</string>
+    <string name="wx_overcast">NUBLADO</string>
+    <string name="wx_fog">NIEBLA</string>
+    <string name="wx_drizzle">LLOVIZNA</string>
+    <string name="wx_rain">LLUVIA</string>
+    <string name="wx_snow">NIEVE</string>
+    <string name="wx_showers">CHUBASCOS</string>
+    <string name="wx_thunderstorm">TORMENTAS</string>
+</resources>
