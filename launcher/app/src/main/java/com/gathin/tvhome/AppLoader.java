@@ -64,6 +64,9 @@ final class AppLoader {
         Context app = ctx.getApplicationContext();
         watch(app);
         active = callback;
+        // Coming back from Netflix or YouTube is the common case, and usually nothing changed. In that
+        // case there is no PackageManager query and no worker hop at all: the UI already has the list.
+        if (last != null && STALE.isEmpty() && localeUnchanged(app)) return;
         refresh(app, callback);
     }
 
@@ -71,9 +74,38 @@ final class AppLoader {
         active = null;
     }
 
-    /** Re-sorts now (after the dock, hidden apps or recents changed); tiles are reused from the cache. */
+    /**
+     * Re-sorts now (after the dock, hidden apps or recents changed); tiles are reused from the cache.
+     * This is the path taken when an app was opened from a tile and the viewer comes back: the recents
+     * changed, but no app was installed or removed, so the PackageManager is not asked again.
+     */
     static void reorder(Context ctx) {
-        if (active != null) refresh(ctx.getApplicationContext(), active);
+        if (active == null) return;
+        Context app = ctx.getApplicationContext();
+        final Callback callback = active;
+        WORKER.execute(() -> {
+            List<AppAdapter.Entry> current = last;
+            if (current == null) {                       // first run: nothing to re-sort yet
+                refresh(app, callback);
+                return;
+            }
+            HomePrefs prefs = new HomePrefs(app);
+            List<AppAdapter.Entry> fresh = new ArrayList<>(current);
+            sort(fresh, prefs.dock(), prefs.recents());
+            if (sameTiles(last, fresh)) return;          // the order did not change
+            last = fresh;
+            MAIN.post(() -> callback.onLoaded(fresh));
+        });
+    }
+
+    /**
+     * Forces a full rebuild. Use when the **set** of apps changed (hidden, unhidden, restore
+     * defaults), not just the order: re-sorting the cached list cannot bring back an app that was
+     * removed from it.
+     */
+    static void reload(Context ctx) {
+        if (active == null) return;
+        refresh(ctx.getApplicationContext(), active);
     }
 
     /** Rebuilds the list on the worker; calls back on the main thread only when it differs from the last one. */
@@ -156,7 +188,17 @@ final class AppLoader {
             fresh.add(e);
         }
         CACHE.keySet().retainAll(seen);
-        Collections.sort(fresh, (a, b) -> {
+        sort(fresh, favourites, recents);
+        return fresh;
+    }
+
+    /**
+     * The tile order: dock first (its own order), then the recent apps, then alphabetical. Split from
+     * {@link #load} so coming back to Home can re-sort the cached tiles without touching the
+     * PackageManager.
+     */
+    private static void sort(List<AppAdapter.Entry> tiles, List<String> favourites, List<String> recents) {
+        Collections.sort(tiles, (a, b) -> {
             int fa = favourites.indexOf(a.pkg), fb = favourites.indexOf(b.pkg);
             if (fa >= 0 || fb >= 0) {
                 if (fa < 0) return 1;
@@ -171,7 +213,12 @@ final class AppLoader {
             }
             return a.label.compareToIgnoreCase(b.label);
         });
-        return fresh;
+    }
+
+    /** Labels are localised, so a language change means the cache and the order must be rebuilt. */
+    private static boolean localeUnchanged(Context app) {
+        String locale = app.getResources().getConfiguration().getLocales().toLanguageTags();
+        return locale.equals(cacheLocale);
     }
 
     private static AppAdapter.Entry build(PackageManager pm, ResolveInfo ri, ComponentName component, String key,
