@@ -491,7 +491,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }));
             items.add(new MenuItem(R.drawable.ic_hide, R.string.menu_hide, () -> {
                 prefs.hide(pkg);
-                AppLoader.reorder(this);
+                AppLoader.reload(this);
             }));
         }
         items.add(new MenuItem(R.drawable.ic_info, R.string.menu_info, () ->
@@ -575,7 +575,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (hidden > 0) {
             items.add(new MenuItem(R.drawable.ic_info, getString(R.string.opt_unhide, hidden), () -> {
                 prefs.unhideAll();
-                AppLoader.reorder(this);
+                AppLoader.reload(this);
             }));
         }
         items.add(new MenuItem(R.drawable.ic_refresh, R.string.opt_reset_dock, () -> {
@@ -1243,7 +1243,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             prefs.resetAll();
             applyAccent();
             applyExperienceState();
-            AppLoader.reorder(this);
+            AppLoader.reload(this);
         }));
         items.add(new MenuItem(R.drawable.ic_left, R.string.rec_close, () -> { }));
         showMenu(greeting, items);
