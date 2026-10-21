@@ -16,6 +16,8 @@ branches, procurando `rss`, `feed`, `news`:
 | `launcher/app/src/main/java/com/gathin/tvhome/` | 13 classes, nenhuma de feed |
 
 O último commit publicado no repositório geral continua sendo `a3f37b5` (os cartões HDMI).
+Confirmado de novo em **21/10/2026, com `git fetch --prune`** nas duas origens: `prfork/main`
+continua em `a3f37b5`, e o upstream avançou para `d27bb06` (traduções e README) sem nada de feed.
 
 **Decisão:** não inventar uma implementação substituta. O RSS fica bloqueado até o módulo existir
 no repositório geral; o port para a Eddy TV é uma branch própria, depois.
@@ -34,13 +36,28 @@ Motivo: `input keyevent --longpress` não chega como long press neste firmware (
 **Falta:** segurar OK em Configurações com o controle e conferir que "Cartões de entrada" abre.
 O resto do fluxo (renomear, ícone, mostrar, abrir) já foi verificado.
 
-## 3. #446 — branch experimental, não promovido
+## 3. Benchmark de quadros — corrigido, e a história não é comparável
+
+Os dois medidores discordavam: `tcl-launcher-bench.sh` casava a tecla com o primeiro quadro cujo
+**IntendedVsync** vinha depois dela; `tools/bench.py` casa com o primeiro quadro que **terminou**
+depois. No foco instantâneo o quadro que reage nasce do vsync anterior à tecla e só termina depois,
+então a regra antiga perdia teclas e misturava dois métodos.
+
+Corrigido em `scripts/frame-match.awk` (usado pelo script), com os três cuidados do `bench.py`:
+término do quadro, janela entre o reset e o dump, e corte de 150 ms para tecla sem reação. Seis
+testes em `tests/test_frame_match.py`.
+
+**Consequência:** números medidos antes desta correção usam a regra antiga e **não são diretamente
+comparáveis** com os de depois. Cada página de resultado diz com qual método foi medida. Na TV, a
+regra nova deu o mesmo p50 (18 ms) com cauda melhor (p95 24 → 22; movimento máx 444 → 434).
+
+## 4. #446 — branch experimental, não promovido
 
 Branch `exp/pr446-grid-single-pass`. Com 5 pares A/B (25 amostras por lado) o ganho de abertura a
 frio caiu para **−6 ms no p50 (−1,2 %)**, dentro do ruído. Views (96) e RenderTarget (4,83 MB) não
 mudaram. Detalhes em [benchmarks/results/2026-10-20-pr446-grid-single-pass.md](../benchmarks/results/2026-10-20-pr446-grid-single-pass.md).
 
-## 4. Medições antigas potencialmente afetadas
+## 5. Medições antigas potencialmente afetadas
 
 O `am force-stop` derrubava o serviço de acessibilidade e nenhum script o devolvia (corrigido nesta
 rodada). Consequências para o histórico:
@@ -56,7 +73,7 @@ As medições históricas de abertura a frio por `tcl-coldstart.sh` e `tcl-launc
 válidas como **abertura a frio sem serviço de acessibilidade**. Elas não representam a operação
 normal descrita no item 5.
 
-## 5. Abertura fria x operação normal
+## 6. Abertura fria x operação normal
 
 Medido em 21/10/2026, mesma TV:
 
