@@ -54,6 +54,19 @@ during the spring — see the [wallpaper A/B](benchmarks/results/2026-10-19-v0.5
 
 ---
 
+## HDMI/AV cards (v0.5.9)
+
+| Cards on the grid | Card settings |
+|:---:|:---:|
+| ![Cards on the grid](docs/assets/input-cards-grid-2026-10-21.png) | ![Card settings](docs/assets/input-cards-settings.png) |
+| *Every passthrough HDMI/AV port becomes a card with its own name and icon, and opens the input* | *Rename it ("Xbox"), pick one of five icons and show or hide it, all from the remote* |
+
+The passthrough inputs the TV reports sit in the same grid as the apps. Each one can be renamed,
+given an icon (live TV, game, movie, music, computer) and shown or hidden. Holding OK on a card does
+nothing, because there is no app behind it. Measured cost: **neutral** — five paired A/B runs against
+v0.5.8 gave cold start 447 → 446 ms, key response 18 ms on both sides and PSS 31 MB on both.
+[Details](docs/RELEASE-0.5.9.md).
+
 ## Is my TV supported?
 
 **Only one model is validated so far.** Do not assume your TCL works because it also runs Android 9: firmware, chipset and regional app sets differ. Check the [compatibility matrix](COMPATIBILITY.md).

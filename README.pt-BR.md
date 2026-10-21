@@ -32,6 +32,18 @@ opções está desfocada por privacidade; o resto são os PNGs originais.*
 | ![Entradas](docs/assets/eddy-inputs.png) | ![Ultraleve](docs/assets/eddy-ultralight.png) |
 | *As entradas HDMI e a TV ao vivo, direto do Home: as teclas 1–3 abrem as três entradas HDMI que esta unidade lista, na mesma ordem do menu Entradas (o launcher mapeia 1–4 para as entradas que o sistema expõe; aqui não existe uma quarta entrada)* | *Movimento suave desligado: o foco salta em vez de deslizar, 1 quadro desenhado por movimento em vez de 38* |
 
+| Cards HDMI/AV na Home | Configuração dos cards |
+|:---:|:---:|
+| ![Cards na grade](docs/assets/input-cards-grid-2026-10-21.png) | ![Configuração](docs/assets/input-cards-settings.png) |
+| *Cada porta HDMI/AV vira um card, com nome e ícone próprios, e abre a entrada em vez de um app* | *Renomear ("Xbox"), escolher entre cinco ícones e mostrar/ocultar, tudo pelo controle* |
+
+**Cards HDMI/AV (v0.5.9).** As entradas de passagem que a TV reporta aparecem na mesma grade dos
+aplicativos. Dá para renomear cada uma, escolher o ícone (TV ao vivo, jogo, filme, música,
+computador) e decidir se aparece na Home. Segurar OK num card não abre "Informações do aplicativo",
+porque não há app atrás dele. Custo medido: **neutro** — cinco pares A/B contra a v0.5.8 deram
+abertura a frio 447 → 446 ms, resposta da tecla 18 ms nos dois lados e PSS 31 MB nos dois.
+[Detalhes](docs/RELEASE-0.5.9.md).
+
 > Cada número em [benchmarks/results/](benchmarks/results/) está marcado com a versão exata do
 > launcher e as condições em que foi medido. Os gráficos são gerados a partir dos dados medidos por
 > `scripts/tcl-make-charts.py`; nenhum número é digitado à mão.
