@@ -53,9 +53,22 @@ mostra diferença (as faixas se sobrepõem e o launcher fica em 0 %). Nada mais 
 
 ```bash
 adb install -r medicoes/apks/tvhome-0.5.8-code30-baseline.apk
-adb shell settings put secure enabled_accessibility_services br.eddy.tvhome/com.gathin.tvhome.KeyRemapService
+# Devolve a lista COMPLETA de servicos de acessibilidade, nao so o nosso: escrever um servico
+# isolado substitui a lista inteira e derruba os servicos de outros apps.
+adb shell 's=$(settings get secure enabled_accessibility_services); case "$s" in
+  *br.eddy.tvhome/com.gathin.tvhome.KeyRemapService*) ;;
+  null|"") settings put secure enabled_accessibility_services br.eddy.tvhome/com.gathin.tvhome.KeyRemapService ;;
+  *) settings put secure enabled_accessibility_services "$s:br.eddy.tvhome/com.gathin.tvhome.KeyRemapService" ;;
+  esac'
 adb shell settings put secure accessibility_enabled 1
+# Confira: a lista tem de conter o KeyRemapService E tudo o que ja estava la.
+adb shell settings get secure enabled_accessibility_services
+adb shell dumpsys accessibility | grep -A2 services
 ```
+
+Os scripts de medicao fazem isso sozinhos (`tv_acc_save` / `tv_acc_restore`, com recuperacao
+pos-SIGKILL em `tv_acc_recover`). Se a lista foi perdida por um teste, rodar qualquer script
+(`scripts/tcl-smoke.sh`, por exemplo) devolve o estado antes de medir.
 
 A Home original continua recuperável pela opção de recuperação da própria Home (Home 3× em 10 s)
 ou por `scripts/tcl-restore.ps1`.
