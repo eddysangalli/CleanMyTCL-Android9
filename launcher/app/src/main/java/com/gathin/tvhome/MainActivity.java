@@ -101,6 +101,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private HomePrefs prefs;
     /** Ultralight mode (HomePrefs): apps only, no glow, title, weather or springs. */
     private boolean light;
+    /** Between onStart and onStop: Home is (at least partly) on screen. */
+    private boolean started;
     private static final ExecutorService WEATHER = Executors.newSingleThreadExecutor();
     /** One static wallpaper decode at a time; the bitmap is released when the Home is destroyed or turned black. */
     private static final ExecutorService WALLPAPER = Executors.newSingleThreadExecutor();
@@ -426,6 +428,36 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // apps is already cached, and showApps() puts the focus back on the same tile.
         List<AppAdapter.Entry> cached = AppLoader.cached();
         if (cached != null) showApps(cached);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        started = true;
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        started = false;
+    }
+
+    /**
+     * Another app needs the memory while Home is in the background: let go of every tile's artwork, and
+     * rebuild when Home comes back. Not on UI_HIDDEN, the ordinary trip to an app, where keeping the
+     * tiles is what makes the return instant.
+     *
+     * RUNNING_LOW and CRITICAL also arrive while Home is visible when an accessibility service keeps the
+     * process in the foreground; never blank the screen the owner is looking at.
+     */
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        boolean due = level >= TRIM_MEMORY_BACKGROUND
+                || level == TRIM_MEMORY_RUNNING_LOW || level == TRIM_MEMORY_RUNNING_CRITICAL;
+        if (!due || started) return;
+        AppLoader.trimMemory();
+        if (adapter != null) adapter.clear();
     }
 
     @Override

@@ -59,6 +59,20 @@ final class AppLoader {
         return last;
     }
 
+    /**
+     * Lets go of every cached tile and its artwork. Called from {@code onTrimMemory} when the Home is
+     * hidden and the system is short of memory; the next {@link #start} rebuilds from scratch.
+     *
+     * Not called on the ordinary trip to an app: keeping the tiles is what makes the return instant.
+     */
+    static void trimMemory() {
+        WORKER.execute(() -> {
+            CACHE.clear();
+            STALE.clear();
+            last = null;
+        });
+    }
+
     /** Keeps the list fresh while Home is resumed: refreshes now and again whenever a package changes. */
     static void start(Context ctx, Callback callback) {
         Context app = ctx.getApplicationContext();
