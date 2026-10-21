@@ -368,6 +368,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onPause() {
         super.onPause();
         handler.removeCallbacks(minuteTick);
+        newsRotate.removeCallbacks(newsRotateStep);
         AppLoader.stop();
     }
 
@@ -919,6 +920,28 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private LinearLayout newsDots;
     private List<NewsFeed.Headline> newsHeadlines = Collections.emptyList();
     private int newsIndex = -1;
+    /** Advances the carousel while the viewer is not on it, like the upstream row (news_rotate). */
+    private final Handler newsRotate = new Handler(Looper.getMainLooper());
+    private final Runnable newsRotateStep = this::rotateNews;
+    private static final long NEWS_ROTATE_MS = 20_000;
+
+    private void rotateNews() {
+        if (newsHeadlines.size() < 2 || newsIndex < 0 || !newsRotateAllowed()) return;
+        showScene(newsIndex + 1);
+        newsRotate.postDelayed(newsRotateStep, NEWS_ROTATE_MS);
+    }
+
+    /** Rotation stops while the viewer is on the carousel (reading or moving through it). */
+    private boolean newsRotateAllowed() {
+        if (newsCarousel == null || newsCarousel.getVisibility() != View.VISIBLE) return false;
+        if (!NewsFeed.enabled(this)) return false;
+        return !newsCarousel.hasFocus();
+    }
+
+    private void scheduleNewsRotation() {
+        newsRotate.removeCallbacks(newsRotateStep);
+        if (newsHeadlines.size() > 1) newsRotate.postDelayed(newsRotateStep, NEWS_ROTATE_MS);
+    }
 
     /** Wires the carousel. Gone unless headlines arrive, so an RSS-off Home draws none of it. */
     private void setupNews() {
@@ -934,6 +957,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         newsCarousel.setOnClickListener(v -> openCurrentNews());
         newsCarousel.setOnFocusChangeListener((v, focused) -> {
             if (newsBackdrop != null) newsBackdrop.setFocused(focused);
+            // On the carousel the viewer is choosing: hold the headline still.
+            if (focused) newsRotate.removeCallbacks(newsRotateStep);
+            else scheduleNewsRotation();
         });
     }
 
@@ -964,6 +990,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             newsCarousel.setLayoutParams(lp);
         }
         showScene(newsIndex);
+        scheduleNewsRotation();
     }
 
     private void showScene(int index) {
@@ -1041,6 +1068,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void hideNewsScene() {
+        newsRotate.removeCallbacks(newsRotateStep);
         newsHeadlines = Collections.emptyList();
         newsIndex = -1;
         if (newsCarousel != null && newsCarousel.getVisibility() == View.VISIBLE) {

@@ -253,7 +253,7 @@ final class NewsFeed {
             if (!safeUrl(conn.getURL().toString())) return out;
             XmlPullParser p = Xml.newPullParser();
             p.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            p.setInput(conn.getInputStream(), charsetOf(conn.getContentType()));
+            p.setInput(new java.io.StringReader(readFeedBody(conn, charsetOf(conn.getContentType()))));
             String name = source.name(ctx);
             boolean inItem = false;
             String title = null, link = null, date = null, image = null, summary = null, rawHtml = null, category = null;
@@ -337,6 +337,33 @@ final class NewsFeed {
         return s == null ? "" : s;
     }
 
+    /**
+     * Reads the feed body and turns it into text, trusting the bytes over the header.
+     *
+     * The Folha feed declares ISO-8859-1 in Content-Type and then serves UTF-8, so trusting the header
+     * turned every accented letter into a box ("Justi\u25C6a"). The bytes are decoded as UTF-8 first; when
+     * they are not valid UTF-8, the declared charset is the right one after all.
+     */
+    private static String readFeedBody(HttpURLConnection conn, String declared) throws java.io.IOException {
+        java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+        try (InputStream in = conn.getInputStream()) {
+            byte[] chunk = new byte[8192];
+            int n;
+            while ((n = in.read(chunk)) > 0) {
+                buffer.write(chunk, 0, n);
+            }
+        }
+        byte[] bytes = buffer.toByteArray();
+        java.nio.charset.CharsetDecoder utf8 = StandardCharsets.UTF_8.newDecoder()
+                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT);
+        try {
+            return utf8.decode(java.nio.ByteBuffer.wrap(bytes)).toString();
+        } catch (java.nio.charset.CharacterCodingException notUtf8) {
+            return new String(bytes, declared);
+        }
+    }
+
     /** The charset a feed declared in its Content-Type, defaulting to UTF-8 when it did not. */
     static String charsetOf(String contentType) {
         if (contentType == null) return "UTF-8";
@@ -392,6 +419,12 @@ final class NewsFeed {
     private static String clean(String raw, int max) {
         if (raw == null) return "";
         String s = Html.fromHtml(raw, Html.FROM_HTML_MODE_COMPACT).toString();
+        // fromHtml turns an <img> into U+FFFC (object replacement); several feeds put the lead photo
+        // inside the description, so the summary started with a box glyph and "Foto: ...".
+        s = s.replace("\uFFFC", " ");
+        // Feeds also prefix the summary with a camera emoji. This TV's font has no glyph for it, so it
+        // showed as a tofu box before "Foto: ...". Symbols and emoji carry no meaning here.
+        s = s.replaceAll("[\u2600-\u27BF\uFE0F]|[\uD83C-\uD83E][\uDC00-\uDFFF]", " ");
         s = s.replaceAll("\\s+", " ").trim();
         // Cut short and mark the cut, so a long title never eats the whole block.
         if (s.length() > max) s = s.substring(0, Math.max(0, max - 1)).trim() + "â€¦";

@@ -233,10 +233,13 @@ public final class NewsBackdropView extends View {
         clip.addRoundRect(bounds, radius, radius, Path.Direction.CW);
         // A light scrim at the top so the photo melts into the black under the clock, and a long
         // ramp into black at the bottom: the headline's words stand on it without any panel.
+        // The ramp starts higher than the text block, not below it: at 34% of the height the fade was
+        // still almost transparent where the kicker and the headline sit, and they were unreadable on
+        // a bright photo.
         scrimTopEnd = h * 0.20f;
-        scrimBottomStart = h * 0.34f;
+        scrimBottomStart = h * 0.20f;
         scrimColorTop = 0x33000000;             // 20% black
-        scrimColorBottom = 0xF2000000;          // 95% black at the very edge
+        scrimColorBottom = 0xF0000000;          // 94% black at the very edge
     }
 
     @Override
