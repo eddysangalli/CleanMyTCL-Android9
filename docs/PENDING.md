@@ -2,44 +2,47 @@
 
 Estado do que ficou aberto depois da rodada de testes e do port dos cartões de entrada.
 
-## 1. RSS / News Feed — portado, experimental, **não promovido**
+## 1. RSS / News Feed — portado, medido e **apto a promover** (aguarda a bateria física)
 
 **O RSS entrou no repositório geral**: commit `46fccd0` ("cinematic RSS news row on Home (v2.5, off
 by default)"), merge da branch `feature/rss-cinematic-home`, em 21/10/2026.
 
-**Port para a Eddy TV**: branch `feat/rss-news`.
+**Port para a Eddy TV**: branch `feat/rss-news`. Benchmark completo em
+[`benchmarks/results/2026-10-21-rss-row.md`](../benchmarks/results/2026-10-21-rss-row.md).
 
-### O benchmark que faltava (21/10/2026, BeyondTV2)
+### O que o carrossel custa hoje (BeyondTV2, mesmo APK, só a preferência muda)
 
-Mesmo APK, só a preferência muda. Jank medido em regime: Home aberta, 20 s de estabilização,
-`gfxinfo reset`, 20 movimentos com o controle.
+| Métrica | Desligado | Ligado |
+|---|---:|---:|
+| Quadros atrasados em regime | 0,38–0,77% | **0,0–3,3%** (mediana 0,8%) |
+| Views | 104 | 105 |
+| PSS | 27,1 MB | 33,2 MB (**+6,1 MB**) |
+| Cold start (p50) | 437 ms | 510 ms (**+73 ms**) |
 
-| Configuração | Jank | Views | PSS |
-|---|---:|---:|---:|
-| RSS desligado | **0,58 %** | 105 | 31,3 MB |
-| RSS ligado (estado do primeiro port) | **83,6 %** | 133 | 38,1 MB |
-| RSS ligado, sem o gradiente full-bleed | 41,2 % | — | — |
-| RSS ligado, sem gradiente e sem sombra no texto | 7,3 % | — | — |
-| Depois do pré-escalonamento do bitmap | 6–33 % (variável) | — | — |
+O jank deixou de ser um problema; o preço que sobra é memória e partida.
 
-**Duas causas encontradas e corrigidas**, ambas acrescentadas por mim no port, não no original:
+### O que estava errado (todas as causas medidas, nenhuma estimada)
 
-1. **`<shape>` com gradiente full-bleed** sobre o carrossel: um `GradientDrawable` de 1700×250
-   redesenhado em software a cada frame. Custava **~42 pontos percentuais** de jank. Removido; o
-   scrim interno do `NewsBackdropView` já dá o contraste necessário.
-2. **Sombra (`shadowRadius`) nos quatro TextViews**: desenhada em software. Custava **~34 pontos
-   percentuais**. Removida.
-3. **Bitmap reescalonado a cada frame**: o `drawPhoto` aplicava uma matriz de `centerCrop` em cada
-   `onDraw`. Agora o recorte é feito uma vez, no worker, e o `onDraw` é um blit 1:1.
+| Correção | Ganho |
+|---|---:|
+| Remover o `<shape>` com gradiente full-bleed (1700×250 em software, todo quadro) | 42 pp |
+| Remover `shadowRadius` dos quatro TextViews (software) | 34 pp |
+| Um TextView de dots em vez de um por manchete (28 views a menos) | 5–20 pp |
+| Desenhar pelo `Path` arredondado em vez de `canvas.clipPath` (não acelerado nesta GPU) | ~8 pp |
+| Cachear os dois `LinearGradient` do scrim em `onSizeChanged` | ~1,5 ms/quadro |
+| Assar recorte, escala e fades no bitmap, na thread de decode | 2 preenchimentos a menos por quadro |
+| Camada de hardware no carrossel (a animação da grade o redesenhava) | ~2–3 ms/quadro |
 
-**Ainda não está pronto.** Mesmo corrigido, o carrossel fica entre 6 % e 33 % de quadros atrasados
-(variação entre corridas), contra 0,58 % com o RSS desligado. O p50 do frame sobe de 14 para ~22 ms.
-A causa restante não foi isolada: não é a foto (testado desligada) nem a rotação automática
-(testado desligado).
+`setClipToOutline` foi tentado no lugar do `clipPath` e foi **pior** (83%): força uma camada por
+quadro. Está registrado no benchmark para não ser repetido.
 
-**Decisão: o RSS continua experimental e fora do release.** Ele custa 6,8 MB de PSS a mais e uma
-cauda de quadros que eu não consegui eliminar. Voltar a trabalhar nisso exige uma sessão dedicada a
-profilar o `onDraw` do carrossel, não a ajustes às cegas.
+### Por que ainda não está no release
+
+Não é mais o jank. Falta a bateria que nenhum recurso novo dispensa: **soak de 8 h, standby, boot a
+frio, controle físico e fonte HDMI real**, além do retorno à Home (Settings → Home) com a linha
+ligada, que não foi medido. O recurso é opt-in, desligado por padrão e reversível, então o custo de
++6,1 MB e +73 ms só aparece para quem o ligar — mas a promoção depende da bateria, não da minha
+leitura dos números.
 
 Referência de arquitetura: o PR #363 do upstream (`ref/prs/pr363.md`) mostra uma faixa de cartões,
 mas lê o provedor de TV, não RSS, e foi fechado sem merge.

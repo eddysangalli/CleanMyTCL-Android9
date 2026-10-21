@@ -39,7 +39,7 @@ RSS ligado, não à v0.5.9.
 | `feat/hdmi-input-cards` | cards HDMI/AV | **incorporada** |
 | `docs/v058-measurement-attribution` | histórico v0.5.2→v0.5.8 | **incorporada** |
 | `release/v0.5.9` | merge de integração | **incorporada** |
-| `feat/rss-news` | RSS completo | **experimental, não incorporada** |
+| `feat/rss-news` | RSS completo | medida; **apta a promover** depois da bateria física |
 | `feat/service-repair` | cópia da `main` para o teste do bench | sem trabalho próprio |
 | `pr/bench-accessibility-fix` | correção do PR upstream #437 | enviada ao fork |
 
@@ -152,7 +152,7 @@ Nosso `onResume` já restaura o foco sem reconstruir quando a lista não mudou.
 | Área | Estado | Evidência |
 |---|---|---|
 | Cards HDMI/AV | funciona | ADB + capturas; **falta o controle físico** |
-| RSS | funciona na branch | testado na TV, **não promovido** |
+| RSS | funciona na branch | medido em regime: **0–3,3% de jank** com a linha ligada, contra 0,38–0,77% desligada; +6,1 MB e +73 ms de cold start; **aguarda a bateria física** |
 | Recuperação da Home | funciona | opção na Home + `tcl-restore.ps1` |
 | Remapeamento Globoplay | funciona | abriu o UniTVnet em ~1 s |
 | Acessibilidade | íntegra | habilitada e vinculada |
@@ -167,7 +167,7 @@ Nosso `onResume` já restaura o foco sem reconstruir quando a lista não mudou.
 2. Controle físico: OK longo em Configurações, botão Input, menu de entradas.
 3. Vídeo real nas portas HDMI.
 4. Standby, boot a frio, 8 h.
-5. Benchmark do RSS ligado (custo de memória, CPU, abertura).
+5. ~~Benchmark do RSS ligado~~ - feito em 21/10 (benchmarks/results/2026-10-21-rss-row.md).
 6. `develop` atrás da `main`.
 7. A TV está com o build experimental, não com a v0.5.9 publicada.
 
@@ -185,6 +185,6 @@ Nosso `onResume` já restaura o foco sem reconstruir quando a lista não mudou.
 | 1 | Devolver a TV à v0.5.9 publicada | o estado atual é experimental |
 | 2 | Medir o #585 com pressão de memória | é a única mudança de memória testável |
 | 3 | Alinhar `develop` com a `main` | evita divergência |
-| 4 | Testar o RSS com benchmark antes/depois | é o que falta para decidir |
+| 4 | Bateria física do RSS (soak, standby, boot, controle) | o benchmark já foi feito; falta validar no aparelho |
 | 5 | Portar #621 e #619 | segurança de recuperação |
 | 6 | Testar o #544 | menos trabalho no resume |

@@ -995,6 +995,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         newsSummary = findViewById(R.id.newsSummary);
         newsMeta = findViewById(R.id.newsMeta);
         newsDots = findViewById(R.id.newsDots);
+        // The carousel is static while the grid animates, so it gets a hardware layer: without
+        // one, every spring frame redraws the 1680x500 photo and the banner's four lines behind
+        // the focus animation, which pushed 1-13% of those frames past 16.7 ms. As a layer it is
+        // composited from cache and the same measurement is 0-1.7%, the same as with the row
+        // turned off. Rotation and the dissolve invalidate the layer, so it still updates.
+        newsCarousel.setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null);
         newsCarousel.setOnKeyListener(this::onCarouselKey);
         newsCarousel.setOnClickListener(v -> openCurrentNews());
         newsCarousel.setOnFocusChangeListener((v, focused) -> {
@@ -1064,23 +1070,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void rebuildNewsDots() {
         if (newsDots == null) return;
-        if (newsDots.getChildCount() != newsHeadlines.size()) {
+        // One TextView for the whole row, not one per headline: with ~25 dots each as its own
+        // view, the carousel added 28 views and the banner's frames were redrawn dot by dot,
+        // which alone cost 5-20 points of jank. A single line of glyphs is one draw call.
+        if (newsDots.getChildCount() != 1) {
             newsDots.removeAllViews();
-            for (int i = 0; i < newsHeadlines.size(); i++) {
-                TextView dot = new TextView(this);
-                dot.setText("•");
-                dot.setTextSize(13);
-                dot.setIncludeFontPadding(false);
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                lp.setMarginStart((int) (6 * density));
-                dot.setLayoutParams(lp);
-                newsDots.addView(dot);
-            }
+            TextView dot = new TextView(this);
+            dot.setTextSize(13);
+            dot.setIncludeFontPadding(false);
+            newsDots.addView(dot);
         }
-        for (int i = 0; i < newsDots.getChildCount(); i++) {
-            newsDots.getChildAt(i).setAlpha(i == newsIndex ? 1f : 0.35f);
+        StringBuilder all = new StringBuilder();
+        for (int i = 0; i < newsHeadlines.size(); i++) {
+            if (i > 0) all.append("  ");
+            all.append(i == newsIndex ? "\u25CF" : "\u2022");
         }
+        ((TextView) newsDots.getChildAt(0)).setText(all.toString());
     }
 
     private boolean onCarouselKey(View v, int keyCode, KeyEvent event) {

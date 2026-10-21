@@ -4,6 +4,7 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -48,8 +49,6 @@ public final class NewsBackdropView extends View {
     private final Paint scrimPaint = new Paint();
     private final Paint ringPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Matrix crop = new Matrix();
-    /** The carousel's rounded rectangle: everything but the focus ring is clipped to it. */
-    private final Path clip = new Path();
     private final RectF bounds = new RectF();
     private float radius;
 
@@ -72,6 +71,17 @@ public final class NewsBackdropView extends View {
 
     private int scrimColorTop, scrimColorBottom;
     private float scrimTopEnd, scrimBottomStart;
+    /** Built in onSizeChanged, not in onDraw: two LinearGradients per frame cost ~1.5 ms here. */
+    private Shader scrimTopShader, scrimBottomShader;
+    /** The banner's rounded rectangle, and the two rounded bands the fades fill. */
+    private final Path shape = new Path();
+    private final Path topScrimPath = new Path();
+    private final Path bottomScrimPath = new Path();
+    /** Two shader slots: the incoming photo and the outgoing one during a dissolve. */
+    /** True when the photo already carries the fades, so onDraw can skip the scrim pass. */
+    private boolean baked;
+    private Bitmap shaderBitmapA, shaderBitmapB;
+    private BitmapShader shaderA, shaderB;
     private float ringInset;
 
     public NewsBackdropView(Context context) {
@@ -139,20 +149,26 @@ public final class NewsBackdropView extends View {
             File file = NewsFeed.imageFile(app, url);
             Bitmap decoded = file == null ? null : decode(file, target);
             if (decoded == null) return;         // offline or not an image: keep the colour
-            // Crop and scale once, here, instead of every frame in onDraw: a 1680x250 draw of a
-            // 1680x1000 bitmap with a matrix cost ~5 ms per frame on this GPU, enough to push the
-            // carousel's frames past 16.7 ms.
-            if (viewW > 0 && viewH > 0) decoded = fit(decoded, viewW, viewH);
+            // Crop, scale and burn the two fades into the bitmap once, here, instead of every frame
+            // in onDraw: the banner then paints with a single texture fill, which is what makes the
+            // dissolve cheap enough to stay under 16.7 ms.
+            if (viewW > 0 && viewH > 0) decoded = bake(decoded, viewW, viewH);
             final Bitmap ready = decoded;
             post(() -> {
                 if (token != generation.get()) return;   // a newer headline took over: drop it
+                baked = ready != null && ready.getWidth() == viewW && ready.getHeight() == viewH
+                        && scrimTopShader != null;
                 swap(ready, animate && !reducedMotion && isShown());
             });
         });
     }
 
-    /** centerCrop into exactly w x h, in RGB_565, so onDraw is a plain 1:1 blit. */
-    private static Bitmap fit(Bitmap src, int w, int h) {
+    /**
+     * centerCrop into exactly w x h, in RGB_565, with the top and bottom fades already painted on
+     * top. Baking them here is what turns onDraw into one fill: the fades are constant, so a photo
+     * that carries them needs no scrim pass, not even during the dissolve.
+     */
+    private Bitmap bake(Bitmap src, int w, int h) {
         try {
             Bitmap out = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565);
             Canvas canvas = new Canvas(out);
@@ -163,9 +179,16 @@ public final class NewsBackdropView extends View {
             m.setScale(scale, scale);
             m.postTranslate(dx, dy);
             canvas.drawBitmap(src, m, new Paint(Paint.FILTER_BITMAP_FLAG));
+            if (scrimTopShader != null && scrimBottomShader != null) {
+                Paint scrim = new Paint();
+                scrim.setShader(scrimTopShader);
+                canvas.drawRect(0, 0, w, scrimTopEnd, scrim);
+                scrim.setShader(scrimBottomShader);
+                canvas.drawRect(0, scrimBottomStart, w, h, scrim);
+            }
             if (out != src) src.recycle();
             return out;
-        } catch (Throwable oom) {
+        } catch (Throwable noMemory) {
             return src;                          // no memory for the cropped copy: scale at draw time
         }
     }
@@ -214,6 +237,9 @@ public final class NewsBackdropView extends View {
         outgoing = null;
         shown = null;
         fadeFraction = 1f;
+        shaderBitmapA = shaderBitmapB = null;
+        shaderA = shaderB = null;
+        baked = false;
     }
 
     /** The carousel width in pixels: the photo never needs more than the banner can show. */
@@ -254,17 +280,33 @@ public final class NewsBackdropView extends View {
         radius = RADIUS_DP * density;
         ringInset = Math.max(2f, 2f * density);
         bounds.set(0, 0, w, h);
-        clip.reset();
-        clip.addRoundRect(bounds, radius, radius, Path.Direction.CW);
         // A light scrim at the top so the photo melts into the black under the clock, and a long
         // ramp into black at the bottom: the headline's words stand on it without any panel.
         // The ramp starts higher than the text block, not below it: at 34% of the height the fade was
         // still almost transparent where the kicker and the headline sit, and they were unreadable on
         // a bright photo.
         scrimTopEnd = h * 0.20f;
-        scrimBottomStart = h * 0.20f;
+        scrimBottomStart = h * 0.10f;
         scrimColorTop = 0x33000000;             // 20% black
-        scrimColorBottom = 0xF0000000;          // 94% black at the very edge
+        scrimColorBottom = 0xF2000000;          // 95% black at the very edge
+        scrimTopShader = new LinearGradient(0, 0, 0, scrimTopEnd,
+                scrimColorTop, 0x00000000, Shader.TileMode.CLAMP);
+        // Three stops, not two: a plain ramp left the headline at ~35% black on a bright photo and
+        // the words competed with it. The plateau puts ~60% under the text and still lets the top
+        // half of the photo breathe.
+        scrimBottomShader = new LinearGradient(0, scrimBottomStart, 0, h,
+                new int[]{0x00000000, 0x99000000, 0xF2000000},
+                new float[]{0f, 0.45f, 1f}, Shader.TileMode.CLAMP);
+        shape.reset();
+        shape.addRoundRect(bounds, radius, radius, Path.Direction.CW);
+        Path band = new Path();
+        band.addRect(0, 0, w, scrimTopEnd, Path.Direction.CW);
+        topScrimPath.reset();
+        topScrimPath.op(shape, band, Path.Op.INTERSECT);
+        band.reset();
+        band.addRect(0, scrimBottomStart, w, h, Path.Direction.CW);
+        bottomScrimPath.reset();
+        bottomScrimPath.op(shape, band, Path.Op.INTERSECT);
     }
 
     @Override
@@ -274,11 +316,10 @@ public final class NewsBackdropView extends View {
         if (w == 0 || h == 0) return;
 
         int save = canvas.save();
-        canvas.clipPath(clip);
         if (!hasPhoto || shown == null || shown.isRecycled()) {
             // The elegant fallback: a deep colour derived from the headline itself, never black.
             fillPaint.setColor(derivedColor(seed));
-            canvas.drawRect(0, 0, w, h, fillPaint);
+            canvas.drawPath(shape, fillPaint);
         } else {
             drawPhoto(canvas, shown, fadeFraction, w, h);
             if (outgoing != null && !outgoing.isRecycled() && fadeFraction < 1f) {
@@ -286,17 +327,17 @@ public final class NewsBackdropView extends View {
             }
         }
 
-        // The fades, over whatever is behind: they are what makes the text readable on a bright
-        // photo and stop the banner from ending in a hard edge against the black Home.
-        scrimPaint.setShader(new LinearGradient(0, 0, 0, scrimTopEnd,
-                scrimColorTop, 0x00000000, Shader.TileMode.CLAMP));
-        canvas.drawRect(0, 0, w, scrimTopEnd, scrimPaint);
-        scrimPaint.setShader(new LinearGradient(0, scrimBottomStart, 0, h,
-                0x00000000, scrimColorBottom, Shader.TileMode.CLAMP));
-        canvas.drawRect(0, scrimBottomStart, w, h, scrimPaint);
+        // The fades. They are already inside a baked photo, so they are only painted when what is
+        // behind is the derived colour (or a photo that could not be baked).
+        if (!baked || !hasPhoto) {
+            scrimPaint.setShader(scrimTopShader);
+            canvas.drawPath(topScrimPath, scrimPaint);
+            scrimPaint.setShader(scrimBottomShader);
+            canvas.drawPath(bottomScrimPath, scrimPaint);
+        }
         canvas.restoreToCount(save);
 
-        // The ring is drawn outside the clip, so its inner half rounds with the corners cleanly.
+        // The ring is drawn outside the shape, so its inner half rounds with the corners cleanly.
         if (focused) {
             ringPaint.setStyle(Paint.Style.STROKE);
             ringPaint.setStrokeWidth(ringInset * 2f);
@@ -310,20 +351,39 @@ public final class NewsBackdropView extends View {
     /** centerCrop of the photo, faded by alpha: the composition fills the banner and never distorts. */
     private void drawPhoto(Canvas canvas, Bitmap bitmap, float alpha, int w, int h) {
         if (alpha <= 0f) return;
-        crop.reset();
-        float scale = Math.max((float) w / bitmap.getWidth(), (float) h / bitmap.getHeight());
-        float dx = (w - bitmap.getWidth() * scale) / 2f;
-        float dy = (h - bitmap.getHeight() * scale) / 2f;
-        crop.setScale(scale, scale);
-        crop.postTranslate(dx, dy);
         photoPaint.setAlpha(Math.round(255 * Math.min(1f, alpha)));
-        // The crop matrix is applied only for the bitmap; save/restore puts the canvas back in
-        // carousel space, so the fades that follow are positioned against the banner, not the
-        // photo's own coordinates.
-        int save = canvas.save();
-        canvas.concat(crop);
-        canvas.drawBitmap(bitmap, 0, 0, photoPaint);
-        canvas.restoreToCount(save);
+        photoPaint.setShader(shaderFor(bitmap, w, h));
+        canvas.drawPath(shape, photoPaint);
+    }
+
+    /**
+     * The photo as a shader, so it can be painted through the rounded path with no path clip.
+     * Two slots cover the dissolve (incoming and outgoing) without allocating on any frame.
+     */
+    private BitmapShader shaderFor(Bitmap bitmap, int w, int h) {
+        if (bitmap == shaderBitmapA) return shaderA;
+        if (bitmap == shaderBitmapB) return shaderB;
+        BitmapShader shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        if (bitmap.getWidth() != w || bitmap.getHeight() != h) {
+            // Only when a photo predates a size change: fit() normally makes this a no-op.
+            float scale = Math.max((float) w / bitmap.getWidth(), (float) h / bitmap.getHeight());
+            crop.reset();
+            crop.setScale(scale, scale);
+            crop.postTranslate((w - bitmap.getWidth() * scale) / 2f,
+                    (h - bitmap.getHeight() * scale) / 2f);
+            shader.setLocalMatrix(crop);
+        }
+        // Replaces the oldest slot: the third live bitmap never exists, only shown and outgoing.
+        if (shaderBitmapA == null || shaderBitmapB != null) {
+            shaderBitmapA = bitmap;
+            shaderA = shader;
+            shaderBitmapB = null;
+            shaderB = null;
+        } else {
+            shaderBitmapB = bitmap;
+            shaderB = shader;
+        }
+        return shader;
     }
 
     /**
