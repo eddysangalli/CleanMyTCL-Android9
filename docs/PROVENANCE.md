@@ -34,6 +34,22 @@ Upstream's `launcher/` changed +3533/−166 lines since `9ef40c1` (themes, `Home
 (see [BRANCHING.md](BRANCHING.md)). Candidates worth reviewing first: `HomeKeyService` (Home-key
 handling), the Home-chooser fix in the install scripts, `values-v28/styles.xml`.
 
+## Reference clones (outside this repository)
+
+Third-party trees are cloned into the working directory (`ref/`), **not** into this repository, so
+they can never be committed as gitlinks or add their history here. Recorded by exact commit for
+reproducible comparison:
+
+| Repository | Commit | Date | Why |
+|---|---|---|---|
+| `Gathin23/tv-vibehack` | `9ef40c1de85b757cbf75dbea174a24b99a0e50a3` | 2026-10-18 | the upstream snapshot our `launcher/` derives from |
+| `BrezhnevEugen/tv-vibehack` | `7b71d312d9607cff43862e19d674ce3053c8b8ab` | 2026-10-20 | fork specialised for the TCL G10; the focus/IR work |
+| `sethihq/baron-tv` | `ccedda1349cc4131d2d536bed25eaf347b397f9c` | 2026-10-21 | `com.barontv.home`; ships a TCL BeyondTV debloat profile |
+
+The same rule covers local artefacts: `private/`, `medicoes/`, `auditoria/`, `diagnostics/`,
+`investigacao/` and `*.apk` are git-ignored, so pulled APKs and raw dumps stay local. Checked on
+2026-10-20: no `.apk` or `.aab` is tracked in this repository.
+
 ## Rules for future code
 
 - MIT/BSD/Apache-2.0: allowed with attribution in `NOTICE.md` (Apache-2.0 also needs its NOTICE).

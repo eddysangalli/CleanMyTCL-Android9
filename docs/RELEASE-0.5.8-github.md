@@ -50,20 +50,25 @@ R851T02 V660, 2 GB RAM, 32 bits. Launcher instalado: `br.eddy.tvhome`.
 
 ## Medições nesta TV
 
-| Métrica | v0.5.8 | Referência |
-|---|---|---|
-| Resposta da tecla p50 | 17–19 ms | v0.5.6: 17 ms |
-| Movimento p50 (mola M3E) | **441 ms / 440 ms** | mola antiga: 635 ms / 629 ms |
-| Movimento p95 / p99 | 450 / 452 ms | mola antiga: 644 / 645 ms |
-| Jank | 0,1% | mola antiga: 0,5% |
-| Cold start p50 | 466–477 ms | v0.5.2: 466 ms |
-| Volta ao Home p50 | 36 ms (TV em foco) / 104 ms (de outra app) | v0.5.2: 38 ms |
-| CPU ociosa do launcher | 0% de um núcleo | v0.5.2: 0% |
-| PSS | 17–23 MB | v0.5.2: 18 MB |
+A coluna **build** diz de qual versão cada número veio. Nenhuma linha da v0.5.7 é reaproveitada como
+se fosse da v0.5.8: a bateria completa da v0.5.8 (cinco repetições por preset) ainda está pendente.
 
-O A/B da mola trocou **um único parâmetro** (stiffness 380 / damping 0,8 contra 260 / 0,58), com
-108 teclas por lado, nas mesmas condições. A mola nova acaba o movimento **194 ms antes**, com a
-mesma resposta de tecla e menos quadro atrasado.
+| Métrica | Build | Valor | Referência |
+|---|---|---|---|
+| Resposta da tecla p50 | v0.5.8 | 17 ms (`tools/bench.py`, 71 de 72 teclas) | v0.5.6: 17 ms |
+| Cold start p50 | v0.5.8 | **477 ms** | v0.5.2: 466 ms |
+| Volta ao Home p50 | v0.5.8 | 104 ms (de outro app) | v0.5.2: 38 ms |
+| CPU ociosa do launcher | v0.5.8 | 0% de um núcleo | v0.5.2: 0% |
+| PSS | v0.5.8 | 17 MB (tela parada) | v0.5.2: 18 MB |
+| Movimento p50 (mola M3E) | **v0.5.7** | **441 ms / 440 ms** | mola antiga: 635 ms / 629 ms |
+| Movimento p95 / p99 | **v0.5.7** | 450 / 452 ms | mola antiga: 644 / 645 ms |
+| Jank | **v0.5.7** | 0,1% | mola antiga: 0,5% |
+
+O A/B da mola rodou na **v0.5.7 (code 29)**, não na v0.5.8: trocou **um único parâmetro**
+(stiffness 380 / damping 0,8 contra 260 / 0,58), com 108 teclas por lado, nas mesmas condições. A
+mola nova acaba o movimento **194 ms antes**, com a mesma resposta de tecla e menos quadro atrasado.
+A v0.5.8 roda a mesma mola, mas não foi medida com a mesma bateria; a única medição da v0.5.8 é a
+do `tools/bench.py` acima.
 
 ## O que continua sem medição
 
