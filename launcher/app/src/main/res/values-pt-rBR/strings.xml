@@ -128,4 +128,19 @@
     <string name="wx_snow">NEVE</string>
     <string name="wx_showers">PANCADAS DE CHUVA</string>
     <string name="wx_thunderstorm">TROVOADAS</string>
+
+    <!-- Input cards: portas HDMI/AV como cartões na Home. -->
+    <string name="input_cards">Cartões de entrada</string>
+    <string name="input_card_name">Nome: %1$s</string>
+    <string name="input_card_name_default">Igual à entrada</string>
+    <string name="input_card_icon">Ícone: %1$s</string>
+    <string name="input_card_icon_title">Ícone</string>
+    <string name="input_card_shown">Mostrar na Home: %1$s</string>
+    <string name="card_name_title">Nome do cartão</string>
+    <string name="icon_game">Jogo</string>
+    <string name="icon_movie">Filme</string>
+    <string name="icon_music">Música</string>
+    <string name="icon_computer">Computador</string>
+    <string name="on">Ligado</string>
+    <string name="off">Desligado</string>
 </resources>

@@ -40,6 +40,12 @@
             </intent-filter>
         </activity>
 
+        <!-- HDMI/AV input cards: reachable from the Home options menu. Not exported: only the launcher opens it. -->
+        <activity
+            android:name=".InputCardsActivity"
+            android:exported="false"
+            android:label="@string/input_cards" />
+
         <!-- Globoplay button -> another app. Off until enabled in Accessibility settings (or over adb). -->
         <service
             android:name=".KeyRemapService"

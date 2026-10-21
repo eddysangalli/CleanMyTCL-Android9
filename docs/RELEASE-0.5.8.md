@@ -18,8 +18,8 @@ upstream CleanYourTV v2.4.0 e o que o nosso próprio benchmarking mostrou sobre 
 | Publicada em | `main` |
 | APK de desenvolvimento | `medicoes/apks/tvhome-0.5.8.apk` (arquivo local, não distribuído pelo GitHub) |
 | Pacote do launcher | `br.eddy.tvhome` (não comprova qual versão está instalada agora) |
-| Última instalação comprovada em relatório público | v0.5.7 / versionCode 29 (20/10/2026, 11:38); verificar o APK atual pela TV |
-| Validação da v0.5.8 | Build/testes de código reportados abaixo; bateria completa de hardware, standby, Cast e soak pendentes |
+| Instalação comprovada na TV | v0.5.8 / versionCode 30, instalada em 20/10/2026 15:36; `base.apk` com SHA-256 `D9EDA30F…96EF10` (conferido por ADB em 20/10/2026). O build v0.5.7 (code 29) foi o último antes dela |
+| Validação da v0.5.8 | Instalação, 4 reinicializações e smoke 24/24 na TV (ver `COMPATIBILITY.md`); bateria completa de hardware, standby, Cast e soak pendentes |
 | Upstream revisado | CleanYourTV v2.4.0 (`fd1ee0a`), com adaptações seletivas; a árvore não é um merge integral da 2.4.0 |
 
 ## Novidades

@@ -273,44 +273,77 @@ def accessibility_services(tv, package):
     return [part.strip() for part in out.split(":") if part.strip().startswith(package + "/")]
 
 
-def restore_accessibility(tv, package, services):
-    """Re-enable the accessibility services a force-stop took down.
+def _norm_component(component):
+    """`pkg/pkg.Classe` and `pkg/.Classe` are the same component; normalise so it is not added twice."""
+    if "/" not in component:
+        return component
+    package, cls = component.split("/", 1)
+    if cls.startswith(package + "."):
+        return package + "/" + cls[len(package):]
+    return component
 
-    `am force-stop` kills the process the service lives in, and Android unbinds it. The
-    service has to be re-enabled by hand, or the launcher comes back without it. `am kill`
-    would leave the service alone, but it also leaves the process alive, and then there is no
-    cold start to measure.
+
+def restore_accessibility(tv, package, services):
+    """Put back the accessibility services a force-stop took down.
+
+    `am force-stop` kills the process the service lives in, and on this TCL it **removes that
+    package's services** from `enabled_accessibility_services` (the other apps' entries stay, and the
+    components come back normalised to `pkg/.Classe`). Upstream PR #503 reported it on a 55C715;
+    reproduced on our BeyondTV2 V660 on 2026-10-20. The service does not come back when the Home
+    opens again.
+
+    The list is a colon-separated set shared by every app, so this **appends** what is missing
+    instead of writing each service on its own: `settings put secure enabled_accessibility_services
+    <one service>` replaces the whole list, which would wipe our other services and any other app's.
     """
     if not services:
         return
+    current = tv.shell("settings get secure enabled_accessibility_services").strip()
+    if current == "null":
+        current = ""
+    merged = [part for part in current.split(":") if part]
+    known = {_norm_component(part) for part in merged}
+    added = False
     for service in services:
-        tv.shell(f"settings put secure enabled_accessibility_services {service}")
-    tv.shell("settings put secure accessibility_enabled 1")
+        if _norm_component(service) not in known:
+            known.add(_norm_component(service))
+            merged.append(service)
+            added = True
+    if added:
+        tv.shell("settings put secure enabled_accessibility_services " + ":".join(merged))
+        tv.shell("settings put secure accessibility_enabled 1")
 
 
 def cold_start(tv, component, repeats):
-    """The `am start -W` WaitTime of the launcher, in ms."""
+    """The `am start -W` WaitTime of the launcher, in ms.
+
+    The accessibility services are put back **after** the measurement, not before. Writing that
+    setting makes the system bind the service, which starts the launcher's process — the one thing a
+    cold start must not have. Restoring first turned every "cold" start into a warm one and made the
+    number look better than a viewer would see.
+    """
     values = []
     other = other_app(tv)
     if not other:
         print("Could not find another app to switch to; the cold start is not measured.")
         return values
     package = tv.package_of(component)
-    for _ in range(repeats):
-        tv.shell(f"am start -W -n {other}")
-        time.sleep(2)
-        # The services are read before the stop, because a force-stop takes them down with
-        # the process, and put back before the measurement, so the launcher is measured as a
-        # viewer would actually have it.
-        services = accessibility_services(tv, package)
-        tv.shell(f"am force-stop {package}")
-        time.sleep(3)
+    # Read once, before the first stop: the force-stop clears the setting on this TCL, so after the
+    # first run there would be nothing left to read.
+    services = accessibility_services(tv, package)
+    try:
+        for _ in range(repeats):
+            tv.shell(f"am start -W -n {other}")
+            time.sleep(2)
+            tv.shell(f"am force-stop {package}")
+            time.sleep(3)
+            out = tv.shell(f"am start -W -n {component}")
+            match = re.search(r"WaitTime:\s*(\d+)", out)
+            if match:
+                values.append(int(match.group(1)))
+            time.sleep(3)
+    finally:
         restore_accessibility(tv, package, services)
-        out = tv.shell(f"am start -W -n {component}")
-        match = re.search(r"WaitTime:\s*(\d+)", out)
-        if match:
-            values.append(int(match.group(1)))
-        time.sleep(3)
     return values
 
 

@@ -63,6 +63,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -76,6 +77,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * Input/Source key is pressed - KEYCODE_TV, KEYCODE_TV_INPUT or KEYCODE_MEDIA_RECORD).
      */
     public static final String ACTION_OPEN_INPUTS = "com.gathin.tvhome.action.OPEN_INPUTS";
+
+    /** InputCardsActivity returns OK when a card changed; the grid is rebuilt in place, no recreate(). */
+    private static final int INPUT_CARDS_REQUEST = 2015;
 
     /**
      * The Inputs popup, when one is on screen. Set by {@link #showInputs()} so a second press of the
@@ -192,6 +196,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         grid = findViewById(R.id.grid);
         grid.setLayoutManager(new GridLayoutManager(this, COLUMNS) {
+            // The grid's top padding is applied here, before the children are laid out, so the first
+            // layout already has the right padding. Doing it from the layout listener (the older way)
+            // left the first pass with the XML padding (10dp), which made the grid inflate rows from
+            // the top of the screen and then pushed them back out with a second pass
+            // (upstream PR #446, idea taken from there; measured on this TV, see docs/).
+            @Override
+            public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+                applyGridPadding();
+                super.onLayoutChildren(recycler, state);
+            }
+
             // RecyclerView smooth-scrolls a newly focused tile into view on its own; in ultralight mode
             // that animation (~250 ms) is skipped so a move finishes in one frame.
             //
@@ -236,20 +251,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             public void onAnimationRepeat(Animation a) {
             }
         });
-        adapter = new AppAdapter(this, Grid.dockSize(COLUMNS));
+        adapter = new AppAdapter(this, this, Grid.dockSize(COLUMNS));
         grid.setAdapter(adapter);
 
         // tvOS layout: push the dock row to the bottom of the screen; the grid hides below until you press Down.
+        // The padding itself is set from the layout manager, before the children are laid out; the listener
+        // keeps it in step with a size that changed after the fact, and still refits the glass.
         grid.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
-            int h = b - t;
-            // Item height follows the tile size, which follows the column count (AppAdapter.tileWidthPx).
-            int inner = (r - l) - grid.getPaddingLeft() - grid.getPaddingRight();
-            int itemH = AppAdapter.itemHeightPx(
-                    AppAdapter.tileHeightPx(AppAdapter.tileWidthPx(inner, COLUMNS, density)), density);
-            int want = Grid.topPadding(h, itemH, density);
-            if (grid.getPaddingTop() != want) {
-                grid.setPadding(grid.getPaddingLeft(), want, grid.getPaddingRight(), grid.getPaddingBottom());
-            }
+            applyGridPadding();
             // On a slow cold start a tile can take focus while the grid has no width yet, at the design size;
             // the relaid-out tile is smaller, so refit the glass instead of waiting for the next focus change.
             // Do this even before the first successful focus: the glass starts at the design size and would
@@ -366,6 +375,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // Read these before rebinding: it can move focus to the first tile and overwrite them.
         final String returnKey = lastFocusedKey;
         final int returnSlot = lastFocused;
+        adapter.setInputCards(resolveInputCards());
         adapter.setEntries(entries);
         if (first && !light) grid.scheduleLayoutAnimation();   // rise-in on launch only, not on every Home press
         restoreFocus(returnKey, returnSlot);
@@ -377,12 +387,45 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
+    /**
+     * The owner's shown input cards, resolved against the inputs the TV reports right now. Read only
+     * when the grid rebinds, so no input query runs while the remote moves.
+     */
+    private List<InputCards> resolveInputCards() {
+        Map<String, InputCards> saved = InputCards.load(
+                getSharedPreferences(HomePrefs.PREFS_NAME, MODE_PRIVATE));
+        if (saved.isEmpty()) return Collections.emptyList();
+        List<InputCards> out = new ArrayList<>();
+        for (TvInputInfo info : InputCards.cardInputs(this)) {
+            InputCards card = saved.get(info.getId());
+            if (card != null && card.shown) out.add(card.resolved(InputCards.portLabel(this, info)));
+        }
+        return out;
+    }
+
+    /** An input card was chosen: switch to that HDMI/AV input, the same path as the Inputs pill. */
+    @Override
+    public void onInputRequested(String inputId) {
+        open(new Intent(Intent.ACTION_VIEW).setDataAndType(
+                TvContract.buildChannelUriForPassthroughInput(inputId), "vnd.android.cursor.item/channel"));
+    }
+
     /** Return to the app we left from, or the same slot if that app is gone. Posted so it runs after layout. */
     private void restoreFocus(String returnKey, int returnSlot) {
         grid.post(() -> {
             int pos = adapter.positionOf(returnKey);
             focusTile(pos >= 0 ? pos : returnSlot);
         });
+    }
+
+    @Override
+    protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request != INPUT_CARDS_REQUEST || result != RESULT_OK) return;
+        // Rebuild only the grid: recreate() would drop the focus and re-query every app. The list of
+        // apps is already cached, and showApps() puts the focus back on the same tile.
+        List<AppAdapter.Entry> cached = AppLoader.cached();
+        if (cached != null) showApps(cached);
     }
 
     @Override
@@ -486,7 +529,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }));
             items.add(new MenuItem(R.drawable.ic_hide, R.string.menu_hide, () -> {
                 prefs.hide(pkg);
-                AppLoader.reorder(this);
+                AppLoader.reload(this);
             }));
         }
         items.add(new MenuItem(R.drawable.ic_info, R.string.menu_info, () ->
@@ -520,6 +563,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     prefs.setUserName(text);
                     updateGreeting();
                 }, () -> showHomeOptions(anchor, 0))));
+        items.add(new MenuItem(R.drawable.ic_input, R.string.input_cards, () ->
+                startActivityForResult(new Intent(this, InputCardsActivity.class), INPUT_CARDS_REQUEST)));
         String message = prefs.message();
         items.add(new MenuItem(R.drawable.ic_edit, getString(R.string.opt_message,
                 message.isEmpty() ? getString(R.string.opt_message_auto) : message), () ->
@@ -570,7 +615,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (hidden > 0) {
             items.add(new MenuItem(R.drawable.ic_info, getString(R.string.opt_unhide, hidden), () -> {
                 prefs.unhideAll();
-                AppLoader.reorder(this);
+                AppLoader.reload(this);
             }));
         }
         items.add(new MenuItem(R.drawable.ic_refresh, R.string.opt_reset_dock, () -> {
@@ -860,6 +905,29 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         focusTile(target);
         return true;
+    }
+
+    /**
+     * The grid's top padding, so the dock sits on the bottom edge of the screen and the rows below it
+     * stay hidden until the viewer presses Down.
+     *
+     * The layout manager calls this before it lays the children out, so the first pass already has the
+     * right padding and the grid does not inflate rows from the top of the screen only to push them back
+     * out (upstream PR #446). The layout listener calls it too, as a safety net for a size that changed
+     * after the fact. It only writes when the padding really changes, so it cannot loop the layout.
+     */
+    private void applyGridPadding() {
+        int h = grid.getHeight();
+        int w = grid.getWidth();
+        if (h <= 0 || w <= 0) return;
+        // Item height follows the tile size, which follows the column count (AppAdapter.tileWidthPx).
+        int inner = w - grid.getPaddingLeft() - grid.getPaddingRight();
+        int itemH = AppAdapter.itemHeightPx(
+                AppAdapter.tileHeightPx(AppAdapter.tileWidthPx(inner, COLUMNS, density)), density);
+        int want = Grid.topPadding(h, itemH, density);
+        if (grid.getPaddingTop() != want) {
+            grid.setPadding(grid.getPaddingLeft(), want, grid.getPaddingRight(), grid.getPaddingBottom());
+        }
     }
 
     /** Refit the glass to the currently focused holder; used after cold-start layout settles. */
@@ -1215,7 +1283,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             prefs.resetAll();
             applyAccent();
             applyExperienceState();
-            AppLoader.reorder(this);
+            AppLoader.reload(this);
         }));
         items.add(new MenuItem(R.drawable.ic_left, R.string.rec_close, () -> { }));
         showMenu(greeting, items);

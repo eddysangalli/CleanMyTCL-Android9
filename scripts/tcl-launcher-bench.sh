@@ -17,6 +17,7 @@ RETURNS="${3:-10}"
 OUT="medicoes/launcher/$(date +%Y%m%d-%H%M%S)-$LABEL"
 mkdir -p "$OUT"
 tv_connect
+tv_acc_recover
 
 HOME_COMPONENT=$(tv_home_component)
 PKG="${HOME_COMPONENT%%/*}"
@@ -35,6 +36,10 @@ stats() {
 # ---- abertura a frio do launcher -----------------------------------------------------------------
 log "Abertura a frio (5x)"
 : > "$OUT/cold_ms.txt"
+# O force-stop de cada volta apaga a lista de servicos de acessibilidade nesta TCL: guarda agora e
+# devolve no fim do script, para a medicao nao deixar o controle sem remapeamento.
+tv_acc_save
+trap tv_acc_restore EXIT
 for i in 1 2 3 4 5; do
     tv am start -W -n com.android.tv.settings/.MainSettings > /dev/null
     sleep 2
@@ -74,11 +79,15 @@ SEQ=(22 22 22 21 21 21 20 22 22 21 21 19)
 FRAMES=0; JANKY=0
 for i in $(seq 0 $((KEYS - 1))); do
     key=${SEQ[$((i % ${#SEQ[@]}))]}
-    tv dumpsys gfxinfo "$PKG" reset > /dev/null
+    # O Uptime do reset e do dump delimita a janela em que a tecla aconteceu: uma linha de log
+    # de outra tecla cai fora dela e seria contada como segundos de atraso.
+    reset_out=$(tv dumpsys gfxinfo "$PKG" reset)
+    t_before=$(echo "$reset_out" | awk '/^Uptime:/ { print $2; exit }')
     "$ADB" -s "$SERIAL" logcat -c -b main
     tv input keyevent "$key"
     sleep 1
     tv dumpsys gfxinfo "$PKG" framestats > "$OUT/framestats_$i.txt"
+    t_after=$(awk '/^Uptime:/ { print $2; exit }' "$OUT/framestats_$i.txt")
     # No Android 9 o OldestInputEvent dos quadros so e preenchido para toque, nao para teclas (fica INT64_MAX).
     # O instante da tecla vem do log do `input` (eventTime em ms de uptime, o mesmo relogio dos quadros).
     t0=$("$ADB" -s "$SERIAL" logcat -d -b main | tr -d '\r' |
@@ -87,17 +96,10 @@ for i in $(seq 0 $((KEYS - 1))); do
     j=$(awk '/Janky frames/ { print $3; exit }' "$OUT/framestats_$i.txt")
     FRAMES=$((FRAMES + ${f:-0})); JANKY=$((JANKY + ${j:-0}))
     [ -n "$t0" ] || continue
-    # Colunas do PROFILEDATA: 1 Flags, 2 IntendedVsync, 14 FrameCompleted (ns). Flags != 0 = quadro descartado.
-    # Resposta = 1o quadro iniciado depois da tecla. Movimento = fim da sequencia continua de quadros
-    # (intervalo < 50 ms); quadros avulsos depois disso (relogio, saudacao) nao fazem parte do movimento.
-    awk -F, -v t0="$t0" -v key="$key" '
-        /---PROFILEDATA---/ { inside = !inside; next }
-        inside && $1 == "0" && $2 + 0 >= t0 * 1e6 && !done {
-            if (!first) { first = $14; last = $14; prev = $2; next }
-            if (($2 - prev) / 1e6 > 50) { done = 1; next }
-            last = $14; prev = $2
-        }
-        END { if (first) printf "%d %d %d\n", (first - t0 * 1e6) / 1e6, (last - t0 * 1e6) / 1e6, key }' "$OUT/framestats_$i.txt" >> "$OUT/key_latency.txt"
+    # Resposta = 1o quadro que TERMINOU depois da tecla; movimento = fim da sequencia continua.
+    # A regra fica em scripts/frame-match.awk, a mesma de tools/bench.py, e tem teste proprio.
+    awk -v t0="$t0" -v t_before="$t_before" -v t_after="$t_after" -v key="$key" \
+        -f scripts/frame-match.awk "$OUT/framestats_$i.txt" >> "$OUT/key_latency.txt"
 done
 read -r RESP_P50 RESP_P95 RESP_P99 RESP_MAX RESP_N < <(awk '{ print $1 }' "$OUT/key_latency.txt" | stats)
 read -r SET_P50 SET_P95 SET_P99 SET_MAX _ < <(awk '{ print $2 }' "$OUT/key_latency.txt" | stats)
