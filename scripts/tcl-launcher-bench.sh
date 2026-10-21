@@ -35,6 +35,10 @@ stats() {
 # ---- abertura a frio do launcher -----------------------------------------------------------------
 log "Abertura a frio (5x)"
 : > "$OUT/cold_ms.txt"
+# O force-stop de cada volta apaga a lista de servicos de acessibilidade nesta TCL: guarda agora e
+# devolve no fim do script, para a medicao nao deixar o controle sem remapeamento.
+tv_acc_save
+trap tv_acc_restore EXIT
 for i in 1 2 3 4 5; do
     tv am start -W -n com.android.tv.settings/.MainSettings > /dev/null
     sleep 2

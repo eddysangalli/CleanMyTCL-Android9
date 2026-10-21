@@ -7,6 +7,10 @@ cd "$(dirname "$0")/.."
 LABEL="${1:?uso: tcl-coldstart.sh <rotulo>}"
 tv_connect
 HOME_COMPONENT=$(tv_home_component); PKG="${HOME_COMPONENT%%/*}"
+# O force-stop abaixo apaga a lista de servicos de acessibilidade nesta TCL: guarda e devolve no fim,
+# mesmo se o script falhar no meio.
+tv_acc_save
+trap tv_acc_restore EXIT
 W=""; T=""
 for i in 1 2 3 4 5; do
     tv am start -W -n com.android.tv.settings/.MainSettings > /dev/null

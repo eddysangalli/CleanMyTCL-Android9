@@ -73,3 +73,45 @@ component_class() {
 median() {
     sort -n | awk '{a[NR]=$1} END { if (NR == 0) print "NA"; else if (NR % 2) print a[(NR + 1) / 2]; else print int((a[NR / 2] + a[NR / 2 + 1]) / 2) }'
 }
+
+# ---- servicos de acessibilidade em volta do force-stop ---------------------------------------------
+#
+# Nesta TCL o `am force-stop` do launcher apaga a lista de servicos de acessibilidade habilitados, e o
+# servico NAO volta quando a Home abre de novo (upstream PR #503 reportou numa 55C715; reproduzido na
+# nossa BeyondTV2 V660 em 20/10/2026: a lista ia de
+# "br.eddy.tvhome/com.gathin.tvhome.KeyRemapService" para vazio depois de um force-stop).
+#
+# Sem isto, qualquer medicao de abertura a frio derruba em silencio o remapeamento de botoes do
+# controle. Salve antes de derrubar a Home e devolva no fim. A devolucao ACRESCENTA: a lista pode ter
+# servicos de outros apps, e sobrescrever tiraria a acessibilidade de quem nao e nosso.
+ACC_SAVED=""
+
+tv_acc_save() {
+    ACC_SAVED=$(tv settings get secure enabled_accessibility_services)
+    case "$ACC_SAVED" in null) ACC_SAVED="" ;; esac
+    if [ -n "$ACC_SAVED" ]; then log "acessibilidade antes do teste: $ACC_SAVED"; fi
+    return 0
+}
+
+tv_acc_restore() {
+    [ -n "${ACC_SAVED:-}" ] || return 0
+    local cur part merged added=0 old_ifs="$IFS"
+    cur=$(tv settings get secure enabled_accessibility_services)
+    case "$cur" in null) cur="" ;; esac
+    merged="$cur"
+    IFS=':'
+    for part in $ACC_SAVED; do
+        [ -n "$part" ] || continue
+        case ":$merged:" in
+            *":$part:"*) ;;
+            *) merged="${merged:+$merged:}$part"; added=1 ;;
+        esac
+    done
+    IFS="$old_ifs"
+    if [ "$added" = 1 ]; then
+        tv settings put secure enabled_accessibility_services "$merged"
+        tv settings put secure accessibility_enabled 1
+        log "acessibilidade restaurada: $merged"
+    fi
+    return 0
+}
