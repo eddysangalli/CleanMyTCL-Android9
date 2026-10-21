@@ -55,6 +55,11 @@
             android:name=".NewsFullActivity"
             android:exported="false"
             android:label="@string/news_settings_title" />
+        <!-- The article reader: the news link inside the launcher (this TV's browser ignores it). -->
+        <activity
+            android:name=".NewsReaderActivity"
+            android:exported="false"
+            android:label="@string/news_settings_title" />
 
         <!-- Globoplay button -> another app. Off until enabled in Accessibility settings (or over adb). -->
         <service

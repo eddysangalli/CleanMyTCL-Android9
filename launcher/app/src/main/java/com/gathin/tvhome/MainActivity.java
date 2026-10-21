@@ -898,7 +898,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             return true;
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-            if (Grid.inDock(position, COLUMNS)) return false;   // dock row: let focus move to the top bar
+            if (Grid.inDock(position, COLUMNS)) {
+                // Dock row. With the news row above it, Up goes to the carousel; without it, the key
+                // falls through to the focus search and reaches the top bar, as before. The grid's
+                // nextFocusUp does not help here: the focused view is the tile inside it.
+                if (newsCarousel != null && newsCarousel.getVisibility() == View.VISIBLE) {
+                    newsCarousel.requestFocus();
+                    return true;
+                }
+                return false;
+            }
             target = position - COLUMNS;
         } else {
             int lastRowStart = Grid.lastRowStart(count, COLUMNS);
@@ -961,6 +970,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (focused) newsRotate.removeCallbacks(newsRotateStep);
             else scheduleNewsRotation();
         });
+        // Without this the focus search skipped the carousel and landed on the top bar's buttons.
+        // Down from the carousel goes into the grid; up from the grid comes back here.
+        newsCarousel.setNextFocusDownId(R.id.grid);
+        grid.setNextFocusUpId(R.id.newsCarousel);
     }
 
     /**
@@ -1060,10 +1073,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (newsIndex < 0 || newsIndex >= newsHeadlines.size()) return;
         NewsFeed.Headline h = newsHeadlines.get(newsIndex);
         if (h.link.isEmpty()) return;
+        // Inside the launcher: this TV's browser ignores ACTION_VIEW and opens its own home, so the
+        // article never showed. If the reader cannot be opened, the browser is still the fallback.
         try {
-            open(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(h.link)));
+            open(new Intent(this, NewsReaderActivity.class).putExtra(NewsReaderActivity.EXTRA_URL, h.link));
         } catch (Exception e) {
-            Toast.makeText(this, getString(R.string.cant_open, h.source), Toast.LENGTH_SHORT).show();
+            try {
+                open(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(h.link)));
+            } catch (Exception again) {
+                Toast.makeText(this, getString(R.string.cant_open, h.source), Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -1073,6 +1092,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         newsIndex = -1;
         if (newsCarousel != null && newsCarousel.getVisibility() == View.VISIBLE) {
             newsCarousel.setVisibility(View.GONE);
+            // The grid's own focus search goes back to the top bar when there is no carousel.
+            if (grid != null) grid.setNextFocusUpId(View.NO_ID);
         }
         if (newsBackdrop != null) {
             newsBackdrop.setVisibility(View.GONE);
