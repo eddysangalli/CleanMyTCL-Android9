@@ -34,4 +34,26 @@
     <string name="icon_computer">Computer</string>
     <string name="on">An</string>
     <string name="off">Aus</string>
+
+    <!-- News (RSS). -->
+    <string name="news_settings_title">Nachrichten</string>
+    <string name="news_enabled">Nachrichtenzeile: %1$s</string>
+    <string name="news_full">Nachrichten im Vollbild</string>
+    <string name="news_idle_enabled">Bildschirmschoner bei Inaktivität: %1$s</string>
+    <string name="news_empty">Noch keine Nachrichten geladen</string>
+    <string name="news_custom">Eigener Feed: %1$s</string>
+    <string name="news_custom_none">Keiner</string>
+    <string name="news_custom_title">Feed-Adresse</string>
+    <string name="news_custom_hint">https://beispiel.de/feed/</string>
+    <string name="news_leouve">Leouve (Serra Gaúcha)</string>
+    <string name="news_g1">G1</string>
+    <string name="news_uol">UOL</string>
+    <string name="news_folha">Folha</string>
+    <string name="news_sul21">Sul21 (Porto Alegre)</string>
+    <string name="news_cinema">Fotohintergrund: %1$s</string>
+    <string name="news_rotate">Schlagzeile bei Inaktivität wechseln: %1$s</string>
+    <string name="news_refresh">Nachrichten aktualisieren alle: %1$d min</string>
+    <string name="news_image_age">Fotos behalten für: %1$d h</string>
+    <string name="news_meta">%1$s · %2$s</string>
+    <string name="news_open_hint">OK zum Öffnen drücken</string>
 </resources>

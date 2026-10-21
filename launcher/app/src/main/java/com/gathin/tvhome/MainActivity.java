@@ -251,6 +251,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             public void onAnimationRepeat(Animation a) {
             }
         });
+        setupNews();
         adapter = new AppAdapter(this, this, Grid.dockSize(COLUMNS));
         grid.setAdapter(adapter);
 
@@ -352,6 +353,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         updateGreeting();
         updateWifiLabel();
         refreshWeather();
+        refreshNews();
         handler.postDelayed(minuteTick, MINUTE_MS);
 
         // Tiles are cached for the life of the process: show them right away, then let the loader check
@@ -565,6 +567,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 }, () -> showHomeOptions(anchor, 0))));
         items.add(new MenuItem(R.drawable.ic_input, R.string.input_cards, () ->
                 startActivityForResult(new Intent(this, InputCardsActivity.class), INPUT_CARDS_REQUEST)));
+        items.add(new MenuItem(R.drawable.ic_info, R.string.news_settings_title, () ->
+                startActivity(new Intent(this, NewsSettingsActivity.class))));
         String message = prefs.message();
         items.add(new MenuItem(R.drawable.ic_edit, getString(R.string.opt_message,
                 message.isEmpty() ? getString(R.string.opt_message_auto) : message), () ->
@@ -905,6 +909,147 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         focusTile(target);
         return true;
+    }
+
+    // ---- news (RSS) ------------------------------------------------------------------------------
+
+    private View newsCarousel;
+    private NewsBackdropView newsBackdrop;
+    private TextView newsKicker, newsHeadline, newsSummary, newsMeta;
+    private LinearLayout newsDots;
+    private List<NewsFeed.Headline> newsHeadlines = Collections.emptyList();
+    private int newsIndex = -1;
+
+    /** Wires the carousel. Gone unless headlines arrive, so an RSS-off Home draws none of it. */
+    private void setupNews() {
+        newsCarousel = findViewById(R.id.newsCarousel);
+        if (newsCarousel == null) return;
+        newsBackdrop = findViewById(R.id.newsBackdrop);
+        newsKicker = findViewById(R.id.newsKicker);
+        newsHeadline = findViewById(R.id.newsHeadline);
+        newsSummary = findViewById(R.id.newsSummary);
+        newsMeta = findViewById(R.id.newsMeta);
+        newsDots = findViewById(R.id.newsDots);
+        newsCarousel.setOnKeyListener(this::onCarouselKey);
+        newsCarousel.setOnClickListener(v -> openCurrentNews());
+        newsCarousel.setOnFocusChangeListener((v, focused) -> {
+            if (newsBackdrop != null) newsBackdrop.setFocused(focused);
+        });
+    }
+
+    /**
+     * Reads the cache and, when it is older than the refresh interval, fetches in the background.
+     * Everything here is off when the row is disabled: no request, no view, no work.
+     */
+    private void refreshNews() {
+        if (newsCarousel == null || light) { hideNewsScene(); return; }
+        if (!NewsFeed.enabled(this)) { hideNewsScene(); return; }
+        List<NewsFeed.Headline> cached = NewsFeed.cached(this);
+        if (!cached.isEmpty()) showNews(cached);
+        if (NewsFeed.stale(this)) NewsFeed.fetch(this, this::showNews);
+    }
+
+    private void showNews(List<NewsFeed.Headline> headlines) {
+        if (headlines == null || headlines.isEmpty() || newsCarousel == null) {
+            hideNewsScene();
+            return;
+        }
+        newsHeadlines = headlines;
+        if (newsIndex < 0 || newsIndex >= headlines.size()) newsIndex = 0;
+        if (newsCarousel.getVisibility() != View.VISIBLE) {
+            newsCarousel.setVisibility(View.VISIBLE);
+            // The carousel takes a fixed slice under the header; the grid keeps its own padding.
+            ViewGroup.LayoutParams lp = newsCarousel.getLayoutParams();
+            lp.height = (int) (250 * density);
+            newsCarousel.setLayoutParams(lp);
+        }
+        showScene(newsIndex);
+    }
+
+    private void showScene(int index) {
+        if (newsHeadlines.isEmpty()) return;
+        newsIndex = ((index % newsHeadlines.size()) + newsHeadlines.size()) % newsHeadlines.size();
+        NewsFeed.Headline h = newsHeadlines.get(newsIndex);
+        if (newsKicker != null) newsKicker.setText(h.category.isEmpty() ? h.source : h.source + " · " + h.category);
+        if (newsHeadline != null) newsHeadline.setText(h.title);
+        if (newsSummary != null) {
+            newsSummary.setText(h.summary);
+            newsSummary.setVisibility(h.summary.isEmpty() ? View.GONE : View.VISIBLE);
+        }
+        if (newsMeta != null) newsMeta.setText(newsMeta(h));
+        rebuildNewsDots();
+        if (newsBackdrop != null) newsBackdrop.show(h, true);
+    }
+
+    /** "21/10 · 08:15" when the feed gave a date, the source alone when it did not. */
+    private String newsMeta(NewsFeed.Headline h) {
+        if (h.published <= 0) return h.source;
+        String when = new java.text.SimpleDateFormat("dd/MM · HH:mm", java.util.Locale.getDefault())
+                .format(new java.util.Date(h.published));
+        return h.source.isEmpty() ? when : when + " · " + h.source;
+    }
+
+    private void rebuildNewsDots() {
+        if (newsDots == null) return;
+        if (newsDots.getChildCount() != newsHeadlines.size()) {
+            newsDots.removeAllViews();
+            for (int i = 0; i < newsHeadlines.size(); i++) {
+                TextView dot = new TextView(this);
+                dot.setText("•");
+                dot.setTextSize(13);
+                dot.setIncludeFontPadding(false);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                lp.setMarginStart((int) (6 * density));
+                dot.setLayoutParams(lp);
+                newsDots.addView(dot);
+            }
+        }
+        for (int i = 0; i < newsDots.getChildCount(); i++) {
+            newsDots.getChildAt(i).setAlpha(i == newsIndex ? 1f : 0.35f);
+        }
+    }
+
+    private boolean onCarouselKey(View v, int keyCode, KeyEvent event) {
+        if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                if (newsHeadlines.size() > 1) showScene(newsIndex - 1);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                if (newsHeadlines.size() > 1) showScene(newsIndex + 1);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                focusTile(lastFocused % COLUMNS);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_UP:
+                return false;                     // the focus search takes it to the top bar
+            default:
+                return false;
+        }
+    }
+
+    private void openCurrentNews() {
+        if (newsIndex < 0 || newsIndex >= newsHeadlines.size()) return;
+        NewsFeed.Headline h = newsHeadlines.get(newsIndex);
+        if (h.link.isEmpty()) return;
+        try {
+            open(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(h.link)));
+        } catch (Exception e) {
+            Toast.makeText(this, getString(R.string.cant_open, h.source), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void hideNewsScene() {
+        newsHeadlines = Collections.emptyList();
+        newsIndex = -1;
+        if (newsCarousel != null && newsCarousel.getVisibility() == View.VISIBLE) {
+            newsCarousel.setVisibility(View.GONE);
+        }
+        if (newsBackdrop != null) {
+            newsBackdrop.setVisibility(View.GONE);
+            newsBackdrop.release();
+        }
     }
 
     /**

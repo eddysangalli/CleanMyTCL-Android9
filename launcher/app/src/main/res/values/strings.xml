@@ -150,4 +150,26 @@
     <string name="icon_computer">Computer</string>
     <string name="on">On</string>
     <string name="off">Off</string>
+
+    <!-- News (RSS) row. -->
+    <string name="news_settings_title">News</string>
+    <string name="news_enabled">News row: %1$s</string>
+    <string name="news_full">News in full screen</string>
+    <string name="news_idle_enabled">Screen saver when idle: %1$s</string>
+    <string name="news_empty">No news loaded yet</string>
+    <string name="news_custom">Custom feed: %1$s</string>
+    <string name="news_custom_none">None</string>
+    <string name="news_custom_title">Feed URL</string>
+    <string name="news_custom_hint">https://example.com/feed/</string>
+    <string name="news_leouve">Leouve (Serra Gaúcha)</string>
+    <string name="news_g1">G1</string>
+    <string name="news_uol">UOL</string>
+    <string name="news_folha">Folha</string>
+    <string name="news_sul21">Sul21 (Porto Alegre)</string>
+    <string name="news_cinema">Photo background: %1$s</string>
+    <string name="news_rotate">Rotate headlines when idle: %1$s</string>
+    <string name="news_refresh">Refresh news every: %1$d min</string>
+    <string name="news_image_age">Keep photos for: %1$d h</string>
+    <string name="news_meta">%1$s · %2$s</string>
+    <string name="news_open_hint">Press OK to open</string>
 </resources>

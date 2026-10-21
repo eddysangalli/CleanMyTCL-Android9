@@ -115,4 +115,26 @@
     <string name="icon_computer">Ordenador</string>
     <string name="on">Activado</string>
     <string name="off">Desactivado</string>
+
+    <!-- Noticias (RSS). -->
+    <string name="news_settings_title">Noticias</string>
+    <string name="news_enabled">Fila de noticias: %1$s</string>
+    <string name="news_full">Noticias a pantalla completa</string>
+    <string name="news_idle_enabled">Salvapantallas inactivo: %1$s</string>
+    <string name="news_empty">Aún no hay noticias cargadas</string>
+    <string name="news_custom">Feed personalizado: %1$s</string>
+    <string name="news_custom_none">Ninguno</string>
+    <string name="news_custom_title">Dirección del feed</string>
+    <string name="news_custom_hint">https://ejemplo.com/feed/</string>
+    <string name="news_leouve">Leouve (Serra Gaúcha)</string>
+    <string name="news_g1">G1</string>
+    <string name="news_uol">UOL</string>
+    <string name="news_folha">Folha</string>
+    <string name="news_sul21">Sul21 (Porto Alegre)</string>
+    <string name="news_cinema">Foto de fondo: %1$s</string>
+    <string name="news_rotate">Cambiar titular inactivo: %1$s</string>
+    <string name="news_refresh">Actualizar noticias cada: %1$d min</string>
+    <string name="news_image_age">Guardar las fotos: %1$d h</string>
+    <string name="news_meta">%1$s · %2$s</string>
+    <string name="news_open_hint">Pulsa OK para abrir</string>
 </resources>

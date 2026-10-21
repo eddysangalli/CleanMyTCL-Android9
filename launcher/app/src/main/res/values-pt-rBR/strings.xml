@@ -143,4 +143,26 @@
     <string name="icon_computer">Computador</string>
     <string name="on">Ligado</string>
     <string name="off">Desligado</string>
+
+    <!-- Notícias (RSS). -->
+    <string name="news_settings_title">Notícias</string>
+    <string name="news_enabled">Linha de notícias: %1$s</string>
+    <string name="news_full">Notícias em tela cheia</string>
+    <string name="news_idle_enabled">Protetor de tela no ocioso: %1$s</string>
+    <string name="news_empty">Nenhuma notícia carregada ainda</string>
+    <string name="news_custom">Feed personalizado: %1$s</string>
+    <string name="news_custom_none">Nenhum</string>
+    <string name="news_custom_title">Endereço do feed</string>
+    <string name="news_custom_hint">https://exemplo.com/feed/</string>
+    <string name="news_leouve">Leouve (Serra Gaúcha)</string>
+    <string name="news_g1">G1</string>
+    <string name="news_uol">UOL</string>
+    <string name="news_folha">Folha</string>
+    <string name="news_sul21">Sul21 (Porto Alegre)</string>
+    <string name="news_cinema">Foto de fundo: %1$s</string>
+    <string name="news_rotate">Trocar manchete no ocioso: %1$s</string>
+    <string name="news_refresh">Atualizar notícias a cada: %1$d min</string>
+    <string name="news_image_age">Guardar as fotos por: %1$d h</string>
+    <string name="news_meta">%1$s · %2$s</string>
+    <string name="news_open_hint">Pressione OK para abrir</string>
 </resources>
