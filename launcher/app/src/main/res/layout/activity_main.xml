@@ -164,12 +164,7 @@
                 android:layout_height="match_parent"
                 android:importantForAccessibility="no" />
 
-            <!-- Full-bleed fade so the words stay readable on a bright photo without a panel. -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/news_text_scrim"
-                android:importantForAccessibility="no" />
+            <!-- TESTE TEMPORARIO: gradiente removido para isolar o jank. -->
 
             <LinearLayout
                 android:id="@+id/newsText"
@@ -189,10 +184,6 @@
                     android:includeFontPadding="false"
                     android:singleLine="true"
                     android:ellipsize="end"
-                    android:shadowColor="#CC000000"
-                    android:shadowDx="0"
-                    android:shadowDy="2"
-                    android:shadowRadius="8"
                     android:textColor="#CCFFFFFF"
                     android:textSize="12sp"
                     android:letterSpacing="0.14" />
@@ -205,10 +196,6 @@
                     android:includeFontPadding="false"
                     android:maxLines="2"
                     android:ellipsize="end"
-                    android:shadowColor="#CC000000"
-                    android:shadowDx="0"
-                    android:shadowDy="2"
-                    android:shadowRadius="8"
                     android:textColor="#FFFFFFFF"
                     android:textSize="26sp"
                     android:fontFamily="@font/outfit_light"
@@ -223,10 +210,6 @@
                     android:includeFontPadding="false"
                     android:maxLines="2"
                     android:ellipsize="end"
-                    android:shadowColor="#CC000000"
-                    android:shadowDx="0"
-                    android:shadowDy="2"
-                    android:shadowRadius="8"
                     android:textColor="#B8FFFFFF"
                     android:textSize="13sp"
                     android:fontFamily="@font/outfit_light" />
@@ -239,10 +222,6 @@
                     android:includeFontPadding="false"
                     android:singleLine="true"
                     android:ellipsize="end"
-                    android:shadowColor="#CC000000"
-                    android:shadowDx="0"
-                    android:shadowDy="2"
-                    android:shadowRadius="8"
                     android:textColor="#99FFFFFF"
                     android:textSize="11sp"
                     android:letterSpacing="0.06" />

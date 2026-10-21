@@ -2,30 +2,44 @@
 
 Estado do que ficou aberto depois da rodada de testes e do port dos cartões de entrada.
 
-## 1. RSS / News Feed — portado, aguardando teste na TV
+## 1. RSS / News Feed — portado, experimental, **não promovido**
 
 **O RSS entrou no repositório geral**: commit `46fccd0` ("cinematic RSS news row on Home (v2.5, off
-by default)"), merge da branch `feature/rss-cinematic-home`, em 21/10/2026. Traz `NewsFeed`,
-`NewsBackdropView`, `NewsSettingsActivity`, `NewsFullActivity` e a galeria em `docs/rss-gallery.md`.
+by default)"), merge da branch `feature/rss-cinematic-home`, em 21/10/2026.
 
-**Port para a Eddy TV**: branch `feat/rss-news`, commit `4ca68d6`.
+**Port para a Eddy TV**: branch `feat/rss-news`.
 
-| Peça | Estado |
-|---|---|
-| `NewsFeed` (parse, cache JSON, 5 feeds + URL própria) | portado inteiro; só a store de prefs mudou (`home`) |
-| `NewsBackdropView` (foto com degradê) | portado inteiro |
-| `NewsSettingsActivity` + layout | portado inteiro |
-| `NewsFullActivity` + layout + scrim | portado inteiro |
-| Carrossel no layout | inserido entre o cabeçalho e a grade |
-| Integração no `MainActivity` | **reescrita enxuta**: fatia fixa de 250 dp, D-pad entre manchetes, Down para a grade, OK abre o link, dots próprios |
-| Animação de cena, cabeçalho arrastado, sincronia com o dock | **não portados** — é onde mora o risco |
+### O benchmark que faltava (21/10/2026, BeyondTV2)
 
-Desligado por padrão: com `news_enabled` falso, `refreshNews()` volta antes de ler o cache e o
-carrossel fica `GONE` — sem request, sem desenho, só uma leitura de preferência no resume.
+Mesmo APK, só a preferência muda. Jank medido em regime: Home aberta, 20 s de estabilização,
+`gfxinfo reset`, 20 movimentos com o controle.
 
-**Pendente:** nada disso foi visto na TV. O build compila e os 43 testes passam, mas o aparelho saiu
-da rede antes da instalação. Falta: abrir Notícias no menu, ligar a linha, conferir carregamento,
-foto, navegação, OK/Back e o custo com a linha ligada.
+| Configuração | Jank | Views | PSS |
+|---|---:|---:|---:|
+| RSS desligado | **0,58 %** | 105 | 31,3 MB |
+| RSS ligado (estado do primeiro port) | **83,6 %** | 133 | 38,1 MB |
+| RSS ligado, sem o gradiente full-bleed | 41,2 % | — | — |
+| RSS ligado, sem gradiente e sem sombra no texto | 7,3 % | — | — |
+| Depois do pré-escalonamento do bitmap | 6–33 % (variável) | — | — |
+
+**Duas causas encontradas e corrigidas**, ambas acrescentadas por mim no port, não no original:
+
+1. **`<shape>` com gradiente full-bleed** sobre o carrossel: um `GradientDrawable` de 1700×250
+   redesenhado em software a cada frame. Custava **~42 pontos percentuais** de jank. Removido; o
+   scrim interno do `NewsBackdropView` já dá o contraste necessário.
+2. **Sombra (`shadowRadius`) nos quatro TextViews**: desenhada em software. Custava **~34 pontos
+   percentuais**. Removida.
+3. **Bitmap reescalonado a cada frame**: o `drawPhoto` aplicava uma matriz de `centerCrop` em cada
+   `onDraw`. Agora o recorte é feito uma vez, no worker, e o `onDraw` é um blit 1:1.
+
+**Ainda não está pronto.** Mesmo corrigido, o carrossel fica entre 6 % e 33 % de quadros atrasados
+(variação entre corridas), contra 0,58 % com o RSS desligado. O p50 do frame sobe de 14 para ~22 ms.
+A causa restante não foi isolada: não é a foto (testado desligada) nem a rotação automática
+(testado desligado).
+
+**Decisão: o RSS continua experimental e fora do release.** Ele custa 6,8 MB de PSS a mais e uma
+cauda de quadros que eu não consegui eliminar. Voltar a trabalhar nisso exige uma sessão dedicada a
+profilar o `onDraw` do carrossel, não a ajustes às cegas.
 
 Referência de arquitetura: o PR #363 do upstream (`ref/prs/pr363.md`) mostra uma faixa de cartões,
 mas lê o provedor de TV, não RSS, e foi fechado sem merge.

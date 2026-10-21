@@ -133,16 +133,41 @@ public final class NewsBackdropView extends View {
         final int token = generation.incrementAndGet();
         final Context app = getContext().getApplicationContext();
         final int target = decodeTarget();
+        final int viewW = getWidth(), viewH = getHeight();
         decoder.execute(() -> {
             // The disk cache is NewsFeed's: already downloaded, never refetched while it is fresh.
             File file = NewsFeed.imageFile(app, url);
             Bitmap decoded = file == null ? null : decode(file, target);
             if (decoded == null) return;         // offline or not an image: keep the colour
+            // Crop and scale once, here, instead of every frame in onDraw: a 1680x250 draw of a
+            // 1680x1000 bitmap with a matrix cost ~5 ms per frame on this GPU, enough to push the
+            // carousel's frames past 16.7 ms.
+            if (viewW > 0 && viewH > 0) decoded = fit(decoded, viewW, viewH);
+            final Bitmap ready = decoded;
             post(() -> {
                 if (token != generation.get()) return;   // a newer headline took over: drop it
-                swap(decoded, animate && !reducedMotion && isShown());
+                swap(ready, animate && !reducedMotion && isShown());
             });
         });
+    }
+
+    /** centerCrop into exactly w x h, in RGB_565, so onDraw is a plain 1:1 blit. */
+    private static Bitmap fit(Bitmap src, int w, int h) {
+        try {
+            Bitmap out = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565);
+            Canvas canvas = new Canvas(out);
+            float scale = Math.max((float) w / src.getWidth(), (float) h / src.getHeight());
+            float dx = (w - src.getWidth() * scale) / 2f;
+            float dy = (h - src.getHeight() * scale) / 2f;
+            Matrix m = new Matrix();
+            m.setScale(scale, scale);
+            m.postTranslate(dx, dy);
+            canvas.drawBitmap(src, m, new Paint(Paint.FILTER_BITMAP_FLAG));
+            if (out != src) src.recycle();
+            return out;
+        } catch (Throwable oom) {
+            return src;                          // no memory for the cropped copy: scale at draw time
+        }
     }
 
     /** Puts the decoded photo on screen, dissolving from the previous one when asked to. */
