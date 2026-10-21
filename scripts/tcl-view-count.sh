@@ -20,6 +20,7 @@ MOVES="${2:-10}"
 OUT="medicoes/viewcount/$(date +%Y%m%d-%H%M%S)-$LABEL"
 mkdir -p "$OUT"
 tv_connect
+tv_acc_recover
 
 PKG=br.eddy.tvhome
 

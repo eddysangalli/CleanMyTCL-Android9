@@ -6,6 +6,7 @@ cd "$(dirname "$0")/.."
 . scripts/tcl-lib.sh
 LABEL="${1:?uso: tcl-coldstart.sh <rotulo>}"
 tv_connect
+tv_acc_recover
 HOME_COMPONENT=$(tv_home_component); PKG="${HOME_COMPONENT%%/*}"
 # O force-stop abaixo apaga a lista de servicos de acessibilidade nesta TCL: guarda e devolve no fim,
 # mesmo se o script falhar no meio.

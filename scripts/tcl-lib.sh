@@ -85,6 +85,9 @@ median() {
 # controle. Salve antes de derrubar a Home e devolva no fim. A devolucao ACRESCENTA: a lista pode ter
 # servicos de outros apps, e sobrescrever tiraria a acessibilidade de quem nao e nosso.
 ACC_SAVED=""
+# Uma copia em disco da lista: se o processo morrer por SIGKILL, fechar o terminal ou faltar energia,
+# o trap nao roda. O proximo script que chamar tv_acc_recover devolve o estado.
+ACC_BACKUP="${ACC_BACKUP:-medicoes/.acc-backup}"
 
 # O Android grava o componente em duas formas equivalentes: "pkg/pkg.Classe" e "pkg/.Classe".
 # Normaliza para comparar, senao a mesma entrada entra duas vezes na lista.
@@ -100,12 +103,16 @@ acc_norm() {
 tv_acc_save() {
     ACC_SAVED=$(tv settings get secure enabled_accessibility_services)
     case "$ACC_SAVED" in null) ACC_SAVED="" ;; esac
-    if [ -n "$ACC_SAVED" ]; then log "acessibilidade antes do teste: $ACC_SAVED"; fi
+    if [ -n "$ACC_SAVED" ]; then
+        mkdir -p "$(dirname "$ACC_BACKUP")"
+        printf '%s' "$ACC_SAVED" > "$ACC_BACKUP"
+        log "acessibilidade antes do teste: $ACC_SAVED"
+    fi
     return 0
 }
 
 tv_acc_restore() {
-    [ -n "${ACC_SAVED:-}" ] || return 0
+    [ -n "${ACC_SAVED:-}" ] || { rm -f "$ACC_BACKUP"; return 0; }
     local cur part norm known="" merged="" added=0 old_ifs="$IFS"
     cur=$(tv settings get secure enabled_accessibility_services)
     case "$cur" in null) cur="" ;; esac
@@ -129,5 +136,23 @@ tv_acc_restore() {
         tv settings put secure accessibility_enabled 1
         log "acessibilidade restaurada: $merged"
     fi
+    rm -f "$ACC_BACKUP"
+    return 0
+}
+
+# Roda no inicio dos scripts: se um teste anterior morreu sem restaurar (SIGKILL, terminal fechado,
+# queda de energia), a lista ficou vazia e o backup sobrou. Devolve o estado antes de medir de novo.
+tv_acc_recover() {
+    [ -f "$ACC_BACKUP" ] || return 0
+    local saved cur
+    saved=$(cat "$ACC_BACKUP")
+    cur=$(tv settings get secure enabled_accessibility_services)
+    case "$cur" in null) cur="" ;; esac
+    if [ -z "$cur" ] && [ -n "$saved" ]; then
+        tv settings put secure enabled_accessibility_services "$saved"
+        tv settings put secure accessibility_enabled 1
+        log "acessibilidade recuperada de um teste interrompido: $saved"
+    fi
+    rm -f "$ACC_BACKUP"
     return 0
 }

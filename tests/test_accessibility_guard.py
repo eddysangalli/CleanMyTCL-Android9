@@ -145,6 +145,45 @@ cat "$FAKE_ACC_STATE"
         self.assertIn("com.outro.novo/.Svc", out)
         self.assertIn(OURS, out)
 
+    def test_recover_after_a_killed_run(self):
+        """SIGKILL cannot be trapped; the on-disk copy is what puts the service back.
+
+        A run killed by SIGKILL, or a terminal closed mid-run, leaves the setting empty and the
+        backup on disk. The next script calls tv_acc_recover and the state comes back.
+        """
+        backup = self.base / "acc-backup"
+        backup.write_text(OURS, encoding="utf-8")
+        self.state.write_text("", encoding="utf-8")
+        self.env["ACC_BACKUP"] = str(backup)
+        driver = r"""
+. scripts/tcl-lib.sh
+tv_acc_recover
+cat "$FAKE_ACC_STATE"
+"""
+        result = subprocess.run(
+            [BASH, "-c", driver],
+            cwd=ROOT, env=self.env, capture_output=True, text=True, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.state.read_text(encoding="utf-8"), OURS)
+        self.assertFalse(backup.exists(), "the backup is consumed once it has been applied")
+
+    def test_recover_does_not_touch_a_list_that_is_not_empty(self):
+        """If nothing was lost, the backup is stale and must not overwrite the current list."""
+        backup = self.base / "acc-backup"
+        backup.write_text(OURS, encoding="utf-8")
+        self.state.write_text(OTHER, encoding="utf-8")
+        self.env["ACC_BACKUP"] = str(backup)
+        driver = r"""
+. scripts/tcl-lib.sh
+tv_acc_recover
+cat "$FAKE_ACC_STATE"
+"""
+        result = subprocess.run(
+            [BASH, "-c", driver],
+            cwd=ROOT, env=self.env, capture_output=True, text=True, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.state.read_text(encoding="utf-8"), OTHER)
+
 
 if __name__ == "__main__":
     unittest.main()

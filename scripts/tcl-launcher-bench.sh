@@ -17,6 +17,7 @@ RETURNS="${3:-10}"
 OUT="medicoes/launcher/$(date +%Y%m%d-%H%M%S)-$LABEL"
 mkdir -p "$OUT"
 tv_connect
+tv_acc_recover
 
 HOME_COMPONENT=$(tv_home_component)
 PKG="${HOME_COMPONENT%%/*}"

@@ -12,6 +12,7 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 . scripts/tcl-lib.sh
 tv_connect
+tv_acc_recover
 
 REMOTE_NAME="${TCL_REMOTE_NAME-TCL_RC802VLA}"
 SMOKE_APP="${TCL_SMOKE_APP:-com.netflix.ninja/.MainActivity}"
