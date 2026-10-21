@@ -21,7 +21,11 @@ stalls is a regression.
   activity transition (~3.7 s in the Settings→Home sequence) and must not be used for that table.
 - **What the key numbers mean.** The launcher battery injects keys with `adb shell input keyevent`.
   The response time (13 ms median in v0.5.2) is from that injected event to the first frame that
-  reacts; it is the launcher's reaction time and **excludes the remote and the IR/BT receiver**.
+  **finished** after it — not to the frame whose intended vsync came after it. On a launcher that
+  moves the focus in one frame the reacting frame is born from the previous vsync and only finishes
+  later, so matching on the vsync drops keys. The rule lives in `scripts/frame-match.awk`, used by
+  `tcl-launcher-bench.sh` and identical to `tools/bench.py`; `tests/test_frame_match.py` pins it.
+  It is the launcher's reaction time and **excludes the remote and the IR/BT receiver**.
   The real input path (IR receiver `/dev/input/eventN` → launcher) was measured separately with
   `tcl-keypath-bench.sh` (p50 3 ms, 100 events). The remote's own scan/transmit time was not
   measured; the end-to-end physical-remote latency would need a hardware probe or a high-speed
@@ -32,7 +36,7 @@ stalls is a regression.
 | Metric | Script | Notes |
 |---|---|---|
 | Idle CPU, MemAvailable, processes, app first frame, jank | `tcl-bench.sh <label> [reps]` | Appends to `medicoes/historico.csv`; the summary and the `*_wait_ms` columns use WaitTime |
-| Key response and full move time (p50/p95/p99/max) | `tcl-launcher-bench.sh <label> [keys] [rounds]` | Uses `dumpsys gfxinfo framestats` |
+| Key response and full move time (p50/p95/p99/max) | `tcl-launcher-bench.sh <label> [keys] [rounds]` | Uses `dumpsys gfxinfo framestats`; the key-to-frame rule is `scripts/frame-match.awk`, with a test |
 | Real key path latency (with/without accessibility) | `tcl-keypath-bench.sh <label> [keys]` | `settings put global eddy_debug_keys 1` |
 | Launcher cold start (WaitTime, not TotalTime) | `tcl-coldstart.sh <label>` | TotalTime on Android 9 over-reports (~3.7 s vs real ~0.5 s) |
 | Idle CPU / fps of the visible screen | `tcl-idle-probe.sh <label> [s]`, `tcl-idle-clean.sh <label> [s]` | `idle-clean` force-stops the test apps first |
