@@ -192,6 +192,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         grid = findViewById(R.id.grid);
         grid.setLayoutManager(new GridLayoutManager(this, COLUMNS) {
+            // The grid's top padding is applied here, before the children are laid out, so the first
+            // layout already has the right padding. Doing it from the layout listener (the older way)
+            // left the first pass with the XML padding (10dp), which made the grid inflate rows from
+            // the top of the screen and then pushed them back out with a second pass
+            // (upstream PR #446, idea taken from there; measured on this TV, see docs/).
+            @Override
+            public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+                applyGridPadding();
+                super.onLayoutChildren(recycler, state);
+            }
+
             // RecyclerView smooth-scrolls a newly focused tile into view on its own; in ultralight mode
             // that animation (~250 ms) is skipped so a move finishes in one frame.
             //
@@ -240,16 +251,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         grid.setAdapter(adapter);
 
         // tvOS layout: push the dock row to the bottom of the screen; the grid hides below until you press Down.
+        // The padding itself is set from the layout manager, before the children are laid out; the listener
+        // keeps it in step with a size that changed after the fact, and still refits the glass.
         grid.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
-            int h = b - t;
-            // Item height follows the tile size, which follows the column count (AppAdapter.tileWidthPx).
-            int inner = (r - l) - grid.getPaddingLeft() - grid.getPaddingRight();
-            int itemH = AppAdapter.itemHeightPx(
-                    AppAdapter.tileHeightPx(AppAdapter.tileWidthPx(inner, COLUMNS, density)), density);
-            int want = Grid.topPadding(h, itemH, density);
-            if (grid.getPaddingTop() != want) {
-                grid.setPadding(grid.getPaddingLeft(), want, grid.getPaddingRight(), grid.getPaddingBottom());
-            }
+            applyGridPadding();
             // On a slow cold start a tile can take focus while the grid has no width yet, at the design size;
             // the relaid-out tile is smaller, so refit the glass instead of waiting for the next focus change.
             // Do this even before the first successful focus: the glass starts at the design size and would
@@ -860,6 +865,29 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         focusTile(target);
         return true;
+    }
+
+    /**
+     * The grid's top padding, so the dock sits on the bottom edge of the screen and the rows below it
+     * stay hidden until the viewer presses Down.
+     *
+     * The layout manager calls this before it lays the children out, so the first pass already has the
+     * right padding and the grid does not inflate rows from the top of the screen only to push them back
+     * out (upstream PR #446). The layout listener calls it too, as a safety net for a size that changed
+     * after the fact. It only writes when the padding really changes, so it cannot loop the layout.
+     */
+    private void applyGridPadding() {
+        int h = grid.getHeight();
+        int w = grid.getWidth();
+        if (h <= 0 || w <= 0) return;
+        // Item height follows the tile size, which follows the column count (AppAdapter.tileWidthPx).
+        int inner = w - grid.getPaddingLeft() - grid.getPaddingRight();
+        int itemH = AppAdapter.itemHeightPx(
+                AppAdapter.tileHeightPx(AppAdapter.tileWidthPx(inner, COLUMNS, density)), density);
+        int want = Grid.topPadding(h, itemH, density);
+        if (grid.getPaddingTop() != want) {
+            grid.setPadding(grid.getPaddingLeft(), want, grid.getPaddingRight(), grid.getPaddingBottom());
+        }
     }
 
     /** Refit the glass to the currently focused holder; used after cold-start layout settles. */
