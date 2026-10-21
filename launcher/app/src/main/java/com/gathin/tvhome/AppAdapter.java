@@ -145,6 +145,12 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         notifyDataSetChanged();
     }
 
+    /** Lets go of every tile (Home is in the background and memory is short); the next bind rebuilds. */
+    void clear() {
+        items.clear();
+        notifyDataSetChanged();
+    }
+
     /** Input cards resolved by the Home; empty = none shown. */
     void setInputCards(List<InputCards> cards) {
         this.inputCards = cards == null ? Collections.emptyList() : cards;
