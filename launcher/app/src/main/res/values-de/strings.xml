@@ -55,5 +55,6 @@
     <string name="news_refresh">Nachrichten aktualisieren alle: %1$d min</string>
     <string name="news_image_age">Fotos behalten für: %1$d h</string>
     <string name="news_meta">%1$s · %2$s</string>
+    <string name="news_clear">Nachrichten jetzt leeren</string>
     <string name="news_open_hint">OK zum Öffnen drücken</string>
 </resources>

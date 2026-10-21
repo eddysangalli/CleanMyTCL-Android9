@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Home</string>
     <string name="inputs">Inputs</string>
@@ -171,5 +171,6 @@
     <string name="news_refresh">Refresh news every: %1$d min</string>
     <string name="news_image_age">Keep photos for: %1$d h</string>
     <string name="news_meta">%1$s · %2$s</string>
+    <string name="news_clear">Clear news now</string>
     <string name="news_open_hint">Press OK to open</string>
 </resources>

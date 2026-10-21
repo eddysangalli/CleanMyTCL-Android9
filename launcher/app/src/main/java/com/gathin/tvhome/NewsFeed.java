@@ -360,7 +360,30 @@ final class NewsFeed {
         try {
             return utf8.decode(java.nio.ByteBuffer.wrap(bytes)).toString();
         } catch (java.nio.charset.CharacterCodingException notUtf8) {
-            return new String(bytes, declared);
+            // Not UTF-8. The charset in the XML prolog wins over the HTTP header: the Folha feed sends
+            // `Content-Type: text/xml` with no charset and declares ISO-8859-1 inside the document, so
+            // the header's default (UTF-8) would decode every accent as a box.
+            return new String(bytes, prologCharset(bytes, declared));
+        }
+    }
+
+    /** The encoding in `<?xml ... encoding="X"?>`, else the header's, else ISO-8859-1. */
+    private static java.nio.charset.Charset prologCharset(byte[] bytes, String declared) {
+        int limit = Math.min(bytes.length, 200);
+        String head = new String(bytes, 0, limit, StandardCharsets.ISO_8859_1);
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("encoding\\s*=\\s*[\"']([A-Za-z0-9._-]+)[\"']").matcher(head);
+        if (m.find()) {
+            try {
+                return java.nio.charset.Charset.forName(m.group(1));
+            } catch (Exception ignored) {
+                // Unknown name: fall through.
+            }
+        }
+        try {
+            return java.nio.charset.Charset.forName(declared);
+        } catch (Exception ignored) {
+            return StandardCharsets.ISO_8859_1;
         }
     }
 

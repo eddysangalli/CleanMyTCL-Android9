@@ -8,6 +8,7 @@ import android.text.InputType;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * The news sources (NewsFeed): turn the row on or off, pick the built-in feeds of the mix, and add
@@ -33,6 +34,7 @@ public final class NewsSettingsActivity extends Activity {
     }
 
     private void fill() {
+        int focused = focusedIndex();
         list.removeAllViews();
         row(getString(R.string.news_enabled,
                 getString(NewsFeed.enabled(choices) ? R.string.on : R.string.off)), () -> {
@@ -80,8 +82,28 @@ public final class NewsSettingsActivity extends Activity {
         String custom = NewsFeed.customUrl(choices);
         row(getString(R.string.news_custom,
                 custom.isEmpty() ? getString(R.string.news_custom_none) : custom), this::editCustom);
-        // The first row under the master toggle takes the remote's focus.
-        if (list.getChildCount() > 1) list.getChildAt(1).requestFocus();
+        // Clears the cached headlines and photos and asks Home to fetch again. It is also the way out of
+        // a headline cached before a parser fix: the cache lives for the refresh interval.
+        row(getString(R.string.news_clear), () -> {
+            NewsFeed.clearCache(this);
+            setResult(RESULT_OK);
+            Toast.makeText(this, getString(R.string.news_empty), Toast.LENGTH_SHORT).show();
+            fill();
+        });
+        // Back to the row the viewer was on; the first one only on the first build.
+        if (focused >= 0 && focused < list.getChildCount()) list.getChildAt(focused).requestFocus();
+        else if (list.getChildCount() > 1) list.getChildAt(1).requestFocus();
+    }
+
+    /**
+     * Index of the focused row, or -1. Every toggle rebuilds the list, and without this the focus fell
+     * back to the first row: moving down and pressing OK then flipped a setting two rows away.
+     */
+    private int focusedIndex() {
+        for (int i = 0; i < list.getChildCount(); i++) {
+            if (list.getChildAt(i).isFocused()) return i;
+        }
+        return -1;
     }
 
     /** One custom feed URL on top of the built-in mix; empty removes it. */

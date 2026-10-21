@@ -52,6 +52,14 @@ public final class NewsReaderActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 if (loading != null) loading.setVisibility(View.GONE);
+                // Two things the desktop site does on a TV: a cookie bar parked over the bottom of the
+                // article, and body text sized for a monitor at arm's length. Neither is useful here.
+                view.evaluateJavascript(
+                        "(function(){var s=document.createElement('style');"
+                        + "s.innerHTML='body{font-size:118% !important}"
+                        + "*[class*=cookie],*[id*=cookie],*[class*=consent],*[id*=consent],"
+                        + "*[class*=lgpd],*[id*=lgpd]{display:none !important}';"
+                        + "(document.head||document.documentElement).appendChild(s);})();", null);
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
@@ -72,6 +80,14 @@ public final class NewsReaderActivity extends Activity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && web != null && web.canGoBack()) {
             web.goBack();
+            return true;
+        }
+        if (web != null && (keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_UP)) {
+            // A WebView has no focusable links to walk here, so the D-pad scrolls the article: half a
+            // screen per press, which is what a reader expects from a remote.
+            int screen = web.getHeight();
+            int step = Math.max(120, screen / 2);
+            web.scrollBy(0, keyCode == KeyEvent.KEYCODE_DPAD_DOWN ? step : -step);
             return true;
         }
         return super.onKeyDown(keyCode, event);
