@@ -43,18 +43,43 @@ stalls is a regression.
 | Stock Home in the same session | `tcl-bench-stock.sh <label> [reps]`, `tcl-stock-session.sh <cmd>` | Enables the stock launcher and restores Eddy in the EXIT trap |
 | Reboot to `boot_completed` / Home drawn | `tcl-reboot-test.sh`, `tcl-boot-test.sh <label> [app] [s]` | Kernel/bootloader time needs an external stopwatch |
 | App start (first screen, screenshots over time) | `tcl-app-start-test.sh <app> <label>` | "Usable catalogue" is judged from screenshots |
+| Views, AppContexts, PSS and the Skia RenderTarget cache | `tcl-view-count.sh <label> [moves]` | `am force-stop`, opens Home, reads before and after navigating; the GPU figure only exists in `gfxinfo` on Android 9 (`meminfo` reports `Graphics: 0`) |
 | Hotword cost | `tcl-hotword-test.sh <label>` | |
 | Screenshots | `tcl-screencap.sh <file.png> [host]` | Binary PNG with a signature check; never use PowerShell 5.1 `>` |
 | Charts | `tcl-make-charts.py <data.json> <out-dir>` | Pillow; the JSON is the single source of the numbers |
 
-## Pending measurements (as of 2026-10-19)
+## A trap: `am force-stop` takes the accessibility services with it
+
+On this TCL, `am force-stop <launcher>` **clears** `enabled_accessibility_services`, and the
+service does not come back when the Home opens again. Upstream PR #503 reported it on a 55C715;
+it was reproduced on the BeyondTV2 V660 on 2026-10-20 — the setting went from
+`br.eddy.tvhome/com.gathin.tvhome.KeyRemapService` to empty after one stop, and stayed empty
+after the Home was reopened.
+
+Every measurement that force-stops the launcher therefore has to put the list back:
+`tv_acc_save` before the first stop and `tv_acc_restore` at the end (both in `scripts/tcl-lib.sh`,
+wired with a `trap … EXIT` in `tcl-coldstart.sh`, `tcl-launcher-bench.sh` and
+`tcl-view-count.sh`). The restore **appends**: the list is shared by every app, so writing one
+service on its own would wipe the others.
+
+In `tools/bench.py` the restore also runs **after** the measurement, not before: writing that
+setting makes the system bind the service, which starts the launcher process, and a "cold start"
+measured on a running process is a warm one.
+
+## Pending measurements (as of 2026-10-20)
 
 - Power-loss boot with an external stopwatch (bootloader/kernel); `adb reboot` only covers Android.
 - Standby (STR) resume: power key to usable Home, 10 reps.
 - Time to usable catalogue (Netflix, YouTube, Globoplay): screenshot series, cold vs warm.
-- Accessibility-service key latency **on** v0.5.2 (the off path is measured: 100 events, p50 3 /
-  p95 4 / p99 5 / max 6 ms; both service-on attempts collided with other runs).
+- Accessibility-service key latency **on** v0.5.8 (the off path is measured: 100 events, p50 3 /
+  p95 4 / p99 5 / max 6 ms). Now that the bench scripts no longer drop the service, this can be
+  measured without the run destroying it first.
 - Full ultralight battery (only a 20-key probe so far).
+- The complete v0.5.8 battery: five matched repetitions per preset. Only the single
+  `tools/bench.py` run and the `tcl-launcher-bench.sh` A/B of 2026-10-20 exist.
+- The physical remote on the "Input/Source" button, after the `InputKeyService` change dropped its
+  window-event subscription (upstream #150). Key injection does not reach an accessibility filter
+  on this firmware, so this needs a person with the remote.
 - Long-run stability: idle probe every 30 min for 8 h; weeks of daily use of the debloat list.
 
 ## Reporting rules
