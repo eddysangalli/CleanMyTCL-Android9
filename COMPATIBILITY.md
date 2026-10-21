@@ -42,7 +42,8 @@ Profile: [devices/tcl-beyondtv2-rtd2851-r851t02-v660/](devices/tcl-beyondtv2-rtd
 | Google Home control | ⚪ | Not tested |
 | Wi-Fi / Ethernet | 🟡 | Internet check in smoke (Ethernet); Wi-Fi not re-tested |
 | Google Play / DRM playback | 🟡 | Play Store present; Netflix opens; `android.hardware.drm@1.1-service.widevine`, clearkey, `drmserver` and `mediadrmserver` all running. Protected playback itself is a visual/audio check |
-| Remap of the "Globoplay" button | 🧪 | No root: the key is injected by TCL software. v0.5 redirects by window event, which needs the accessibility service — **currently off**, and its cost to key delivery is **not measured** (the two attempts that were run collided with other measurements) |
+| Remap of the "Globoplay" button | 🧪 | No root: the key is injected by TCL software. v0.5 redirects by window event, which needs the accessibility service — **enabled and bound**, and the redirect **was verified working on 2026-10-20** (opening Globoplay brought `com.unitvnet.tvod` to the front within a second). Its cost to key delivery is **not measured**. Note: `am force-stop` removes the service from the list on this TV; the bench scripts now save and restore it |
+| HDMI/AV input cards on Home | 🧪 | Ported from `eddysangalli/cleanyourtv@a3f37b5`; see [INPUT-CARDS.md](docs/INPUT-CARDS.md). Verified 2026-10-21: rename, icon, show/hide, the card on the grid, opening it (`com.tcl.tv/.TVActivity`), no-op long press, focus kept. The TV reports AV, HDMI 1 and HDMI 3 as passthrough inputs; **HDMI 2 has no TvInputInfo on this unit**. Opening verified by `mResumedActivity`. The settings screen was reached over ADB with the activity exported for the test; **the menu path still needs the physical remote** (upstream #485) |
 
 ### TCL L32S6500 (UnionTV) — Realtek RTD284x — R41KT01 V391 — Android 9 (API 28), 32-bit, ~1.4 GB RAM
 
