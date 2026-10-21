@@ -15,6 +15,7 @@ não um app.
 | Configuração no controle | ![Cartões de entrada](assets/input-cards-settings.png) |
 | Cartão na Home | ![Xbox na Home](assets/input-cards-home.png) |
 | Escolha de ícone | ![Ícone](assets/input-cards-icon.png) |
+| Grade com o cartão (21/10) | ![Grade](assets/input-cards-grid-2026-10-21.png) |
 
 Chega-se por **segurar OK em Configurações** na Home → "Cartões de entrada".
 
@@ -59,9 +60,15 @@ lista em cache): `recreate()` derrubaria o foco e consultaria todos os apps de n
 | MENU no cartão | não faz nada (não há app atrás) |
 | Voltar à Home | foco preservado |
 
-**Limite do teste:** a TV reporta AV, HDMI 1 e HDMI 3 como entradas de passagem; o HDMI 2 não aparece
-no `TvInputInfo` desta unidade, então não há cartão para ele. A abertura foi conferida pelo
-`mResumedActivity`, não por vídeo (não há fonte ligada nas portas).
+**Limite do teste:** a TV reporta **quatro** entradas de passagem — AV e três HDMI. A abertura foi
+conferida pelo `mResumedActivity`, não por vídeo (não há fonte ligada nas portas). Os nomes que a
+tela mostra vêm do `loadCustomLabel` quando existe: configurar "Console de jogos" em Configurações >
+Entradas faz o cartão mostrar o mesmo nome, em vez de "HDMI 1".
+
+**Simplificação em relação ao original:** o `Entry` deste fork não tem o campo `caption`, então o
+cartão mostra só o nome escolhido ("Xbox") e não a legenda com o porto ("HDMI 3"). O `portLabel`
+existe e é usado quando o cartão não tem nome, e prefere o nome customizado de Configurações >
+Entradas.
 
 **Pendente:** a configuração foi feita por `am start` numa build com a activity exportada
 temporariamente, porque `input keyevent --longpress` não chega como long press neste firmware

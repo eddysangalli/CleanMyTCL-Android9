@@ -107,8 +107,14 @@ final class InputCards {
     }
 
     /** The input's own label ("HDMI 1"), falling back to the id's last segment. */
+    /**
+     * The input's own label ("HDMI 1"), falling back to the id's last segment. The owner's custom name
+     * from Settings > Inputs ("Console de jogos") wins: the Inputs menu shows it (MainActivity.inputLabel)
+     * and a card that named the same port differently from the menu would be confusing.
+     */
     static String portLabel(Context ctx, TvInputInfo info) {
-        CharSequence label = info.loadLabel(ctx);
+        CharSequence custom = info.loadCustomLabel(ctx);
+        CharSequence label = custom != null && custom.length() > 0 ? custom : info.loadLabel(ctx);
         String text = label == null ? "" : label.toString().trim();
         if (text.isEmpty()) {
             String id = info.getId();
