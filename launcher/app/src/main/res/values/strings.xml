@@ -135,4 +135,19 @@
     <string name="wx_snow">SNOW</string>
     <string name="wx_showers">RAIN SHOWERS</string>
     <string name="wx_thunderstorm">THUNDERSTORMS</string>
+
+    <!-- Input cards: HDMI/AV ports as tiles on Home. -->
+    <string name="input_cards">Input cards</string>
+    <string name="input_card_name">Name: %1$s</string>
+    <string name="input_card_name_default">Same as the input</string>
+    <string name="input_card_icon">Icon: %1$s</string>
+    <string name="input_card_icon_title">Icon</string>
+    <string name="input_card_shown">Show on Home: %1$s</string>
+    <string name="card_name_title">Card name</string>
+    <string name="icon_game">Game</string>
+    <string name="icon_movie">Movie</string>
+    <string name="icon_music">Music</string>
+    <string name="icon_computer">Computer</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
 </resources>

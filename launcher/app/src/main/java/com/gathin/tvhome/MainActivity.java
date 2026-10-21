@@ -63,6 +63,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -76,6 +77,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * Input/Source key is pressed - KEYCODE_TV, KEYCODE_TV_INPUT or KEYCODE_MEDIA_RECORD).
      */
     public static final String ACTION_OPEN_INPUTS = "com.gathin.tvhome.action.OPEN_INPUTS";
+
+    /** InputCardsActivity returns OK when a card changed; the grid is rebuilt in place, no recreate(). */
+    private static final int INPUT_CARDS_REQUEST = 2015;
 
     /**
      * The Inputs popup, when one is on screen. Set by {@link #showInputs()} so a second press of the
@@ -236,7 +240,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             public void onAnimationRepeat(Animation a) {
             }
         });
-        adapter = new AppAdapter(this, Grid.dockSize(COLUMNS));
+        adapter = new AppAdapter(this, this, Grid.dockSize(COLUMNS));
         grid.setAdapter(adapter);
 
         // tvOS layout: push the dock row to the bottom of the screen; the grid hides below until you press Down.
@@ -366,6 +370,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // Read these before rebinding: it can move focus to the first tile and overwrite them.
         final String returnKey = lastFocusedKey;
         final int returnSlot = lastFocused;
+        adapter.setInputCards(resolveInputCards());
         adapter.setEntries(entries);
         if (first && !light) grid.scheduleLayoutAnimation();   // rise-in on launch only, not on every Home press
         restoreFocus(returnKey, returnSlot);
@@ -377,12 +382,45 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
+    /**
+     * The owner's shown input cards, resolved against the inputs the TV reports right now. Read only
+     * when the grid rebinds, so no input query runs while the remote moves.
+     */
+    private List<InputCards> resolveInputCards() {
+        Map<String, InputCards> saved = InputCards.load(
+                getSharedPreferences(HomePrefs.PREFS_NAME, MODE_PRIVATE));
+        if (saved.isEmpty()) return Collections.emptyList();
+        List<InputCards> out = new ArrayList<>();
+        for (TvInputInfo info : InputCards.cardInputs(this)) {
+            InputCards card = saved.get(info.getId());
+            if (card != null && card.shown) out.add(card.resolved(InputCards.portLabel(this, info)));
+        }
+        return out;
+    }
+
+    /** An input card was chosen: switch to that HDMI/AV input, the same path as the Inputs pill. */
+    @Override
+    public void onInputRequested(String inputId) {
+        open(new Intent(Intent.ACTION_VIEW).setDataAndType(
+                TvContract.buildChannelUriForPassthroughInput(inputId), "vnd.android.cursor.item/channel"));
+    }
+
     /** Return to the app we left from, or the same slot if that app is gone. Posted so it runs after layout. */
     private void restoreFocus(String returnKey, int returnSlot) {
         grid.post(() -> {
             int pos = adapter.positionOf(returnKey);
             focusTile(pos >= 0 ? pos : returnSlot);
         });
+    }
+
+    @Override
+    protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request != INPUT_CARDS_REQUEST || result != RESULT_OK) return;
+        // Rebuild only the grid: recreate() would drop the focus and re-query every app. The list of
+        // apps is already cached, and showApps() puts the focus back on the same tile.
+        List<AppAdapter.Entry> cached = AppLoader.cached();
+        if (cached != null) showApps(cached);
     }
 
     @Override
@@ -520,6 +558,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     prefs.setUserName(text);
                     updateGreeting();
                 }, () -> showHomeOptions(anchor, 0))));
+        items.add(new MenuItem(R.drawable.ic_input, R.string.input_cards, () ->
+                startActivityForResult(new Intent(this, InputCardsActivity.class), INPUT_CARDS_REQUEST)));
         String message = prefs.message();
         items.add(new MenuItem(R.drawable.ic_edit, getString(R.string.opt_message,
                 message.isEmpty() ? getString(R.string.opt_message_auto) : message), () ->

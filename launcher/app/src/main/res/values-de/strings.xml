@@ -19,4 +19,19 @@
     <string name="not_available">Auf diesem TV nicht verfügbar</string>
     <string name="cant_open">%1$s lässt sich nicht öffnen</string>
     <string name="date_format">EEEE, d. MMMM</string>
+
+    <!-- Input cards: HDMI/AV ports as tiles on Home. -->
+    <string name="input_cards">Eingangskarten</string>
+    <string name="input_card_name">Name: %1$s</string>
+    <string name="input_card_name_default">Wie der Eingang</string>
+    <string name="input_card_icon">Symbol: %1$s</string>
+    <string name="input_card_icon_title">Symbol</string>
+    <string name="input_card_shown">Auf Home anzeigen: %1$s</string>
+    <string name="card_name_title">Kartenname</string>
+    <string name="icon_game">Spiel</string>
+    <string name="icon_movie">Film</string>
+    <string name="icon_music">Musik</string>
+    <string name="icon_computer">Computer</string>
+    <string name="on">An</string>
+    <string name="off">Aus</string>
 </resources>

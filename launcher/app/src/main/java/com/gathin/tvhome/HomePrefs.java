@@ -19,6 +19,10 @@ import java.util.Set;
  */
 final class HomePrefs {
 
+    /** Preference file this launcher uses. Public so other screens (InputCardsActivity) can read the
+     *  same store instead of inventing a second one. */
+    static final String PREFS_NAME = "home";
+
     private static final int MAX_RECENTS = 8;
     /** Weather older than this is fetched again, and only while the home screen is on screen. */
     static final long WEATHER_MAX_AGE_MS = 60 * 60_000L;
@@ -55,7 +59,7 @@ final class HomePrefs {
 
     HomePrefs(Context ctx) {
         this.ctx = ctx.getApplicationContext();
-        this.sp = this.ctx.getSharedPreferences("home", Context.MODE_PRIVATE);
+        this.sp = this.ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         ensureExperience();
     }
 
