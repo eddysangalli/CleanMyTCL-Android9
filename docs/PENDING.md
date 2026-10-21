@@ -2,28 +2,33 @@
 
 Estado do que ficou aberto depois da rodada de testes e do port dos cartões de entrada.
 
-## 1. RSS / News Feed — bloqueado por dependência
+## 1. RSS / News Feed — portado, aguardando teste na TV
 
-**Não existe implementação de RSS em nenhuma branch**, local ou remota, nem no repositório geral
-(`prfork` → `eddysangalli/cleanyourtv`). Verificado em 21/10/2026 por `git ls-tree` em todas as
-branches, procurando `rss`, `feed`, `news`:
+**O RSS entrou no repositório geral**: commit `46fccd0` ("cinematic RSS news row on Home (v2.5, off
+by default)"), merge da branch `feature/rss-cinematic-home`, em 21/10/2026. Traz `NewsFeed`,
+`NewsBackdropView`, `NewsSettingsActivity`, `NewsFullActivity` e a galeria em `docs/rss-gallery.md`.
 
-| Onde | Resultado |
+**Port para a Eddy TV**: branch `feat/rss-news`, commit `4ca68d6`.
+
+| Peça | Estado |
 |---|---|
-| `prfork/main` (repo geral) | nenhum arquivo |
-| `prfork/contrib/*`, `prfork/pr/*` | nenhum arquivo |
-| branches locais deste repo | nenhum arquivo |
-| `launcher/app/src/main/java/com/gathin/tvhome/` | 13 classes, nenhuma de feed |
+| `NewsFeed` (parse, cache JSON, 5 feeds + URL própria) | portado inteiro; só a store de prefs mudou (`home`) |
+| `NewsBackdropView` (foto com degradê) | portado inteiro |
+| `NewsSettingsActivity` + layout | portado inteiro |
+| `NewsFullActivity` + layout + scrim | portado inteiro |
+| Carrossel no layout | inserido entre o cabeçalho e a grade |
+| Integração no `MainActivity` | **reescrita enxuta**: fatia fixa de 250 dp, D-pad entre manchetes, Down para a grade, OK abre o link, dots próprios |
+| Animação de cena, cabeçalho arrastado, sincronia com o dock | **não portados** — é onde mora o risco |
 
-O último commit publicado no repositório geral continua sendo `a3f37b5` (os cartões HDMI).
-Confirmado de novo em **21/10/2026, com `git fetch --prune`** nas duas origens: `prfork/main`
-continua em `a3f37b5`, e o upstream avançou para `d27bb06` (traduções e README) sem nada de feed.
+Desligado por padrão: com `news_enabled` falso, `refreshNews()` volta antes de ler o cache e o
+carrossel fica `GONE` — sem request, sem desenho, só uma leitura de preferência no resume.
 
-**Decisão:** não inventar uma implementação substituta. O RSS fica bloqueado até o módulo existir
-no repositório geral; o port para a Eddy TV é uma branch própria, depois.
+**Pendente:** nada disso foi visto na TV. O build compila e os 43 testes passam, mas o aparelho saiu
+da rede antes da instalação. Falta: abrir Notícias no menu, ligar a linha, conferir carregamento,
+foto, navegação, OK/Back e o custo com a linha ligada.
 
-Referência para quando houver: o PR #363 do upstream (`ref/prs/pr363.md`) mostra a estrutura visual
-de uma faixa de cartões, mas lê o provedor de TV, não RSS, e foi fechado sem merge.
+Referência de arquitetura: o PR #363 do upstream (`ref/prs/pr363.md`) mostra uma faixa de cartões,
+mas lê o provedor de TV, não RSS, e foi fechado sem merge.
 
 ## 2. Cartões de entrada — caminho pelo menu precisa do controle físico
 
