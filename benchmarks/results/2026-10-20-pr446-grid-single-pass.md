@@ -47,14 +47,43 @@ Uma corrida por célula, na ordem A-B-B-A.
 | B2 | + grade | 96 | 96 | 23 374 KB | 4,83 MB (20) | 7 (1,57 %) |
 | A2 | referência | 96 | 96 | 23 432 KB | 4,83 MB (20) | 11 (2,48 %) |
 
+## 3. Repetição pareada: 5 pares A/B (25 amostras por lado)
+
+O item 1 acima é uma corrida por lado. Para decidir, a mudança foi medida de novo em **5 pares
+A-B pareados** (instala A, mede; instala B, mede — e repete), 5 aberturas a frio por execução, e
+Views/PSS/RenderTarget em cada execução.
+
+**Abertura a frio (WaitTime), 25 amostras por lado:**
+
+| Lado | n | p50 | p95 | p99 | máx | média |
+|---|---:|---:|---:|---:|---:|---:|
+| A — v0.5.8 | 25 | **481 ms** | 648 ms | 729 ms | 729 ms | 503,2 ms |
+| B — + grade | 25 | **475 ms** | 589 ms | 606 ms | 606 ms | 491,0 ms |
+
+- **p50: −6 ms (−1,2 %)** — dentro do ruído.
+- p95: −59 ms; p99 e máx: −123 ms.
+
+**Views / PSS / RenderTarget, mediana das 5 execuções por lado:**
+
+| Lado | Views | PSS (mediana) | PSS (min–max) | RenderTarget |
+|---|---:|---:|---:|---:|
+| A | 96 | 27 816 KB | 27 239–28 890 | 4,83 MB (20) |
+| B | 96 | 27 940 KB | 27 336–28 767 | 4,83 MB (20) |
+
 ## O que conclui
 
-- **A abertura a frio melhorou**: p50 436 → 417 ms e o pior caso 535 → 451 ms (−84 ms no pior
-  caso). É o alvo da mudança e o único sinal consistente.
-- **Views não mudou**: 96 nos quatro casos, no primeiro layout e depois da navegação. O ganho
-  de 125 → 61 Views que o PR relata **não se reproduz nesta TV**.
-- **RenderTarget não mudou**: 4,83 MB em 20 entradas nos quatro casos. Isso é esperado — essa
+- **O ganho de 19 ms da primeira corrida não se reproduz.** Com 25 amostras por lado o p50 cai
+  6 ms (1,2 %), que é ruído. Os valores absolutos subiram (436 → 481 ms) porque o estado da TV
+  mudou entre as sessões; só a comparação pareada vale.
+- **A cauda melhorou**: p95 −59 ms, p99 e máximo −123 ms. É sugestivo (menos trabalho na primeira
+  passada), mas com n=25 e sem teste estatístico não fecha a questão.
+- **Views não mudou**: 96 nos quatro casos da primeira rodada e nos dez pares, no primeiro layout e
+  depois da navegação. O ganho de 125 → 61 Views que o PR relata **não se reproduz nesta TV**.
+- **RenderTarget não mudou**: 4,83 MB em 20 entradas em todos os casos. Isso é esperado — essa
   memória vem do item 2 do PR (o FBO do `GlassView`), que **não** foi aplicado aqui.
+- **PSS**: mediana 27 816 vs 27 940 KB, sem sinal.
+- **Veredito: não promover.** A mudança fica no branch `exp/pr446-grid-single-pass`. Um ganho de
+  1,2 % no p50 não justifica mexer na `main`.
 - **PSS e quadros atrasados**: sem sinal. O B1 marcou 10,29 % de janky contra 1,57–2,48 % nos
   outros, o que mostra que a métrica é ruidosa nesta janela; não serve para decidir.
 - **Resposta da tecla**: p95 caiu (24 → 21 ms) e p99/max subiram (25 → 30 ms). Com uma corrida
@@ -62,12 +91,11 @@ Uma corrida por célula, na ordem A-B-B-A.
 
 ## Limites
 
-- **Uma corrida por lado** no `tcl-launcher-bench.sh`. A regra do projeto pede ≥ 5 repetições
-  para a bateria principal e ≥ 3 corridas para a do launcher. A diferença de abertura a frio
-  precisa ser repetida antes de entrar na `main`.
+- A seção 1 é **uma corrida por lado**; a seção 3 tem 5 pares. As duas ficam no documento para
+  mostrar por que a primeira impressão (19 ms) não sobreviveu à repetição.
 - As duas medições de PSS não são comparáveis entre si: o bench do launcher lê depois de 60 s
   com a tela parada (28 MB), e o `tcl-view-count.sh` logo depois de uma abertura a frio
-  (~23,5 MB). Estados diferentes.
+  (~23,5–28 MB). Estados diferentes.
 - O `dumpsys meminfo` do Android 9 reporta `Graphics: 0`; a memória de GPU só aparece no
   `dumpsys gfxinfo` (`GPU Caches: RenderTarget`), que **existe** nesta TV (ao contrário do
   Android 8 do teste do Philips no PR).
