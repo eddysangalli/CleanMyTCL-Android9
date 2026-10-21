@@ -21,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,6 +41,9 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
 
         /** An app was opened from its tile. */
         void onTileLaunched(Entry entry);
+
+        /** Opens the input an INPUT tile points at (an HDMI/AV card, see {@link InputCards}). */
+        void onInputRequested(String inputId);
     }
 
     /** One app, ready to bind: built once by {@link AppLoader} and reused until the app changes. */
@@ -54,8 +58,15 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         final Bitmap banner;
         final Drawable icon;
         final int ambient;
+        /** TvInputInfo id for an INPUT tile (an HDMI/AV card), else null. */
+        final String inputId;
 
         Entry(String label, ComponentName component, String key, Bitmap banner, Drawable icon, int ambient) {
+            this(label, component, key, banner, icon, ambient, null);
+        }
+
+        Entry(String label, ComponentName component, String key, Bitmap banner, Drawable icon, int ambient,
+              String inputId) {
             this.label = label;
             this.component = component;
             this.pkg = component.getPackageName();
@@ -64,6 +75,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
             this.banner = banner;
             this.icon = icon;
             this.ambient = ambient;
+            this.inputId = inputId;
         }
     }
 
@@ -103,10 +115,14 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     private static final Interpolator FOCUS_OUT = new OvershootInterpolator(0f);
 
     private final TileListener listener;
+    private final Context ctx;
+    /** Input cards (HDMI/AV) resolved by the Home; empty = none shown. */
+    private List<InputCards> inputCards = Collections.emptyList();
     private final int dockSize;
     private final List<Entry> items = new ArrayList<>();
 
-    AppAdapter(TileListener listener, int dockSize) {
+    AppAdapter(Context ctx, TileListener listener, int dockSize) {
+        this.ctx = ctx;
         this.listener = listener;
         this.dockSize = dockSize;
         // Tiles keep their identity across setEntries(), so a focused tile stays on its app instead of
@@ -118,7 +134,20 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     void setEntries(List<Entry> entries) {
         items.clear();
         items.addAll(entries);
+        // The owner's input cards (HDMI/AV) sit with the tiles, after the apps. An input id can hold a
+        // slash, so the key uses a sanitised copy to stay a valid, unique RecyclerView id.
+        for (InputCards card : inputCards) {
+            items.add(new Entry(card.displayLabel,
+                    new ComponentName("com.gathin.tvhome.input", card.inputId.replace('/', '.')),
+                    "input:" + card.inputId, null,
+                    ctx.getDrawable(InputCards.iconRes(card.icon)), 0, card.inputId));
+        }
         notifyDataSetChanged();
+    }
+
+    /** Input cards resolved by the Home; empty = none shown. */
+    void setInputCards(List<InputCards> cards) {
+        this.inputCards = cards == null ? Collections.emptyList() : cards;
     }
 
     @NonNull
@@ -256,10 +285,17 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
 
             card.setOnClickListener(view -> {
                 if (entry == null) return;
+                if (entry.inputId != null) {
+                    // An input card switches to that HDMI/AV port (same path as the Inputs pill).
+                    if (listener != null) listener.onInputRequested(entry.inputId);
+                    return;
+                }
                 launch(view.getContext(), entry);
                 if (listener != null) listener.onTileLaunched(entry);
             });
             card.setOnLongClickListener(view -> {
+                // An input card has no app page behind it; holding OK does nothing.
+                if (entry != null && entry.inputId != null) return true;
                 int pos = getBindingAdapterPosition();
                 if (entry == null || listener == null || pos == RecyclerView.NO_POSITION) return false;
                 listener.onTileMenu(pos, view);
