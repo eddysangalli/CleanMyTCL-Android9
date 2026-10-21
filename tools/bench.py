@@ -273,12 +273,24 @@ def accessibility_services(tv, package):
     return [part.strip() for part in out.split(":") if part.strip().startswith(package + "/")]
 
 
+def _norm_component(component):
+    """`pkg/pkg.Classe` and `pkg/.Classe` are the same component; normalise so it is not added twice."""
+    if "/" not in component:
+        return component
+    package, cls = component.split("/", 1)
+    if cls.startswith(package + "."):
+        return package + "/" + cls[len(package):]
+    return component
+
+
 def restore_accessibility(tv, package, services):
     """Put back the accessibility services a force-stop took down.
 
-    `am force-stop` kills the process the service lives in, and on this TCL it also **clears**
-    `enabled_accessibility_services` (upstream PR #503 reported it on a 55C715; reproduced on our
-    BeyondTV2 V660 on 2026-10-20). The service does not come back when the Home opens again.
+    `am force-stop` kills the process the service lives in, and on this TCL it **removes that
+    package's services** from `enabled_accessibility_services` (the other apps' entries stay, and the
+    components come back normalised to `pkg/.Classe`). Upstream PR #503 reported it on a 55C715;
+    reproduced on our BeyondTV2 V660 on 2026-10-20. The service does not come back when the Home
+    opens again.
 
     The list is a colon-separated set shared by every app, so this **appends** what is missing
     instead of writing each service on its own: `settings put secure enabled_accessibility_services
@@ -290,9 +302,11 @@ def restore_accessibility(tv, package, services):
     if current == "null":
         current = ""
     merged = [part for part in current.split(":") if part]
+    known = {_norm_component(part) for part in merged}
     added = False
     for service in services:
-        if service not in merged:
+        if _norm_component(service) not in known:
+            known.add(_norm_component(service))
             merged.append(service)
             added = True
     if added:

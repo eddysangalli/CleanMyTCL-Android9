@@ -76,15 +76,26 @@ median() {
 
 # ---- servicos de acessibilidade em volta do force-stop ---------------------------------------------
 #
-# Nesta TCL o `am force-stop` do launcher apaga a lista de servicos de acessibilidade habilitados, e o
-# servico NAO volta quando a Home abre de novo (upstream PR #503 reportou numa 55C715; reproduzido na
-# nossa BeyondTV2 V660 em 20/10/2026: a lista ia de
-# "br.eddy.tvhome/com.gathin.tvhome.KeyRemapService" para vazio depois de um force-stop).
+# Nesta TCL o `am force-stop` do launcher REMOVE da lista os servicos daquele pacote (os de outros apps
+# ficam), e o servico NAO volta quando a Home abre de novo. Upstream PR #503 reportou numa 55C715;
+# reproduzido na nossa BeyondTV2 V660 em 20/10/2026: com dois servicos na lista, um deles o nosso, o
+# force-stop deixou so o do outro app.
 #
 # Sem isto, qualquer medicao de abertura a frio derruba em silencio o remapeamento de botoes do
 # controle. Salve antes de derrubar a Home e devolva no fim. A devolucao ACRESCENTA: a lista pode ter
 # servicos de outros apps, e sobrescrever tiraria a acessibilidade de quem nao e nosso.
 ACC_SAVED=""
+
+# O Android grava o componente em duas formas equivalentes: "pkg/pkg.Classe" e "pkg/.Classe".
+# Normaliza para comparar, senao a mesma entrada entra duas vezes na lista.
+acc_norm() {
+    local c="$1" pkg cls
+    pkg="${c%%/*}"; cls="${c#*/}"
+    case "$cls" in
+        "$pkg".*) echo "$pkg/${cls#"$pkg"}" ;;
+        *)        echo "$c" ;;
+    esac
+}
 
 tv_acc_save() {
     ACC_SAVED=$(tv settings get secure enabled_accessibility_services)
@@ -95,16 +106,21 @@ tv_acc_save() {
 
 tv_acc_restore() {
     [ -n "${ACC_SAVED:-}" ] || return 0
-    local cur part merged added=0 old_ifs="$IFS"
+    local cur part norm known="" merged="" added=0 old_ifs="$IFS"
     cur=$(tv settings get secure enabled_accessibility_services)
     case "$cur" in null) cur="" ;; esac
-    merged="$cur"
     IFS=':'
+    for part in $cur; do
+        [ -n "$part" ] || continue
+        known="${known:+$known:}$(acc_norm "$part")"
+        merged="${merged:+$merged:}$part"
+    done
     for part in $ACC_SAVED; do
         [ -n "$part" ] || continue
-        case ":$merged:" in
-            *":$part:"*) ;;
-            *) merged="${merged:+$merged:}$part"; added=1 ;;
+        norm=$(acc_norm "$part")
+        case ":$known:" in
+            *":$norm:"*) ;;
+            *) known="${known:+$known:}$norm"; merged="${merged:+$merged:}$part"; added=1 ;;
         esac
     done
     IFS="$old_ifs"
