@@ -61,7 +61,7 @@ projeto. O que se paga é memória e abertura, não fluidez.
 ## Recuperação
 
 ```bash
-adb install -r medicoes/apks/tvhome-0.5.9-code31.apk
+adb install -r tvhome-0.5.9-code31.apk          # release v0.5.9
 # Devolve a lista COMPLETA de servicos de acessibilidade, nao so o nosso: escrever um servico
 # isolado substitui a lista inteira e derruba os servicos de outros apps.
 adb shell 's=$(settings get secure enabled_accessibility_services); case "$s" in
