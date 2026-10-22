@@ -22,7 +22,7 @@ How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
 - [`OPTIMIZATION-CANDIDATES.md`](OPTIMIZATION-CANDIDATES.md) — measured candidates, **not applied**, each with risk and undo.
 
 **Installed on 2026-10-21:** `br.eddy.tvhome` **0.6.0** (versionCode 32), APK SHA-256
-`4A0933DBFDB2C992E20F599B933C7BEA82DFFEEE088B06491507916A365EEC5B`, with the opt-in news row
+`76A14A02192B6B74D4B0E66F56842F9D5E4FF054F39C44EA2FD2131740B196E4`, with the opt-in news row
 (off by default) and the article reader. Previous install, kept here for comparison:
 **Installed on 2026-10-20 15:36:** `br.eddy.tvhome` **0.5.8** (versionCode 30), APK
 SHA-256 `D9EDA30FE285FC3AE643F26FB19C05121F30DC7E963DF4B6DB9F4A461A96EF10`, built from `main`
