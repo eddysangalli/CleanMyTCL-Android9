@@ -98,11 +98,15 @@ final class NewsFeed {
                 new Source("leouve", R.string.news_leouve, "https://leouve.com.br/feed/"),
                 new Source("g1", R.string.news_g1, "https://g1.globo.com/rss/g1/"),
                 new Source("uol", R.string.news_uol, "https://rss.uol.com.br/feed/noticias.xml"),
-                new Source("folha", R.string.news_folha, "https://feeds.folha.uol.com.br/folha/cotidiano/rss091.xml"),
+                // Folha's feed was removed in 0.6.0: feeds.folha.uol.com.br/folha/cotidiano/rss091.xml
+                // stopped in May 2015 and still answers 200, so the row showed eleven-year-old news
+                // whose links were plain http and could not open in the reader.
                 new Source("sul21", R.string.news_sul21, "https://www.sul21.com.br/feed/"));
     }
 
     private static final String CACHE_NAME = "news_cache.json";
+    /** Bumped when the source catalogue changes, so a cache built from the old list is ignored once. */
+    private static final int CACHE_VERSION = 2;
     private static final int CONNECT_TIMEOUT_MS = 6000, READ_TIMEOUT_MS = 8000;
     private static final int PER_SOURCE = 8, MAX_HEADLINES = 28;     // cards in the row
     /** Cap on the on-disk photo cache: the launcher never grows a news folder without bound. */
@@ -497,6 +501,7 @@ final class NewsFeed {
             }
             JSONObject root = new JSONObject();
             root.put("items", array);
+            root.put("v", CACHE_VERSION);
             try (FileOutputStream out = new FileOutputStream(file)) {
                 out.write(root.toString().getBytes(StandardCharsets.UTF_8));
             }
@@ -515,8 +520,15 @@ final class NewsFeed {
                 if (n < 0) break;
                 got += n;
             }
-            JSONArray array = new JSONObject(new String(buf, 0, got, StandardCharsets.UTF_8))
-                    .optJSONArray("items");
+            JSONObject root = new JSONObject(new String(buf, 0, got, StandardCharsets.UTF_8));
+            // A cache written before a catalogue change can carry a source that no longer exists
+            // (the Folha feed frozen in 2015 is why this exists): drop it and fetch again.
+            if (root.optInt("v", 1) != CACHE_VERSION) {
+                //noinspection ResultOfMethodCallIgnored
+                file.delete();              // also makes stale() true, so the row refetches now
+                return out;
+            }
+            JSONArray array = root.optJSONArray("items");
             if (array == null) return out;
             for (int i = 0; i < array.length(); i++) {
                 JSONObject o = array.optJSONObject(i);

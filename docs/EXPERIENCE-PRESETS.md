@@ -1,6 +1,6 @@
 # Experience presets and measured cost
 
-Status: the current repository source on `main` and `develop` is **v0.5.8 (versionCode 30)**. GitHub has no formal v0.5.8 release artifact or validated stable tag. The installed APK was checked over ADB on 2026-10-20: `versionName=0.5.8`, `versionCode=30`, installed 15:36, and its `base.apk` hashes to `D9EDA30F…96EF10` — the same value `COMPATIBILITY.md` records. The full v0.5.8 performance/standby/Cast/soak battery remains pending: the spring A/B below is a **v0.5.7** measurement.
+Status: the current repository source on `main` and `develop` is **v0.6.0 (versionCode 32)**. The APK is published with its release notes and hash ([RELEASE-0.6.0](../docs/RELEASE-0.6.0.md), [COMPATIBILITY](../COMPATIBILITY.md)). The news row is opt-in and off by default: measured +6.1 MB of PSS, +73 ms of cold start and jank indistinguishable from the row being off ([RSS benchmark](../benchmarks/results/2026-10-21-rss-row.md)). The full v0.6.0 performance/standby/Cast/soak battery remains pending: the spring A/B below is a **v0.5.7** measurement.
 
 The project rule is:
 

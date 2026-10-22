@@ -54,6 +54,20 @@ during the spring — see the [wallpaper A/B](benchmarks/results/2026-10-19-v0.5
 
 ---
 
+## News row (v0.6.0)
+
+![The news row on Home](docs/assets/news-row-2026-10-21.png)
+
+Headlines from four Brazilian feeds sit between the greeting and the grid: photo, source, category,
+summary and time, rotating on their own when nobody is choosing. OK opens the article in a WebView
+inside the launcher, Back returns to Home, and Up/Down scroll the page.
+
+**It is off by default.** Turn it on in Settings → News; sources are toggled one by one there, so a
+regional feed is not drowned by the big ones. Measured on the V660 with the same APK, only the
+preference changed: delayed frames 0.0-0.8% with it off and **0.0-2.5%** with it on, PSS 28.3 → 34.4 MB
+and cold start 440 → 513 ms. [Full method and the seven causes](../benchmarks/results/2026-10-21-rss-row.md),
+[v0.6.0 notes](docs/RELEASE-0.6.0.md).
+
 ## HDMI/AV cards (v0.5.9)
 
 | Cards on the grid | Card settings |
@@ -85,7 +99,13 @@ v0.5.8 gave cold start 447 → 446 ms, key response 18 ms on both sides and PSS 
 3. **Evidence over claims.** Speed numbers come with method, device and raw-data location ([benchmarks/](benchmarks/)). Untested means untested; old measurements are never presented as results for a new build.
 4. **The stock launcher is never disabled before the new Home is installed and verified**, and the way back is documented ([docs/RECOVERY.md](docs/RECOVERY.md)).
 
-**Current code status (2026-10-20):** `main` contains **v0.5.8 / versionCode 30**. A GitHub Release/tag has not been published. The last APK installation explicitly confirmed in the public device evidence is the v0.5.7 test build (code 29); a full v0.5.8 hardware benchmark and 8-hour soak remain pending. See [compatibility status](COMPATIBILITY.md) and [v0.5.8 change notes](docs/RELEASE-0.5.8.md).\n\n## Experience presets
+**Current code status (2026-10-21):** `main` contains **v0.6.0 / versionCode 32**, with the news row
+off by default. The APK is published with the release and its `base.apk` hash is recorded in
+[COMPATIBILITY.md](COMPATIBILITY.md) and [v0.6.0 change notes](docs/RELEASE-0.6.0.md). Still pending on
+the device: the physical remote path for the HDMI cards, a real picture on the HDMI ports, standby,
+cold boot and the 8-hour soak. See [compatibility status](COMPATIBILITY.md).
+
+## Experience presets
 
 The same Home has three presets, not three launchers. Individual options remain adjustable; changing one marks the experience as **Custom**.
 

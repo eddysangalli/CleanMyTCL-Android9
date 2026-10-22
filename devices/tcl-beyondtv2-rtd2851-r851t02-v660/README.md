@@ -21,6 +21,9 @@ How to know if your TV matches: `adb shell getprop ro.build.fingerprint` and
 - [`../../scripts/protected-packages.txt`](../../scripts/protected-packages.txt) — packages the scripts refuse to disable.
 - [`OPTIMIZATION-CANDIDATES.md`](OPTIMIZATION-CANDIDATES.md) — measured candidates, **not applied**, each with risk and undo.
 
+**Installed on 2026-10-21:** `br.eddy.tvhome` **0.6.0** (versionCode 32), APK SHA-256
+`4A0933DBFDB2C992E20F599B933C7BEA82DFFEEE088B06491507916A365EEC5B`, with the opt-in news row
+(off by default) and the article reader. Previous install, kept here for comparison:
 **Installed on 2026-10-20 15:36:** `br.eddy.tvhome` **0.5.8** (versionCode 30), APK
 SHA-256 `D9EDA30FE285FC3AE643F26FB19C05121F30DC7E963DF4B6DB9F4A461A96EF10`, built from `main`
 (commit `5922022`, tag `launcher-v0.5.8`). The `base.apk` pulled back from the TV hashes to the
@@ -80,3 +83,23 @@ sides](../../benchmarks/results/2026-10-20-v0.5.7-spring-m3e.md). Review status:
   `scripts/tcl-app-assisted.sh netflix <label> frio`.
 - The remote's "Globoplay" key is injected by TCL software (scanCode 0); it cannot be remapped by a
   key filter without root.
+
+## Rendering on the RTD2851 (measured 2026-10-21)
+
+Notes from profiling a 1680x500 banner on the Home with `dumpsys gfxinfo framestats`. They are about
+this GPU and this firmware, not about the launcher: any view here can pay them.
+
+| What | Cost measured | What replaced it |
+|---|---:|---|
+| `canvas.clipPath` (rounded rect) on the banner | ~8 points of janky frames | fill a pre-built `Path` with a `BitmapShader` |
+| `setClipToOutline(true)` on the same view | 83% janky frames | not used: it forces a layer per frame |
+| Full-bleed `<shape>` gradient, 1700x250, redrawn each frame | ~42 points | constant scrim baked into the bitmap |
+| `android:shadowRadius` on four TextViews | ~34 points | removed; the scrim gives the contrast |
+| Two `LinearGradient` built inside `onDraw` | ~1.5 ms per frame | built in `onSizeChanged` |
+| Static banner behind the grid's spring animation | ~2-3 ms per frame of the spring | hardware layer on the banner |
+
+Also on this firmware: `am send-trim-memory` refuses background trim levels while the accessibility
+service holds the launcher at `curProcState=2`, so `onTrimMemory` for background levels can only be
+exercised by real system pressure.
+
+Method and full numbers: [`benchmarks/results/2026-10-21-rss-row.md`](../../benchmarks/results/2026-10-21-rss-row.md).

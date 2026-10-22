@@ -54,12 +54,18 @@ public final class NewsReaderActivity extends Activity {
                 if (loading != null) loading.setVisibility(View.GONE);
                 // Two things the desktop site does on a TV: a cookie bar parked over the bottom of the
                 // article, and body text sized for a monitor at arm's length. Neither is useful here.
-                view.evaluateJavascript(
-                        "(function(){var s=document.createElement('style');"
-                        + "s.innerHTML='body{font-size:118% !important}"
-                        + "*[class*=cookie],*[id*=cookie],*[class*=consent],*[id*=consent],"
-                        + "*[class*=lgpd],*[id*=lgpd]{display:none !important}';"
-                        + "(document.head||document.documentElement).appendChild(s);})();", null);
+                hideOverlays(view);
+            }
+
+            /**
+             * A headline the TV cannot load gets an explanation instead of the WebView's own error
+             * page. The usual cause here is a plain http link: this build blocks cleartext, so the
+             * engine refuses before any byte leaves the TV.
+             */
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                if (loading != null) loading.setVisibility(View.GONE);
+                view.loadDataWithBaseURL(null, failedPage(failingUrl, description), "text/html", "utf-8", null);
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
@@ -75,8 +81,49 @@ public final class NewsReaderActivity extends Activity {
         web.requestFocus();
     }
 
-    /** Back leaves the article; with history it goes back a page first, as a browser would. */
-    @Override
+    /**
+     * Hides the consent bar and lifts the body text. It writes to each element's own style instead
+     * of injecting a {@code <style>}: news sites ship a CSP that drops injected stylesheets, and a
+     * consent manager that mounts late is caught by the short interval, not by a single pass.
+     */
+    private static void hideOverlays(WebView view) {
+        view.evaluateJavascript(
+                "(function(){"
+                + "function hide(){"
+                + "var sel='[class*=cookie],[id*=cookie],[class*=consent],[id*=consent],"
+                + "[class*=lgpd],[id*=lgpd]';"
+                + "var n=document.querySelectorAll(sel);"
+                + "for(var i=0;i<n.length;i++){n[i].style.setProperty('display','none','important');}"
+                + "if(document.body){document.body.style.setProperty('font-size','118%','important');}"
+                + "}"
+                + "hide();"
+                + "if(!window.__eddyHide){window.__eddyHide=setInterval(hide,700);"
+                + "setTimeout(function(){clearInterval(window.__eddyHide);window.__eddyHide=null;},12000);}"
+                + "})();", null);
+    }
+
+    /**
+     * The page shown when the article cannot load: the same dark stage, and what the viewer can do.
+     * A plain http link is refused by this build (cleartext is blocked), and the raw WebView error
+     * does not say so in words anyone should have to read on a TV.
+     */
+    private static String failedPage(String url, String reason) {
+        String safeUrl = url == null ? "" : url.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        boolean cleartext = url != null && url.startsWith("http://");
+        String why = cleartext
+                ? "O endereço desta manchete é http://, e o Android desta TV só abre páginas https://."
+                : "A página não respondeu" + (reason == null || reason.isEmpty() ? "." : " (" + reason + ").");
+        return "<html><head><meta name=viewport content='width=device-width,initial-scale=1'>"
+                + "<style>body{margin:0;background:#0b0c0f;color:#e8eaf0;font:24px/1.55 sans-serif;padding:72px}"
+                + "h1{font-size:42px;font-weight:500;margin:0 0 26px}p{color:#b9bfcc;margin:0 0 18px}"
+                + "code{color:#8fb4ff;word-break:break-all;font-size:19px}</style></head><body>"
+                + "<h1>Não foi possível abrir esta manchete</h1>"
+                + "<p>" + why + "</p>"
+                + "<p><code>" + safeUrl + "</code></p>"
+                + "<p>Volte com o botão Voltar.</p></body></html>";
+    }
+
+    /** Back leaves the article; with history it goes back a page first, as a browser would. */    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && web != null && web.canGoBack()) {
             web.goBack();

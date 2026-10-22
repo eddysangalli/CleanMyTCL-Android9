@@ -2,51 +2,36 @@
 
 Estado do que ficou aberto depois da rodada de testes e do port dos cartões de entrada.
 
-## 1. RSS / News Feed — portado, medido e **apto a promover** (aguarda a bateria física)
+## 1. RSS / News Feed - **publicado na v0.6.0**, aguardando a bateria física
 
-**O RSS entrou no repositório geral**: commit `46fccd0` ("cinematic RSS news row on Home (v2.5, off
-by default)"), merge da branch `feature/rss-cinematic-home`, em 21/10/2026.
+O recurso entrou no release 0.6.0 (opt-in, desligado por padrão). Benchmark e método em
+[`benchmarks/results/2026-10-21-rss-row.md`](../benchmarks/results/2026-10-21-rss-row.md); notas do
+release em [`RELEASE-0.6.0.md`](RELEASE-0.6.0.md).
 
-**Port para a Eddy TV**: branch `feat/rss-news`. Benchmark completo em
-[`benchmarks/results/2026-10-21-rss-row.md`](../benchmarks/results/2026-10-21-rss-row.md).
-
-### O que o carrossel custa hoje (BeyondTV2, mesmo APK, só a preferência muda)
-
-| Métrica | Desligado | Ligado |
+| Métrica (V660, mesmo APK) | Desligado | Ligado |
 |---|---:|---:|
-| Quadros atrasados em regime | 0,38–0,77% | **0,0–3,3%** (mediana 0,8%) |
+| Quadros atrasados em regime | 0,0–0,8% | 0,0–2,5% |
 | Views | 104 | 105 |
-| PSS | 27,1 MB | 33,2 MB (**+6,1 MB**) |
-| Cold start (p50) | 437 ms | 510 ms (**+73 ms**) |
+| PSS | 28,3 MB | 34,4 MB (+6,1 MB) |
+| Cold start (p50) | 440 ms | 513 ms (+73 ms) |
 
-O jank deixou de ser um problema; o preço que sobra é memória e partida.
+O jank saiu de 83,6% no primeiro port para ~1%, com sete causas medidas e corrigidas (gradiente
+full-bleed, sombra nos textos, 25 TextViews de dots, `canvas.clipPath`, shaders por quadro, bitmap
+reescalado por quadro e redesenho durante a animação de foco).
 
-### O que estava errado (todas as causas medidas, nenhuma estimada)
+**Falta a bateria física:** controle físico, imagem real nas portas HDMI, standby, boot a frio, soak de
+8 h e o retorno à Home com a linha ligada.
 
-| Correção | Ganho |
-|---|---:|
-| Remover o `<shape>` com gradiente full-bleed (1700×250 em software, todo quadro) | 42 pp |
-| Remover `shadowRadius` dos quatro TextViews (software) | 34 pp |
-| Um TextView de dots em vez de um por manchete (28 views a menos) | 5–20 pp |
-| Desenhar pelo `Path` arredondado em vez de `canvas.clipPath` (não acelerado nesta GPU) | ~8 pp |
-| Cachear os dois `LinearGradient` do scrim em `onSizeChanged` | ~1,5 ms/quadro |
-| Assar recorte, escala e fades no bitmap, na thread de decode | 2 preenchimentos a menos por quadro |
-| Camada de hardware no carrossel (a animação da grade o redesenhava) | ~2–3 ms/quadro |
+**Feed da Folha removido:** `feeds.folha.uol.com.br/folha/cotidiano/rss091.xml` parou em maio de 2015 e
+continua respondendo 200; a linha mostrava notícias de onze anos atrás com links `http://` que o leitor
+não abria. O cache ganhou versão (`CACHE_VERSION`) para não sobreviver à troca de catálogo.
 
-`setClipToOutline` foi tentado no lugar do `clipPath` e foi **pior** (83%): força uma camada por
-quadro. Está registrado no benchmark para não ser repetido.
+## 1b. #585 (largar tiles sob pressão) - incluído, não exercitável por ADB
 
-### Por que ainda não está no release
-
-Não é mais o jank. Falta a bateria que nenhum recurso novo dispensa: **soak de 8 h, standby, boot a
-frio, controle físico e fonte HDMI real**, além do retorno à Home (Settings → Home) com a linha
-ligada, que não foi medido. O recurso é opt-in, desligado por padrão e reversível, então o custo de
-+6,1 MB e +73 ms só aparece para quem o ligar — mas a promoção depende da bateria, não da minha
-leitura dos números.
-
-Referência de arquitetura: o PR #363 do upstream (`ref/prs/pr363.md`) mostra uma faixa de cartões,
-mas lê o provedor de TV, não RSS, e foi fechado sem merge.
-
+O `am send-trim-memory` recusa níveis de fundo nesta firmware mesmo com a Home atrás: o serviço de
+acessibilidade mantém o processo em `curProcState=2`. O gancho só roda sob pressão real do sistema e
+não age com a Home visível (`started`). Não há número para mostrar; o que se sabe é que ele não pode
+apagar a tela de quem está olhando.
 ## 2. Cartões de entrada — caminho pelo menu precisa do controle físico
 
 O recurso funciona e foi validado na TV, mas a **tela de configuração foi aberta por ADB**, com a

@@ -11,8 +11,8 @@ android {
         applicationId 'br.eddy.tvhome'
         minSdk 26
         targetSdk 29
-        versionCode 31
-        versionName '0.5.9'
+        versionCode 32
+        versionName '0.6.0'
     }
 
     buildTypes {
