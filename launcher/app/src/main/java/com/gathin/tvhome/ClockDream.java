@@ -17,10 +17,9 @@ import java.util.Random;
 public class ClockDream extends DreamService {
 
     private static final long MOVE_MS = 60_000L;
-    /** The glow fades to its next colour over 8 s in 40 steps: at that pace 5 fps looks the same as 60 and
-     *  redraws the full-screen gradient a twelfth as often. */
+    /** The glow fades over 8 s in 16 steps: enough for this ambient effect without redrawing at video rates. */
     private static final long SHIFT_MS = 8_000L;
-    private static final int SHIFT_STEPS = 40;
+    private static final int SHIFT_STEPS = 16;
     private static final ArgbEvaluator ARGB = new ArgbEvaluator();
     /** Deep, low-brightness glow colours; the glow is drawn at partial alpha on black. */
     private static final int[] PALETTE = {0xFF2B5CFF, 0xFF00A39A, 0xFF8A3FFC, 0xFFE0661B, 0xFFD6336C};
@@ -28,6 +27,7 @@ public class ClockDream extends DreamService {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Random random = new Random();
     private View content;
+    private ClockRefresh clockRefresh;
     private GradientDrawable glow;
     private int colorIndex;
     private int glowColor;
@@ -60,6 +60,7 @@ public class ClockDream extends DreamService {
         setContentView(R.layout.dream_clock);
 
         content = findViewById(R.id.dreamContent);
+        clockRefresh = new ClockRefresh(content);
         View ambient = findViewById(R.id.dreamAmbient);
         glow = new GradientDrawable();
         glow.setGradientType(GradientDrawable.RADIAL_GRADIENT);
@@ -76,15 +77,17 @@ public class ClockDream extends DreamService {
         content.setAlpha(0f);
         content.post(() -> {
             placeClock();
-            content.animate().alpha(1f).setDuration(1200).start();
+            content.animate().alpha(1f).setDuration(1200).withLayer().start();
         });
         handler.postDelayed(tick, MOVE_MS);
+        clockRefresh.start();
     }
 
     @Override
     public void onDreamingStopped() {
         handler.removeCallbacks(tick);
         handler.removeCallbacks(shiftStepper);
+        clockRefresh.stop();
         super.onDreamingStopped();
     }
 
@@ -92,13 +95,14 @@ public class ClockDream extends DreamService {
     public void onDetachedFromWindow() {
         handler.removeCallbacks(tick);
         handler.removeCallbacks(shiftStepper);
+        if (clockRefresh != null) clockRefresh.stop();
         super.onDetachedFromWindow();
     }
 
     private void moveClock() {
-        content.animate().alpha(0f).setDuration(900).withEndAction(() -> {
+        content.animate().alpha(0f).setDuration(900).withLayer().withEndAction(() -> {
             placeClock();
-            content.animate().alpha(1f).setDuration(1200).start();
+            content.animate().alpha(1f).setDuration(1200).withLayer().start();
         }).start();
     }
 

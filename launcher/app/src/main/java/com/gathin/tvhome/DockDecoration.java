@@ -44,7 +44,9 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
             View child = parent.getChildAt(i);
             int pos = parent.getChildAdapterPosition(child);
             if (pos < 0 || pos >= dockSize) continue;
-            View card = child.findViewById(R.id.card);
+            RecyclerView.ViewHolder holder = parent.getChildViewHolder(child);
+            View card = holder instanceof AppAdapter.Holder
+                    ? ((AppAdapter.Holder) holder).card : child.findViewById(R.id.card);
             if (card == null) continue;
             float l = child.getLeft() + card.getLeft();
             float t = child.getTop() + card.getTop() + child.getTranslationY();

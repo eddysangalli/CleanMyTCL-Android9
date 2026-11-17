@@ -116,6 +116,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private GlassView glass;
     private ImageView wallpaperView;
     private Bitmap wallpaperBitmap;
+    /** Keeps the header TextClocks current after standby on TCL Android 9 (upstream #3044). */
+    private ClockRefresh clockRefresh;
     /** Incremented whenever the wallpaper is hidden or reloaded, so a late decode is discarded. */
     private int wallpaperRequest;
     private int wallpaperRes, wallpaperLoadingRes;   // image shown / being decoded, 0 = none
@@ -188,6 +190,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         root = findViewById(R.id.root);
         glass = findViewById(R.id.glass);
         wallpaperView = findViewById(R.id.wallpaper);
+        clockRefresh = new ClockRefresh(findViewById(R.id.leftBlock));
         // Sized for a focused tile before the first frame: left at the 10dp placeholder it showed as a dot.
         sizeGlass(getResources().getDimension(R.dimen.tile_width), getResources().getDimension(R.dimen.tile_height));
         brand = findViewById(R.id.brand);
@@ -438,6 +441,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onStart() {
         super.onStart();
         started = true;
+        clockRefresh.start();
         // onTrimMemory detaches the adapter while Home is hidden so its holders cannot keep tile
         // artwork alive. Reattach it before onResume restores the cached list or starts a reload.
         if (grid.getAdapter() == null) grid.setAdapter(adapter);
@@ -447,6 +451,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onStop() {
         super.onStop();
         started = false;
+        clockRefresh.stop();
     }
 
     /**

@@ -190,6 +190,8 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         h.card.setScaleX(focused ? FOCUS_SCALE : 1f);
         h.card.setScaleY(focused ? FOCUS_SCALE : 1f);
         if (e.banner != null) {
+            // A recycled holder may still reference the previous app's hidden icon (upstream #3595).
+            h.icon.setImageDrawable(null);
             h.banner.setImageBitmap(e.banner);
             h.banner.setVisibility(View.VISIBLE);
             h.icon.setVisibility(View.GONE);
