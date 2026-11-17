@@ -135,6 +135,48 @@ Do `1-telemetry.txt`: `com.tcl.bi` **já está desabilitado** aqui. `com.google.
 Regra do projeto aplicável: **um `pm disable-user` por vez**, smoke test depois, parar no
 primeiro sinal de anomalia. Nada acima foi aplicado.
 
+## 5c. Segunda rodada de ports (v0.6.2, commit `bacb87e9`)
+
+A varredura dedicada de `9ef40c1..upstream/main` sobre `launcher/` (**834 commits**; 822
+até `v3.5.0`, 12 depois) achou mais dois itens comprovados, ambos dentro da `v3.5.0`:
+
+| SHA | O que | Onde |
+|---|---|---|
+| `ea658e1d` | banner opaco cobre o card inteiro (centerCrop), então o `tile_bg` embaixo era pintado e coberto todo frame | `AppAdapter.java` bind, `AppLoader.java` build |
+| `#2908` | `refitGlass` comparava só largura/altura; no cold start o anel ficava com o tamanho certo e a **posição errada** | `MainActivity.java` `refitGlass` |
+
+**Desvio deliberado do upstream no `ea658e1d`:** o upstream usa `e.banner.getOpacity()`
+sobre um `Drawable`. Aqui o banner é `Bitmap` em `Config.HARDWARE`, e um hardware bitmap
+não responde `getOpacity()` de forma confiável — um falso "opaco" mostraria o preto da
+janela atrás de um banner com transparência. Portanto a opacidade é lida do **`Drawable`
+de origem**, em `AppLoader.build`, antes da conversão para hardware, e viaja no `Entry`.
+
+**Bug evitado durante o port:** a primeira versão comparava o `Rect` usando `tileRect`,
+que é o mesmo objeto que `onTileFocused` sobrescreve — a comparação seria sempre igual.
+Substituído por um `refitRect` próprio.
+
+### Medição real (mesmo roteiro, 36 teclas / 10 voltas)
+
+| Métrica | v0.6.1 | v0.6.2 | |
+|---|---|---|---|
+| resposta tecla p50 | 29 ms | **27 ms** | melhor |
+| resposta tecla p95 | 44 ms | **40 ms** | melhor |
+| resposta p99 / max | 46 / 46 | **45 / 45** | melhor |
+| quadros atrasados | 8,4% | **7,9%** | melhor |
+| abertura a frio p50 | 1111 ms | **1099 ms** | melhor |
+| volta ao Home p50 | 105 ms | **103 ms** | melhor |
+| CPU parada (total / launcher) | 14,2% / 1,9% | 14,5% / **1,7%** | neutro/melhor |
+| PSS | 52 MB | 52 MB | igual |
+
+**Nenhuma métrica regrediu.** Ganho pequeno e dentro da variação esperada — não é
+justificativa para alarde, é ausência de regressão. O overdraw só se mediria com GPU
+profiling, que este aparelho não expõe por ADB.
+
+**Visual conferido por screenshot:** todos os tiles com banner (Netflix, YouTube,
+globoplay, UniTVnet, NAVEGADOR WEB, TCL HOME) renderizam normalmente, sem fundo preto,
+com o anel de foco no lugar. `tile_bg.xml` é só um `<shape>` (sem ripple), então remover
+o fill não tira feedback de toque — o caminho de clique foi testado abrindo um tile.
+
 ## 6. Pendências reais
 
 1. **Baseline v0.6.0 com o mesmo roteiro de benchmark** — sem ele, não é possível afirmar
