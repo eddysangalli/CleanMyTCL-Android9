@@ -35,6 +35,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
@@ -332,13 +333,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnVoice.setOnKeyListener(pillKeys);
         btnSettings.setOnKeyListener(pillKeys);
 
-        // Hide the glass when focus leaves the tiles.
-        getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((oldF, newF) -> {
-            boolean onTile = newF != null && newF.getId() == R.id.card;
-            if (!onTile) hideGlass();
-        });
+        // Taken off in onDestroy: recreate() keeps the window, and a listener left on it held every earlier Home.
+        getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener(glassFocusListener);
 
-        ConnectivityManager cm = getSystemService(ConnectivityManager.class);
+        // From the application, not this activity: a ConnectivityManager made from an activity keeps the context
+        // it was made with (and the callback Messenger the system holds), so every recreate() left the previous
+        // Home and its bitmaps behind. Upstream #3804.
+        ConnectivityManager cm = getApplicationContext().getSystemService(ConnectivityManager.class);
         if (cm != null) cm.registerDefaultNetworkCallback(networkCallback);
     }
 
@@ -437,6 +438,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onStart() {
         super.onStart();
         started = true;
+        // onTrimMemory detaches the adapter while Home is hidden so its holders cannot keep tile
+        // artwork alive. Reattach it before onResume restores the cached list or starts a reload.
+        if (grid.getAdapter() == null) grid.setAdapter(adapter);
     }
 
     @Override
@@ -461,15 +465,36 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (!due || started) return;
         AppLoader.trimMemory();
         if (adapter != null) adapter.clear();
+        // Clearing the entries alone is not enough while RecyclerView is stopped: attached and pooled
+        // holders still reference their last Entry, banner and icon until another layout pass. Dropping
+        // the adapter releases those views immediately; onStart attaches it again.
+        if (grid != null) {
+            grid.setAdapter(null);
+            grid.getRecycledViewPool().clear();
+        }
+        // A wallpaper decode may still be running. Invalidate it before releasing the current bitmap,
+        // otherwise its late UI callback would put several megabytes back while Netflix is in front.
+        wallpaperRequest++;
+        wallpaperLoadingRes = 0;
+        releaseWallpaper();
         if (newsBackdrop != null) newsBackdrop.release();
     }
+
+    /** Hides the glass when focus leaves the tiles (added in onCreate, removed in onDestroy). */
+    private final ViewTreeObserver.OnGlobalFocusChangeListener glassFocusListener = (oldF, newF) -> {
+        boolean onTile = newF != null && newF.getId() == R.id.card;
+        if (!onTile) hideGlass();
+    };
 
     @Override
     protected void onDestroy() {
         wallpaperRequest++;
         releaseWallpaper();
         super.onDestroy();
-        ConnectivityManager cm = getSystemService(ConnectivityManager.class);
+        ViewTreeObserver tree = getWindow().getDecorView().getViewTreeObserver();
+        if (tree.isAlive()) tree.removeOnGlobalFocusChangeListener(glassFocusListener);
+        // From the application, as it was registered: an activity's own would be a different instance.
+        ConnectivityManager cm = getApplicationContext().getSystemService(ConnectivityManager.class);
         if (cm != null) cm.unregisterNetworkCallback(networkCallback);
     }
 
@@ -1525,7 +1550,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void updateWifiLabel() {
         String text = getString(R.string.wifi);
         try {
-            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            ConnectivityManager cm = getApplicationContext().getSystemService(ConnectivityManager.class);
             Network net = cm != null ? cm.getActiveNetwork() : null;
             NetworkCapabilities caps = net != null ? cm.getNetworkCapabilities(net) : null;
             if (caps == null) {
