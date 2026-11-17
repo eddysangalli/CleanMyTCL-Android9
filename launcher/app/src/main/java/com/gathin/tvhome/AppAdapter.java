@@ -56,23 +56,31 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         final long id;
         /** Banner pre-rendered at tile size, or null when the app only has an icon. */
         final Bitmap banner;
+        /**
+         * The banner was fully opaque at its source, so it covers the whole card and the card's own fill under
+         * it would be drawn for nothing on every frame (upstream #ea658e1d). Read from the Drawable before it
+         * became a hardware bitmap: a hardware Bitmap cannot answer getOpacity() reliably.
+         */
+        final boolean opaqueBanner;
         final Drawable icon;
         final int ambient;
         /** TvInputInfo id for an INPUT tile (an HDMI/AV card), else null. */
         final String inputId;
 
-        Entry(String label, ComponentName component, String key, Bitmap banner, Drawable icon, int ambient) {
-            this(label, component, key, banner, icon, ambient, null);
+        Entry(String label, ComponentName component, String key, Bitmap banner, boolean opaqueBanner,
+              Drawable icon, int ambient) {
+            this(label, component, key, banner, opaqueBanner, icon, ambient, null);
         }
 
-        Entry(String label, ComponentName component, String key, Bitmap banner, Drawable icon, int ambient,
-              String inputId) {
+        Entry(String label, ComponentName component, String key, Bitmap banner, boolean opaqueBanner,
+              Drawable icon, int ambient, String inputId) {
             this.label = label;
             this.component = component;
             this.pkg = component.getPackageName();
             this.key = key;
             this.id = key.hashCode();
             this.banner = banner;
+            this.opaqueBanner = opaqueBanner;
             this.icon = icon;
             this.ambient = ambient;
             this.inputId = inputId;
@@ -139,7 +147,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         for (InputCards card : inputCards) {
             items.add(new Entry(card.displayLabel,
                     new ComponentName("com.gathin.tvhome.input", card.inputId.replace('/', '.')),
-                    "input:" + card.inputId, null,
+                    "input:" + card.inputId, null, false,
                     ctx.getDrawable(InputCards.iconRes(card.icon)), 0, card.inputId));
         }
         notifyDataSetChanged();
@@ -189,6 +197,9 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         h.name.setAlpha(focused ? 1f : 0f);
         h.card.setScaleX(focused ? FOCUS_SCALE : 1f);
         h.card.setScaleY(focused ? FOCUS_SCALE : 1f);
+        // A fully opaque banner covers the whole card (centerCrop), so the card's fill under it is drawn for
+        // nothing on every frame; keep it under banners with transparent parts and under icon tiles (#ea658e1d).
+        h.card.setBackground(e.opaqueBanner ? null : h.cardBackground);
         if (e.banner != null) {
             // A recycled holder may still reference the previous app's hidden icon (upstream #3595).
             h.icon.setImageDrawable(null);
@@ -266,6 +277,8 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
 
     static final class Holder extends RecyclerView.ViewHolder {
         final View card;
+        /** item_app.xml's tile_bg: the dark card behind an icon tile, or behind a banner with transparent parts. */
+        final Drawable cardBackground;
         final ImageView banner;
         final ImageView icon;
         final TextView label;
@@ -276,6 +289,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         Holder(View v, TileListener listener) {
             super(v);
             card = v.findViewById(R.id.card);
+            cardBackground = card.getBackground();
             banner = v.findViewById(R.id.banner);
             icon = v.findViewById(R.id.icon);
             label = v.findViewById(R.id.label);

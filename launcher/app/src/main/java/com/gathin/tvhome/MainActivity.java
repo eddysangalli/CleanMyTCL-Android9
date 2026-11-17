@@ -149,6 +149,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private float density;
     /** Scratch rects for onTileFocused, which runs on every D-pad move. */
     private final Rect tileRect = new Rect();
+    /** The focused tile's rect as of the last onTileFocused, so a cold-start refit can tell it moved (#2908). */
+    private final Rect glassCardRect = new Rect();
+    /** Scratch rect for refitGlass, kept apart from tileRect which onTileFocused overwrites. */
+    private final Rect refitRect = new Rect();
     private final Rect revealRect = new Rect();
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -526,6 +530,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         Rect r = tileRect;
         r.set(0, 0, card.getWidth(), card.getHeight());
         root.offsetDescendantRectToMyCoords(card, r);
+        glassCardRect.set(r);   // copy: tileRect is reused by the next call
         sizeGlass(card.getWidth(), card.getHeight());
         glassCardW = card.getWidth();
         float pad = 6f * density;        // GlassView's inset, also the reveal margin below
@@ -1198,13 +1203,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         int pos = Math.max(0, Math.min(lastFocused, adapter.getItemCount() - 1));
         RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(pos);
         View card = vh == null ? null : vh.itemView.findViewById(R.id.card);
-        if (card == null || card.getWidth() <= 0) return;
+        // A focused-only guard: if focus left the tiles during the first seconds (Up to the top bar), hideGlass()
+        // set glassShown=false and this refit would bring the ring back over a tile that has no focus.
+        if (card == null || card.getWidth() <= 0 || !card.isFocused()) return;
         float pad = 6f * density;
         int w = (int) (card.getWidth() * AppAdapter.FOCUS_SCALE + 2 * pad);
         int h = (int) (card.getHeight() * AppAdapter.FOCUS_SCALE + 2 * pad);
+        // The tile's rect, not only its width: the grid's top padding lands after the tile has its width, so a
+        // cold start can leave the glass at the right size and the wrong place. Comparing the rect catches that
+        // (upstream #2908).
+        Rect r = refitRect;
+        r.set(0, 0, card.getWidth(), card.getHeight());
+        root.offsetDescendantRectToMyCoords(card, r);
         if (!glassShown || card.getWidth() != glassCardW
-                || glass.getWidth() != w || glass.getHeight() != h) {
-            onTileFocused(pos, card);
+                || glass.getWidth() != w || glass.getHeight() != h
+                || !glassCardRect.equals(r)) {
+            onTileFocused(pos, card);   // overwrites tileRect and glassCardRect, which is why r is its own rect
         }
     }
 

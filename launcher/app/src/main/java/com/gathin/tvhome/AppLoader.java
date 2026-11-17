@@ -11,6 +11,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Handler;
@@ -241,13 +242,16 @@ final class AppLoader {
         Drawable banner = ri.activityInfo.loadBanner(pm);
         if (banner == null) banner = ri.activityInfo.applicationInfo.loadBanner(pm);
         if (banner != null) {
+            // Ask the Drawable, before it becomes a hardware bitmap: a hardware Bitmap cannot answer this
+            // reliably, and a wrong "opaque" here would show the window's black behind a transparent banner.
+            boolean opaque = banner.getOpacity() == PixelFormat.OPAQUE;
             Bitmap tile = render(banner, w, h, true);
             int ambient = vividColor(tile);
-            return new AppAdapter.Entry(label, component, key, toHardware(tile), null, ambient);
+            return new AppAdapter.Entry(label, component, key, toHardware(tile), opaque, null, ambient);
         }
         Drawable icon = ri.loadIcon(pm);
         int ambient = icon != null ? vividColor(render(icon, 12, 12, false)) : 0xFF444444;
-        return new AppAdapter.Entry(label, component, key, null, icon, ambient);
+        return new AppAdapter.Entry(label, component, key, null, false, icon, ambient);
     }
 
     /** Draws a drawable into a bitmap of exactly this size, centre-cropped like the tile's ImageView. */
