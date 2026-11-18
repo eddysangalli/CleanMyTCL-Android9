@@ -59,8 +59,37 @@
     <string name="opt_motion_off">Movimiento suave: desactivado</string>
     <string name="opt_profiles">Perfiles de la familia: %1$d</string>
     <string name="opt_columns">Columnas: %1$d</string>
+    <string name="opt_experience">Experiencia: %1$s</string>
+    <string name="experience_title">Experiencia</string>
+    <string name="experience_performance">Rendimiento (predeterminado): fondo negro, foco instantáneo</string>
+    <string name="experience_balanced">Equilibrado: foco suave, fondo negro</string>
+    <string name="experience_visual" formatted="false">Visual: foco suave + Aurora\nMedido en la v0.5.6: +9 MB y del 0,19 % al 6,89 % de fotogramas con retraso</string>
+    <string name="experience_performance_short">Rendimiento</string>
+    <string name="experience_balanced_short">Equilibrado</string>
+    <string name="experience_visual_short">Visual</string>
+    <string name="experience_custom_short">Personalizado</string>
     <string name="opt_wallpaper_on">Fondo de pantalla: Aurora</string>
     <string name="opt_wallpaper_off">Fondo de pantalla: negro</string>
+    <string name="wallpaper_title">Fondo de pantalla Aurora</string>
+    <string name="wallpaper_cost" formatted="false">Medido en la TCL BeyondTV2 con la v0.5.6: unos 9 MB más de memoria, y los fotogramas con retraso subieron del 0,19 % (negro) al 6,89 % (Aurora) en la prueba de navegación. La respuesta mediana de las teclas se mantuvo en 17 ms. Puedes volver al negro cuando quieras.</string>
+    <string name="wallpaper_enable">Activar fondo</string>
+    <string name="wallpaper_cost_unmeasured">Este fondo con imagen aún no se ha medido en esta TV. Si notas más tirones, vuelve al negro.</string>
+    <string name="opt_wallpaper">Fondo de pantalla: %1$s</string>
+    <!-- Same order as MainActivity.BG_IDS. -->
+    <string-array name="wallpaper_names">
+        <item>Negro</item>
+        <item>Medianoche</item>
+        <item>Bosque</item>
+        <item>Ciruela</item>
+        <item>Burdeos</item>
+        <item>Grafito</item>
+        <item>Petróleo</item>
+        <item>Aurora</item>
+        <item>La Tierra de noche</item>
+        <item>Nebulosa desenfocada</item>
+        <item>Vía Láctea desenfocada</item>
+        <item>Estelas de estrellas desenfocadas</item>
+    </string-array>
     <string name="wallpaper_light">El modo ultraligero siempre usa el fondo negro.</string>
     <string name="columns_title">Columnas</string>
     <string name="profiles_title">Perfiles de la familia</string>
@@ -88,6 +117,7 @@
     </string-array>
     <string name="remap_label">Eddy TV: botones del control</string>
     <string name="remap_description">Cuando el botón Globoplay del control abre Globoplay, cambia a otra app. Desde la pantalla de inicio Globoplay abre normalmente. No lee la pantalla ni lo que escribes; solo detecta cuando se abre Globoplay.</string>
+    <string name="input_key_service_description">Abre el menú Entradas al pulsar el botón Input/Source del control. Cada control envía códigos de tecla distintos para ese botón; este servicio los detecta todos. Desactivado de forma predeterminada.</string>
     <string name="opt_remap_on">Botón Globoplay: abre %1$s</string>
     <string name="opt_remap_off">Botón Globoplay: predeterminado (Globoplay)</string>
     <string name="opt_remap_service">Botón Globoplay: activar el reasignador</string>
@@ -107,7 +137,7 @@
     <string name="input_card_name_default">Igual que la entrada</string>
     <string name="input_card_icon">Icono: %1$s</string>
     <string name="input_card_icon_title">Icono</string>
-    <string name="input_card_shown">Mostrar en Home: %1$s</string>
+    <string name="input_card_shown">Mostrar en Inicio: %1$s</string>
     <string name="card_name_title">Nombre de la tarjeta</string>
     <string name="icon_game">Juego</string>
     <string name="icon_movie">Película</string>
